@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resultados Operacionais</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar collapsed" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-mark">J</div>
+        <div class="brand-text">
+          <strong>Just Dashboards</strong>
+          <span>Painel Executivo</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-page="pages/resultados-operacionais.html" data-title="Resultados Operacionais" data-description="Dashboard operacional final preservado sem alterações internas.">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Resultados Operacionais</span>
+        </button>
+
+        <button class="nav-item" data-page="pages/faturamento.html" data-title="Faturamento" data-description="Área reservada para o dashboard de faturamento.">
+          <span class="nav-icon">💰</span>
+          <span class="nav-label">Faturamento</span>
+        </button>
+
+        <button class="nav-item" data-page="pages/compras.html" data-title="Compras" data-description="Área reservada para o dashboard de compras.">
+          <span class="nav-icon">🛒</span>
+          <span class="nav-label">Compras</span>
+        </button>
+      </nav>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="toggle-btn" id="toggleSidebar" aria-label="Expandir ou recolher menu lateral">☰</button>
+          <div>
+            <h1 id="pageTitle">Resultados Operacionais</h1>
+            <p id="pageDescription">Dashboard operacional final preservado sem alterações internas.</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <a class="source-link" href="pages/resultados-operacionais.html" target="_blank" rel="noopener noreferrer" id="openCurrentPage">Abrir página atual</a>
+        </div>
+      </header>
+
+      <section class="content-area">
+        <iframe
+          id="contentFrame"
+          class="content-frame"
+          src="pages/resultados-operacionais.html"
+          title="Resultados Operacionais"
+          loading="eager">
+        </iframe>
+      </section>
+    </main>
+  </div>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
