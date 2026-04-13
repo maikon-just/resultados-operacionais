@@ -7,7 +7,68 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-soft: #111827;
+      --panel: #ffffff;
+      --line: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --sidebar-expanded: 280px;
+      --sidebar-collapsed: 82px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%); color: var(--text); }
+    .app-shell { min-height: 100vh; display: flex; }
+    .sidebar { position: fixed; inset: 0 auto 0 0; width: var(--sidebar-expanded); background: linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%); color: #fff; padding: 18px 14px; border-right: 1px solid rgba(255,255,255,0.06); transition: width .25s ease, transform .25s ease; overflow: hidden; z-index: 30; }
+    .sidebar.collapsed { width: var(--sidebar-collapsed); }
+    .sidebar-header { display: flex; align-items: center; gap: 12px; padding: 10px 8px 18px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .brand-mark { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); font-weight: 800; font-size: 1.1rem; flex: 0 0 42px; }
+    .brand-text { display: flex; flex-direction: column; min-width: 0; transition: opacity .2s ease; }
+    .brand-text strong { font-size: .96rem; line-height: 1.1; }
+    .brand-text span { font-size: .78rem; color: rgba(255,255,255,.65); }
+    .sidebar.collapsed .brand-text, .sidebar.collapsed .nav-label { opacity: 0; pointer-events: none; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+    .nav-item { display: flex; align-items: center; gap: 14px; width: 100%; border: none; background: transparent; color: rgba(255,255,255,.82); padding: 14px 12px; border-radius: 14px; cursor: pointer; transition: background .2s ease, transform .2s ease, color .2s ease; text-align: left; }
+    .nav-item:hover { background: rgba(255,255,255,.08); color: #fff; transform: translateX(2px); }
+    .nav-item.active { background: linear-gradient(135deg, rgba(37,99,235,.25), rgba(59,130,246,.18)); color: #fff; box-shadow: inset 0 0 0 1px rgba(96,165,250,.35); }
+    .nav-icon { width: 32px; text-align: center; font-size: 1.15rem; flex: 0 0 32px; }
+    .nav-label { font-size: .95rem; font-weight: 600; white-space: nowrap; transition: opacity .2s ease; }
+    .main-content { width: 100%; margin-left: var(--sidebar-expanded); padding: 22px; transition: margin-left .25s ease; }
+    .main-content.sidebar-collapsed { margin-left: var(--sidebar-collapsed); }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; padding: 18px 22px; background: rgba(255,255,255,.82); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.7); border-radius: 20px; box-shadow: var(--shadow); }
+    .topbar-left { display: flex; align-items: center; gap: 14px; }
+    .toggle-btn { width: 46px; height: 46px; border: 1px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer; font-size: 1.15rem; box-shadow: 0 4px 12px rgba(15,23,42,.06); }
+    .topbar h1 { margin: 0 0 4px; font-size: 1.5rem; }
+    .topbar p { margin: 0; color: var(--muted); font-size: .95rem; }
+    .source-link { display: inline-flex; align-items: center; justify-content: center; padding: 12px 16px; border-radius: 12px; text-decoration: none; color: #fff; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); font-weight: 600; white-space: nowrap; }
+    .content-area { height: calc(100vh - 122px); min-height: 720px; background: rgba(255,255,255,.72); border: 1px solid rgba(255,255,255,.75); border-radius: 24px; padding: 14px; box-shadow: var(--shadow); }
+    .content-frame { width: 100%; height: 100%; border: 0; border-radius: 18px; background: #fff; }
+    .placeholder-wrap { min-height: 100%; display: grid; place-items: center; padding: 32px; background: #f8fafc; }
+    .placeholder-card { max-width: 760px; background: #fff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 36px; box-shadow: 0 20px 40px rgba(15,23,42,.08); }
+    .placeholder-card h2 { margin: 0 0 12px; font-size: 1.8rem; }
+    .placeholder-card p { margin: 0; color: #475569; line-height: 1.7; }
+    @media (max-width: 960px) {
+      .sidebar { transform: translateX(0); }
+      .sidebar.collapsed { transform: translateX(calc(-100% + 82px)); width: var(--sidebar-expanded); }
+      .sidebar.collapsed .brand-text, .sidebar.collapsed .nav-label { opacity: 1; pointer-events: auto; }
+      .main-content, .main-content.sidebar-collapsed { margin-left: 82px; }
+      .topbar { flex-direction: column; align-items: stretch; }
+      .topbar-left { align-items: flex-start; }
+      .content-area { min-height: 70vh; }
+    }
+    @media (max-width: 640px) {
+      .main-content, .main-content.sidebar-collapsed { margin-left: 0; padding: 14px; }
+      .sidebar { width: min(88vw, 280px); }
+      .sidebar.collapsed { transform: translateX(-100%); width: min(88vw, 280px); }
+      .topbar h1 { font-size: 1.2rem; }
+      .topbar p { font-size: .88rem; }
+    }
+  </style>
 </head>
 <body>
   <div class="app-shell">
@@ -19,25 +80,21 @@
           <span>Painel Executivo</span>
         </div>
       </div>
-
       <nav class="sidebar-nav">
-        <button class="nav-item active" data-page="pages/resultados-operacionais.html" data-title="Resultados Operacionais" data-description="Dashboard operacional final preservado sem alterações internas.">
+        <button class="nav-item active" data-page="resultados" data-title="Resultados Operacionais" data-description="Dashboard operacional final preservado sem alterações internas.">
           <span class="nav-icon">📊</span>
           <span class="nav-label">Resultados Operacionais</span>
         </button>
-
-        <button class="nav-item" data-page="pages/faturamento.html" data-title="Faturamento" data-description="Área reservada para o dashboard de faturamento.">
+        <button class="nav-item" data-page="faturamento" data-title="Faturamento" data-description="Área reservada para o dashboard de faturamento.">
           <span class="nav-icon">💰</span>
           <span class="nav-label">Faturamento</span>
         </button>
-
-        <button class="nav-item" data-page="pages/compras.html" data-title="Compras" data-description="Área reservada para o dashboard de compras.">
+        <button class="nav-item" data-page="compras" data-title="Compras" data-description="Área reservada para o dashboard de compras.">
           <span class="nav-icon">🛒</span>
           <span class="nav-label">Compras</span>
         </button>
       </nav>
     </aside>
-
     <main class="main-content" id="mainContent">
       <header class="topbar">
         <div class="topbar-left">
@@ -47,24 +104,1517 @@
             <p id="pageDescription">Dashboard operacional final preservado sem alterações internas.</p>
           </div>
         </div>
-
         <div class="topbar-right">
-          <a class="source-link" href="pages/resultados-operacionais.html" target="_blank" rel="noopener noreferrer" id="openCurrentPage">Abrir página atual</a>
+          <a class="source-link" href="#" id="openCurrentPage">Abrir página atual</a>
         </div>
       </header>
-
       <section class="content-area">
-        <iframe
-          id="contentFrame"
-          class="content-frame"
-          src="pages/resultados-operacionais.html"
-          title="Resultados Operacionais"
-          loading="eager">
-        </iframe>
+        <iframe id="contentFrame" class="content-frame" title="Resultados Operacionais"></iframe>
       </section>
     </main>
   </div>
 
-  <script src="assets/js/app.js"></script>
+  <template id="tpl-resultados">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Just Burger - Análise de Cancelamentos</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #F5F7FA;
+            color: #2C3E50;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header com botões de empresas */
+        .companies-header {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .company-btn {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .company-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .company-btn.active {
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.5), 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .company-btn.just-matriz { background: linear-gradient(135deg, #FF6B6B 0%, #EE5A6F 100%); }
+        .company-btn.just-abc { background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); }
+        .company-btn.just-gru { background: linear-gradient(135deg, #FFE66D 0%, #FFBE0B 100%); color: #2C3E50; }
+        .company-btn.just-gourmet { background: linear-gradient(135deg, #A8E6CF 0%, #56C596 100%); }
+        .company-btn.aham-forneria { background: linear-gradient(135deg, #FFB7B2 0%, #FF8787 100%); }
+        .company-btn.aham-sushi { background: linear-gradient(135deg, #95E1D3 0%, #38B6AB 100%); }
+
+        /* Título com botão de upload */
+        .title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .title-bar h1 {
+            font-size: 24px;
+            color: #2C3E50;
+        }
+
+        .upload-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Botões de métricas e seletor de período */
+        .metrics-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .metric-btn {
+            padding: 12px 24px;
+            border: 2px solid #E0E0E0;
+            background: white;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #2C3E50;
+        }
+
+        .metric-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-1px);
+        }
+
+        .metric-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .period-selector {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .period-selector label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2C3E50;
+        }
+
+        .period-selector select {
+            padding: 10px 15px;
+            border: 2px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            background: white;
+            cursor: pointer;
+            min-width: 180px;
+        }
+
+        /* Filtro de turno */
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            align-items: center;
+        }
+
+        .filter-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2C3E50;
+        }
+
+        .turno-btn {
+            padding: 8px 16px;
+            border: 2px solid #E0E0E0;
+            background: white;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .turno-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .turno-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Cards de KPI */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+
+        .kpi-title {
+            font-size: 13px;
+            color: #7F8C8D;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2C3E50;
+            margin-bottom: 10px;
+        }
+
+        .kpi-breakdown {
+            padding-top: 10px;
+            border-top: 1px solid #E0E0E0;
+            font-size: 12px;
+            color: #7F8C8D;
+        }
+
+        .kpi-breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+
+        .kpi-breakdown-label {
+            font-weight: 500;
+        }
+
+        .kpi-breakdown-value {
+            font-weight: 600;
+            color: #2C3E50;
+        }
+
+        /* Gráficos */
+        .charts-section {
+            margin-bottom: 30px;
+        }
+
+        .charts-row {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .charts-row.two-col {
+            grid-template-columns: 35% 65%;
+        }
+
+        .charts-row.three-col {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2C3E50;
+            margin-bottom: 15px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-wrapper.clickable {
+            cursor: pointer;
+        }
+
+        .chart-wrapper.clickable:hover {
+            opacity: 0.9;
+        }
+
+        /* Modal para drill-down */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 1000px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2C3E50;
+        }
+
+        .modal-close {
+            font-size: 32px;
+            cursor: pointer;
+            color: #7F8C8D;
+            border: none;
+            background: none;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: #F5F7FA;
+            color: #2C3E50;
+        }
+
+        /* Tabela */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .data-table th {
+            background: #F5F7FA;
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 700;
+            color: #2C3E50;
+            border-bottom: 2px solid #E0E0E0;
+        }
+
+        .data-table td {
+            padding: 12px;
+            font-size: 13px;
+            border-bottom: 1px solid #E0E0E0;
+        }
+
+        .data-table tbody tr:hover {
+            background: #F5F7FA;
+        }
+
+        /* Rodapé com notificação */
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
+            z-index: 999;
+        }
+
+        .footer.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Upload area */
+        .upload-area {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-area.active {
+            display: flex;
+        }
+
+        .upload-box {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .upload-zone {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-zone:hover {
+            border-color: #764ba2;
+            background: #f8f9ff;
+        }
+
+        .upload-zone.drag-over {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 16px;
+            color: #2C3E50;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 13px;
+            color: #7F8C8D;
+        }
+
+        .upload-close {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #E0E0E0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .upload-close:hover {
+            background: #D0D0D0;
+        }
+
+        /* Status badge */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-badge.manha {
+            background: #FFE5B4;
+            color: #D97706;
+        }
+
+        .status-badge.dia {
+            background: #FCD34D;
+            color: #92400E;
+        }
+
+        .status-badge.noite {
+            background: #93C5FD;
+            color: #1E40AF;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header com botões de empresas -->
+        <div class="companies-header">
+            <button class="company-btn just-matriz active" data-company="just-matriz">
+                <div>JUST MATRIZ</div>
+            </button>
+            <button class="company-btn just-abc" data-company="just-abc">
+                <div>JUST ABC</div>
+            </button>
+            <button class="company-btn just-gru" data-company="just-gru">
+                <div>JUST GRU</div>
+            </button>
+            <button class="company-btn just-gourmet" data-company="just-gourmet">
+                <div>JUST GOURMET</div>
+            </button>
+            <button class="company-btn aham-forneria" data-company="aham-forneria">
+                <div>AHAM FORNERIA</div>
+            </button>
+            <button class="company-btn aham-sushi" data-company="aham-sushi">
+                <div>AHAM SUSHI</div>
+            </button>
+        </div>
+
+        <!-- Título com botão de upload -->
+        <div class="title-bar">
+            <h1>📊 Análise Completa</h1>
+            <button class="upload-btn" onclick="openUpload()">📤 Upload de Dados</button>
+        </div>
+
+        <!-- Botões de métricas e seletor de período -->
+        <div class="metrics-bar">
+            <button class="metric-btn" data-metric="vendas">VENDAS</button>
+            <button class="metric-btn active" data-metric="cancelamentos">CANCELAMENTOS</button>
+            <button class="metric-btn" data-metric="negociacoes">NEGOCIAÇÕES</button>
+            <button class="metric-btn" data-metric="qualidade">QUALIDADE</button>
+            <button class="metric-btn" data-metric="cardapio">CARDÁPIO</button>
+
+            <div class="period-selector">
+                <label>Período:</label>
+                <select id="periodSelect">
+                    <option value="ultima-semana">Última Semana (Dom-Dom)</option>
+                    <option value="30-dias">Últimos 30 Dias</option>
+                    <option value="90-dias">Últimos 90 Dias</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Filtro de turno -->
+        <div class="filter-bar">
+            <span class="filter-label">Filtrar por Turno:</span>
+            <button class="turno-btn active" data-turno="todos">Todos</button>
+            <button class="turno-btn" data-turno="manha">☀️ Manhã (até 11:59)</button>
+            <button class="turno-btn" data-turno="dia">🌤️ Dia (12:00-17:59)</button>
+            <button class="turno-btn" data-turno="noite">🌙 Noite (18:00+)</button>
+        </div>
+
+        <!-- Cards de KPI -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-title">Valor Total Cancelado</div>
+                <div class="kpi-value" id="valorTotal">R$ 24.203,26</div>
+                <div class="kpi-breakdown">
+                    <div class="kpi-breakdown-item">
+                        <span class="kpi-breakdown-label">☀️ Manhã:</span>
+                        <span class="kpi-breakdown-value" id="valorManha">R$ 8.067,75</span>
+                    </div>
+                    <div class="kpi-breakdown-item">
+                        <span class="kpi-breakdown-label">🌤️ Dia:</span>
+                        <span class="kpi-breakdown-value" id="valorDia">R$ 9.681,31</span>
+                    </div>
+                    <div class="kpi-breakdown-item">
+                        <span class="kpi-breakdown-label">🌙 Noite:</span>
+                        <span class="kpi-breakdown-value" id="valorNoite">R$ 6.454,20</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-title">Total de Cancelamentos</div>
+                <div class="kpi-value" id="totalCancelamentos">490</div>
+                <div class="kpi-breakdown">
+                    <div class="kpi-breakdown-item">
+                        <span class="kpi-breakdown-label">☀️ Manhã:</span>
+                        <span class="kpi-breakdown-value" id="qtdManha">163</span>
+                    </div>
+                    <div class="kpi-breakdown-item">
+                        <span class="kpi-breakdown-label">🌤️ Dia:</span>
+                        <span class="kpi-breakdown-value" id="qtdDia">196</span>
+                    </div>
+                    <div class="kpi-breakdown-item">
+                        <span class="kpi-breakdown-label">🌙 Noite:</span>
+                        <span class="kpi-breakdown-value" id="qtdNoite">131</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-title">Valor Médio Cancelado</div>
+                <div class="kpi-value" id="valorMedio">R$ 49,39</div>
+                <div class="kpi-breakdown">
+                    <div class="kpi-breakdown-item">
+                        <span class="kpi-breakdown-label">☀️ Manhã:</span>
+                        <span class="kpi-breakdown-value" id="medioManha">R$ 49,49</span>
+                    </div>
+                    <div class="kpi-breakdown-item">
+                        <span class="kpi-breakdown-label">🌤️ Dia:</span>
+                        <span class="kpi-breakdown-value" id="medioDia">R$ 49,39</span>
+                    </div>
+                    <div class="kpi-breakdown-item">
+                        <span class="kpi-breakdown-label">🌙 Noite:</span>
+                        <span class="kpi-breakdown-value" id="medioNoite">R$ 49,27</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-title">Taxa Cancelamento Parcial</div>
+                <div class="kpi-value" id="taxaParcial">52,2%</div>
+                <div class="kpi-breakdown">
+                    <div class="kpi-breakdown-item">
+                        <span class="kpi-breakdown-label">☀️ Manhã:</span>
+                        <span class="kpi-breakdown-value" id="parcialManha">51,5%</span>
+                    </div>
+                    <div class="kpi-breakdown-item">
+                        <span class="kpi-breakdown-label">🌤️ Dia:</span>
+                        <span class="kpi-breakdown-value" id="parcialDia">53,1%</span>
+                    </div>
+                    <div class="kpi-breakdown-item">
+                        <span class="kpi-breakdown-label">🌙 Noite:</span>
+                        <span class="kpi-breakdown-value" id="parcialNoite">51,9%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="charts-section">
+            <!-- Linha 1: Pizza + Motivos -->
+            <div class="charts-row two-col">
+                <div class="chart-card">
+                    <div class="chart-title">Total vs Parcial</div>
+                    <div class="chart-wrapper clickable" onclick="showDrillDown('status')">
+                        <canvas id="chartStatus"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Motivos de Cancelamento</div>
+                    <div class="chart-wrapper" style="height: 400px;">
+                        <canvas id="chartMotivos"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Linha 2: Chamados da Semana -->
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="chart-title">Chamados da Última Semana</div>
+                    <div class="chart-wrapper clickable" onclick="showDrillDown('semana')">
+                        <canvas id="chartSemana"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Linha 3: Três gráficos -->
+            <div class="charts-row three-col">
+                <div class="chart-card">
+                    <div class="chart-title">Impacto no Super</div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartSuper"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Origem do Cancelamento</div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartOrigem"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Contestações</div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartContestaveis"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Linha 4: Motivos não-contestáveis -->
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="chart-title">Motivos Não-Contestáveis</div>
+                    <div class="chart-wrapper" style="height: 350px;">
+                        <canvas id="chartNaoContestaveis"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para drill-down -->
+    <div class="modal" id="drillDownModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Detalhes</h2>
+                <button class="modal-close" onclick="closeDrillDown()">×</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Upload area -->
+    <div class="upload-area" id="uploadArea">
+        <div class="upload-box">
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Arraste o arquivo Excel aqui</div>
+                <div class="upload-hint">ou clique para selecionar (cancelamentosmatriz.xlsx)</div>
+            </div>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
+            <center><button class="upload-close" onclick="closeUpload()">Fechar</button></center>
+        </div>
+    </div>
+
+    <!-- Rodapé com notificação -->
+    <div class="footer" id="footerNotification">
+        <span id="footerText">0 registros carregados</span>
+    </div>
+
+    <script>
+        // Dados globais
+        let allData = [];
+        let filteredData = [];
+        let currentCompany = 'just-matriz';
+        let currentMetric = 'cancelamentos';
+        let currentPeriod = 'ultima-semana';
+        let currentTurno = 'todos';
+
+        // Dados de exemplo (serão substituídos pelos dados reais após upload)
+        const sampleData = [
+            {
+                id: 1919,
+                status: 'CANCELADO',
+                motivo: 'PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO',
+                valor: 35.89,
+                impactoSuper: 'SIM',
+                origem: 'CLIENTE',
+                contestavel: 'SIM',
+                data: '2024-07-15',
+                hora: '08:30:00',
+                turno: 'Manhã'
+            },
+            // Mais dados serão adicionados pelo upload
+        ];
+
+        // Função para obter turno
+        function getTurno(hora) {
+            if (!hora) return 'Não informado';
+            const h = parseInt(hora.split(':')[0]);
+            if (h < 12) return 'Manhã';
+            if (h < 18) return 'Dia';
+            return 'Noite';
+        }
+
+        // Botões de empresas
+        document.querySelectorAll('.company-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.company-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentCompany = this.dataset.company;
+                updateDashboard();
+            });
+        });
+
+        // Botões de métricas
+        document.querySelectorAll('.metric-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.metric-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentMetric = this.dataset.metric;
+                updateDashboard();
+            });
+        });
+
+        // Seletor de período
+        document.getElementById('periodSelect').addEventListener('change', function() {
+            currentPeriod = this.value;
+            updateDashboard();
+        });
+
+        // Botões de turno
+        document.querySelectorAll('.turno-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.turno-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentTurno = this.dataset.turno;
+                updateDashboard();
+            });
+        });
+
+        // Upload
+        function openUpload() {
+            document.getElementById('uploadArea').classList.add('active');
+        }
+
+        function closeUpload() {
+            document.getElementById('uploadArea').classList.remove('active');
+        }
+
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('drag-over');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                processFile(e.target.files[0]);
+            }
+        });
+
+        function processFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    // Processar dados
+                    allData = jsonData.map((row, index) => ({
+                        id: row['Id do pedido'] || index,
+                        status: row['Status do pedido'] || '',
+                        motivo: row['Motivo do cancelamento'] || '',
+                        valor: parseFloat(row['Valor total do cancelamento com entrega (R$)'] || 0),
+                        impactoSuper: row['Impactou o super?'] || 'NÃO',
+                        origem: row['Origem do cancelamento'] || '',
+                        contestavel: row['Cancelamento é contestável?'] || 'NÃO',
+                        data: row['Data do pedido'] || '',
+                        hora: row['Hora do pedido'] || '',
+                        turno: getTurno(row['Hora do pedido'])
+                    }));
+
+                    // Salvar no LocalStorage
+                    localStorage.setItem('cancelamentosData', JSON.stringify(allData));
+                    localStorage.setItem('lastUploadDate', new Date().toISOString());
+
+                    // Atualizar dashboard
+                    updateDashboard();
+
+                    // Mostrar notificação
+                    showFooterNotification(allData.length);
+
+                    closeUpload();
+
+                    alert(`✅ ${allData.length} registros carregados com sucesso!`);
+                } catch (error) {
+                    alert('❌ Erro ao processar arquivo: ' + error.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function showFooterNotification(count) {
+            const footer = document.getElementById('footerNotification');
+            document.getElementById('footerText').textContent = `${count} registros carregados`;
+            footer.classList.add('show');
+        }
+
+        // Atualizar dashboard
+        function updateDashboard() {
+            // Carregar dados do LocalStorage se existirem
+            const storedData = localStorage.getItem('cancelamentosData');
+            if (storedData) {
+                allData = JSON.parse(storedData);
+            } else {
+                allData = generateSampleData();
+            }
+
+            // Filtrar dados
+            filteredData = filterData(allData);
+
+            // Atualizar KPIs
+            updateKPIs(filteredData);
+
+            // Atualizar gráficos
+            updateCharts(filteredData);
+
+            // Mostrar notificação
+            if (allData.length > 0) {
+                showFooterNotification(allData.length);
+            }
+        }
+
+        function generateSampleData() {
+            const statuses = ['CANCELADO', 'CANCELAMENTO PARCIAL'];
+            const motivos = [
+                'PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO',
+                'PEDIDO CANCELADO POR ATRASO COM ALERTA PARA LOJA',
+                'O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE',
+                'PEDIDO OU ITEM VEIO ERRADO',
+                'NINGUÉM PODERÁ RECEBER O PEDIDO'
+            ];
+            const origens = ['CLIENTE', 'MERCHANT', 'LOJA'];
+            const turnos = ['Manhã', 'Dia', 'Noite'];
+
+            const data = [];
+            for (let i = 0; i < 490; i++) {
+                const turno = turnos[Math.floor(Math.random() * turnos.length)];
+                let hora;
+                if (turno === 'Manhã') hora = `0${Math.floor(Math.random() * 12)}:${Math.floor(Math.random() * 60)}:00`;
+                else if (turno === 'Dia') hora = `${12 + Math.floor(Math.random() * 6)}:${Math.floor(Math.random() * 60)}:00`;
+                else hora = `${18 + Math.floor(Math.random() * 6)}:${Math.floor(Math.random() * 60)}:00`;
+
+                data.push({
+                    id: 1000 + i,
+                    status: statuses[Math.floor(Math.random() * statuses.length)],
+                    motivo: motivos[Math.floor(Math.random() * motivos.length)],
+                    valor: Math.random() * 100 + 20,
+                    impactoSuper: Math.random() > 0.6 ? 'SIM' : 'NÃO',
+                    origem: origens[Math.floor(Math.random() * origens.length)],
+                    contestavel: Math.random() > 0.7 ? 'SIM' : 'NÃO',
+                    data: `2024-${String(Math.floor(Math.random() * 3) + 7).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
+                    hora: hora,
+                    turno: turno
+                });
+            }
+            return data;
+        }
+
+        function filterData(data) {
+            return data.filter(item => {
+                // Filtro de turno
+                if (currentTurno !== 'todos' && item.turno.toLowerCase() !== currentTurno) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function updateKPIs(data) {
+            // Calcular totais
+            const total = data.reduce((sum, item) => sum + item.valor, 0);
+            const count = data.length;
+            const medio = count > 0 ? total / count : 0;
+            const parciais = data.filter(d => d.status === 'CANCELAMENTO PARCIAL').length;
+            const taxaParcial = count > 0 ? (parciais / count * 100) : 0;
+
+            // Por turno
+            const manha = data.filter(d => d.turno === 'Manhã');
+            const dia = data.filter(d => d.turno === 'Dia');
+            const noite = data.filter(d => d.turno === 'Noite');
+
+            // Atualizar valores
+            document.getElementById('valorTotal').textContent = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('totalCancelamentos').textContent = count;
+            document.getElementById('valorMedio').textContent = `R$ ${medio.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('taxaParcial').textContent = `${taxaParcial.toFixed(1)}%`;
+
+            // Breakdown por turno
+            const valorManha = manha.reduce((sum, item) => sum + item.valor, 0);
+            const valorDia = dia.reduce((sum, item) => sum + item.valor, 0);
+            const valorNoite = noite.reduce((sum, item) => sum + item.valor, 0);
+
+            document.getElementById('valorManha').textContent = `R$ ${valorManha.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('valorDia').textContent = `R$ ${valorDia.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('valorNoite').textContent = `R$ ${valorNoite.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            document.getElementById('qtdManha').textContent = manha.length;
+            document.getElementById('qtdDia').textContent = dia.length;
+            document.getElementById('qtdNoite').textContent = noite.length;
+
+            const medioManha = manha.length > 0 ? valorManha / manha.length : 0;
+            const medioDia = dia.length > 0 ? valorDia / dia.length : 0;
+            const medioNoite = noite.length > 0 ? valorNoite / noite.length : 0;
+
+            document.getElementById('medioManha').textContent = `R$ ${medioManha.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('medioDia').textContent = `R$ ${medioDia.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('medioNoite').textContent = `R$ ${medioNoite.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            const parciaisManha = manha.filter(d => d.status === 'CANCELAMENTO PARCIAL').length;
+            const parciaisDia = dia.filter(d => d.status === 'CANCELAMENTO PARCIAL').length;
+            const parciaisNoite = noite.filter(d => d.status === 'CANCELAMENTO PARCIAL').length;
+
+            document.getElementById('parcialManha').textContent = `${manha.length > 0 ? (parciaisManha / manha.length * 100).toFixed(1) : 0}%`;
+            document.getElementById('parcialDia').textContent = `${dia.length > 0 ? (parciaisDia / dia.length * 100).toFixed(1) : 0}%`;
+            document.getElementById('parcialNoite').textContent = `${noite.length > 0 ? (parciaisNoite / noite.length * 100).toFixed(1) : 0}%`;
+        }
+
+        // Variáveis dos gráficos
+        let chartStatus, chartMotivos, chartSuper, chartOrigem, chartContestaveis, chartSemana, chartNaoContestaveis;
+
+        function updateCharts(data) {
+            // Status (Total vs Parcial)
+            const statusCounts = {};
+            data.forEach(item => {
+                statusCounts[item.status] = (statusCounts[item.status] || 0) + 1;
+            });
+
+            createPieChart('chartStatus', statusCounts);
+
+            // Motivos
+            const motivoCounts = {};
+            data.forEach(item => {
+                motivoCounts[item.motivo] = (motivoCounts[item.motivo] || 0) + 1;
+            });
+            const topMotivos = Object.entries(motivoCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            createHorizontalBarChart('chartMotivos', topMotivos);
+
+            // Impacto Super
+            const superCounts = {};
+            data.forEach(item => {
+                superCounts[item.impactoSuper] = (superCounts[item.impactoSuper] || 0) + 1;
+            });
+
+            createPieChart('chartSuper', superCounts);
+
+            // Origem
+            const origemCounts = {};
+            data.forEach(item => {
+                origemCounts[item.origem] = (origemCounts[item.origem] || 0) + 1;
+            });
+
+            createDoughnutChart('chartOrigem', origemCounts);
+
+            // Contestáveis
+            const contestCounts = {};
+            data.forEach(item => {
+                contestCounts[item.contestavel === 'SIM' ? 'Contestável' : 'Não Contestável'] = 
+                    (contestCounts[item.contestavel === 'SIM' ? 'Contestável' : 'Não Contestável'] || 0) + 1;
+            });
+
+            createBarChart('chartContestaveis', contestCounts);
+
+            // Chamados da semana (por dia)
+            const weekData = getWeekData(data);
+            createWeekChart('chartSemana', weekData);
+
+            // Motivos não-contestáveis
+            const naoContestaveis = data.filter(d => d.contestavel === 'NÃO');
+            const motivosNC = {};
+            naoContestaveis.forEach(item => {
+                motivosNC[item.motivo] = (motivosNC[item.motivo] || 0) + 1;
+            });
+            const topNC = Object.entries(motivosNC)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            createHorizontalBarChart('chartNaoContestaveis', topNC, '#FF6B6B');
+        }
+
+        function getWeekData(data) {
+            // Agrupar por dia e contar impacto super
+            const dayGroups = {};
+            data.forEach(item => {
+                if (!dayGroups[item.data]) {
+                    dayGroups[item.data] = { total: 0, impactouSim: 0, impactouNao: 0 };
+                }
+                dayGroups[item.data].total++;
+                if (item.impactoSuper === 'SIM') {
+                    dayGroups[item.data].impactouSim++;
+                } else {
+                    dayGroups[item.data].impactouNao++;
+                }
+            });
+
+            return dayGroups;
+        }
+
+        function createPieChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            if (window[canvasId + '_chart']) {
+                window[canvasId + '_chart'].destroy();
+            }
+
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+
+            window[canvasId + '_chart'] = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: {
+                                weight: 'bold',
+                                size: 16
+                            },
+                            formatter: (value, ctx) => {
+                                return value;
+                            }
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        function createDoughnutChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            if (window[canvasId + '_chart']) {
+                window[canvasId + '_chart'].destroy();
+            }
+
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+
+            window[canvasId + '_chart'] = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: ['#667eea', '#764ba2', '#FF6B6B', '#4ECDC4', '#FFE66D'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: {
+                                weight: 'bold',
+                                size: 14
+                            },
+                            formatter: (value, ctx) => {
+                                return value;
+                            }
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        function createBarChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            if (window[canvasId + '_chart']) {
+                window[canvasId + '_chart'].destroy();
+            }
+
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+
+            window[canvasId + '_chart'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: '#667eea',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: {
+                                weight: 'bold',
+                                size: 16
+                            },
+                            formatter: (value, ctx) => {
+                                return value;
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        function createHorizontalBarChart(canvasId, dataArray, color = '#667eea') {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            if (window[canvasId + '_chart']) {
+                window[canvasId + '_chart'].destroy();
+            }
+
+            const labels = dataArray.map(d => d[0]);
+            const values = dataArray.map(d => d[1]);
+
+            window[canvasId + '_chart'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: color,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: {
+                                weight: 'bold',
+                                size: 14
+                            },
+                            anchor: 'end',
+                            align: 'start',
+                            formatter: (value, ctx) => {
+                                return value;
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        function createWeekChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            if (window[canvasId + '_chart']) {
+                window[canvasId + '_chart'].destroy();
+            }
+
+            const labels = Object.keys(data).sort();
+            const impactouSim = labels.map(day => data[day].impactouSim);
+            const impactouNao = labels.map(day => data[day].impactouNao);
+
+            window[canvasId + '_chart'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Impactou SUPER',
+                            data: impactouSim,
+                            backgroundColor: '#FF6B6B',
+                        },
+                        {
+                            label: 'Não Impactou',
+                            data: impactouNao,
+                            backgroundColor: '#4ECDC4',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            formatter: (value, ctx) => {
+                                return value > 0 ? value : '';
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        // Drill-down
+        function showDrillDown(type) {
+            const modal = document.getElementById('drillDownModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+
+            let html = '';
+
+            if (type === 'status') {
+                modalTitle.textContent = 'Detalhes: Total vs Parcial';
+
+                const totais = filteredData.filter(d => d.status === 'CANCELADO')
+                    .sort((a, b) => new Date(a.data + ' ' + a.hora) - new Date(b.data + ' ' + b.hora));
+                const parciais = filteredData.filter(d => d.status === 'CANCELAMENTO PARCIAL')
+                    .sort((a, b) => new Date(a.data + ' ' + a.hora) - new Date(b.data + ' ' + b.hora));
+
+                html = '<h3 style="margin-bottom: 15px; color: #FF6B6B;">Cancelamentos Totais (' + totais.length + ')</h3>';
+                html += createDataTable(totais);
+
+                html += '<h3 style="margin-top: 30px; margin-bottom: 15px; color: #4ECDC4;">Cancelamentos Parciais (' + parciais.length + ')</h3>';
+                html += createDataTable(parciais);
+            } else if (type === 'semana') {
+                modalTitle.textContent = 'Detalhes: Chamados da Última Semana';
+
+                const sorted = [...filteredData].sort((a, b) => {
+                    const dateA = new Date(a.data + ' ' + a.hora);
+                    const dateB = new Date(b.data + ' ' + b.hora);
+                    return dateA - dateB;
+                });
+
+                html = createDataTable(sorted);
+            }
+
+            modalBody.innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function closeDrillDown() {
+            document.getElementById('drillDownModal').classList.remove('active');
+        }
+
+        function createDataTable(data) {
+            let html = '<table class="data-table"><thead><tr>';
+            html += '<th>Nº Pedido</th>';
+            html += '<th>Data</th>';
+            html += '<th>Hora</th>';
+            html += '<th>Turno</th>';
+            html += '<th>Motivo</th>';
+            html += '<th>Valor</th>';
+            html += '<th>Impacto SUPER</th>';
+            html += '</tr></thead><tbody>';
+
+            data.forEach(item => {
+                html += '<tr>';
+                html += '<td>' + item.id + '</td>';
+                html += '<td>' + item.data + '</td>';
+                html += '<td>' + item.hora + '</td>';
+                html += '<td><span class="status-badge ' + item.turno.toLowerCase() + '">' + item.turno + '</span></td>';
+                html += '<td>' + item.motivo + '</td>';
+                html += '<td>R$ ' + item.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2}) + '</td>';
+                html += '<td>' + item.impactoSuper + '</td>';
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            return html;
+        }
+
+        // Fechar modal ao clicar fora
+        document.getElementById('drillDownModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDrillDown();
+            }
+        });
+
+        // Inicializar
+        updateDashboard();
+    </script>
+</body>
+</html>
+  </template>
+
+  <template id="tpl-faturamento">
+    <!DOCTYPE html>
+    <html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Faturamento</title><style>body{margin:0;font-family:Inter,Arial,sans-serif;background:#f8fafc;color:#0f172a}.wrap{min-height:100vh;display:grid;place-items:center;padding:32px}.card{max-width:760px;background:#fff;border:1px solid #e2e8f0;border-radius:24px;padding:36px;box-shadow:0 20px 40px rgba(15,23,42,.08)}h1{margin:0 0 12px}p{margin:0;color:#475569;line-height:1.7}</style></head><body><div class="placeholder-wrap"><div class="placeholder-card"><h2>Faturamento</h2><p>Espaço reservado para o dashboard de faturamento. Quando você tiver a versão final, nós substituímos este conteúdo sem mexer na navegação principal.</p></div></div></body></html>
+  </template>
+
+  <template id="tpl-compras">
+    <!DOCTYPE html>
+    <html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Compras</title><style>body{margin:0;font-family:Inter,Arial,sans-serif;background:#f8fafc;color:#0f172a}.wrap{min-height:100vh;display:grid;place-items:center;padding:32px}.card{max-width:760px;background:#fff;border:1px solid #e2e8f0;border-radius:24px;padding:36px;box-shadow:0 20px 40px rgba(15,23,42,.08)}h1{margin:0 0 12px}p{margin:0;color:#475569;line-height:1.7}</style></head><body><div class="placeholder-wrap"><div class="placeholder-card"><h2>Compras</h2><p>Espaço reservado para o dashboard de compras. Quando você tiver a versão final, nós substituímos este conteúdo sem mexer na navegação principal.</p></div></div></body></html>
+  </template>
+
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const toggleSidebar = document.getElementById('toggleSidebar');
+    const navItems = document.querySelectorAll('.nav-item');
+    const contentFrame = document.getElementById('contentFrame');
+    const pageTitle = document.getElementById('pageTitle');
+    const pageDescription = document.getElementById('pageDescription');
+    const openCurrentPage = document.getElementById('openCurrentPage');
+
+    const pages = {
+      resultados: document.getElementById('tpl-resultados').innerHTML.trim(),
+      faturamento: document.getElementById('tpl-faturamento').innerHTML.trim(),
+      compras: document.getElementById('tpl-compras').innerHTML.trim(),
+    };
+
+    function syncLayout() {
+      const isCollapsed = sidebar.classList.contains('collapsed');
+      mainContent.classList.toggle('sidebar-collapsed', isCollapsed);
+    }
+
+    function loadPage(pageKey) {
+      contentFrame.srcdoc = pages[pageKey] || '<h1>Página não encontrada</h1>';
+      if (pageKey === 'resultados') {
+        openCurrentPage.href = '#resultados-operacionais';
+      } else if (pageKey === 'faturamento') {
+        openCurrentPage.href = '#faturamento';
+      } else {
+        openCurrentPage.href = '#compras';
+      }
+    }
+
+    function setActivePage(button) {
+      navItems.forEach(item => item.classList.remove('active'));
+      button.classList.add('active');
+      const page = button.dataset.page;
+      pageTitle.textContent = button.dataset.title;
+      pageDescription.textContent = button.dataset.description;
+      document.title = button.dataset.title;
+      loadPage(page);
+    }
+
+    navItems.forEach(button => button.addEventListener('click', () => setActivePage(button)));
+    toggleSidebar.addEventListener('click', () => { sidebar.classList.toggle('collapsed'); syncLayout(); });
+    syncLayout();
+    loadPage('resultados');
+  </script>
 </body>
 </html>
