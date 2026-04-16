@@ -9,7 +9,7 @@
   <style>
     :root{
       --bg:#0b1020; --bg2:#121933; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.10);
-      --text:#f8fafc; --muted:rgba(248,250,252,.62); --brand:#ff7a1a; --brand2:#ff9d52;
+      --text:#ffffff; --muted:rgba(255,255,255,.86); --brand:#ff7a1a; --brand2:#ff9d52;
       --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#6366f1; --cyan:#06b6d4;
       --shadow:0 24px 60px rgba(0,0,0,.30);
     }
@@ -24,26 +24,26 @@
     .header h1{margin:0;font-size:32px;line-height:1.02;font-weight:900;letter-spacing:-.02em}
     .header p{margin:8px 0 0;color:var(--muted);font-size:14px}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-weight:800;font-size:12px;color:#dbeafe;box-shadow:var(--shadow)}
-    .panel{background:var(--card);border:1px solid var(--line);border-radius:24px;backdrop-filter:blur(10px);box-shadow:var(--shadow)}
+    .panel{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);border-radius:24px;backdrop-filter:blur(10px);box-shadow:var(--shadow)}
     .filters-sticky{position:sticky;top:0;z-index:40;margin-bottom:18px}
-    .filters{padding:14px 16px 12px;border-radius:24px 24px 20px 20px;background:rgba(11,16,32,.88);backdrop-filter:blur(16px)}
+    .filters{padding:14px 16px 12px;border-radius:24px 24px 20px 20px;background:rgba(9,14,26,.96);backdrop-filter:blur(16px)}
     .filter-toolbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
     .field{display:flex;flex-direction:column;gap:6px;min-width:140px;flex:1 1 140px}
     .field.period{flex:1.15 1 185px}
     .field.store{flex:1.15 1 180px}
     .field.date-compact{flex:0 0 138px;min-width:138px}
     .field.actions{flex:0 0 auto;min-width:auto}
-    .field label{font-size:11px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
-    .field select,.field input{height:42px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);border-radius:12px;padding:0 12px;font:800 13px 'Nunito',sans-serif;outline:none;width:100%}
+    .field label{font-size:11px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;color:#f8fbff}
+    .field select,.field input{height:42px;border:1.5px solid rgba(255,255,255,.22);background:rgba(255,255,255,.10);color:#ffffff;border-radius:12px;padding:0 12px;font:800 13px 'Nunito',sans-serif;outline:none;width:100%}
     .field select option{background:#111827;color:#fff}
     .field input[type="date"]{padding-right:10px;cursor:pointer}
     .date-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
     .btn{height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff7a1a,#ff9d52);color:#fff;font:900 13px Nunito,sans-serif;cursor:pointer;white-space:nowrap}
     .btn.secondary{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#e2e8f0}
-    .helper{font-size:12px;color:#cbd5e1;margin-top:10px}
-    .notice{padding:14px 16px;border-radius:16px;margin-bottom:18px;font-size:13px;font-weight:800;border:1px solid rgba(99,102,241,.25);background:rgba(99,102,241,.10);color:#c7d2fe}
+    .helper{display:none}
+    .notice{display:none}
     .result-line{margin-top:0;border-top:1px solid rgba(255,255,255,.08);border-radius:0 0 20px 20px;padding:12px 16px;background:rgba(8,13,27,.92);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-    .result-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:12px;font-weight:800;color:#e2e8f0}
+    .result-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);font-size:12px;font-weight:900;color:#ffffff}
     .result-chip strong{color:#fff}
     .result-chip.accent{background:rgba(255,122,26,.10);border-color:rgba(255,122,26,.28)}
     .summary-section{margin-bottom:18px}
@@ -54,11 +54,11 @@
     .summary-card.active{border-color:rgba(255,122,26,.66);box-shadow:0 0 0 1px rgba(255,122,26,.40) inset;background:rgba(255,122,26,.08)}
     .summary-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
     .summary-name{font-size:15px;font-weight:900}
-    .summary-space{font-size:11px;color:#94a3b8;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+    .summary-space{font-size:11px;color:#dbe8ff;font-weight:900;text-transform:uppercase;letter-spacing:.6px}
     .summary-value{font-size:24px;font-weight:900;letter-spacing:-.03em;margin:10px 0 8px}
     .summary-line{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#e2e8f0;margin-top:6px}
     .summary-line strong{color:#fff}
-    .section-title{font-size:12px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:#cbd5e1;margin:0 0 10px}
+    .section-title{font-size:12px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:#f8fbff;margin:0 0 10px}
     .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
     .kpi{padding:18px}
     .kpi .label{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px}
@@ -73,8 +73,8 @@
     .table-wrap{overflow:auto;border-radius:18px;border:1px solid rgba(255,255,255,.08)}
     table{width:100%;border-collapse:collapse;min-width:1180px}
     th,td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
-    th{position:sticky;top:0;background:#111827;color:#dbeafe;text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase}
-    td{color:#f8fafc} tr:hover td{background:rgba(255,255,255,.03)}
+    th{position:sticky;top:0;background:#131c30;color:#ffffff;text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;font-weight:900}
+    td{color:#ffffff;font-weight:700} tr:hover td{background:rgba(255,255,255,.05)}
     .money{font-weight:900}.tag{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:11px;font-weight:900}
     .empty{padding:36px;text-align:center;color:var(--muted);font-weight:800}
     .hidden{display:none!important}
@@ -139,19 +139,43 @@
             <div class="field actions"><label>Ações</label><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="btnAplicarFiltros" class="btn">Aplicar filtros</button><button id="btnLimparFiltroView" class="btn secondary">Limpar visualização</button></div></div>
           </div>
         </div>
-        <div class="helper">Os filtros ficam fixos no topo. Ao clicar nos campos <b>De</b> e <b>Até</b>, o calendário abre direto no próprio campo.</div>
+        <div class="helper"></div>
       </div>
       <div class="panel result-line" id="resultLine"></div>
     </div>
 
-    <div class="notice" id="noticeBox">Lendo relatórios diretamente da base de uploads...</div>
-
-    <div class="summary-section" id="summarySection">
-      <div class="section-title" id="summarySectionTitle">Empresas no recorte</div>
-      <div class="summary-list" id="summaryCompanies"></div>
-    </div>
-
     <div id="detailWrap" class="hidden">
+      <div class="panel card" style="margin-bottom:18px">
+        <h3>Tabela executiva financeira por loja</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>Loja</th>
+                <th>Pedidos</th>
+                <th>Receita Total</th>
+                <th>Itens</th>
+                <th>Ticket Médio</th>
+                <th>Descontos</th>
+                <th>Acréscimos</th>
+                <th>Entrega</th>
+                <th>Taxa Serviço</th>
+                <th>Cancelados</th>
+                <th>Valor Cancelado</th>
+                <th>Última linha / último dia</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="summary-section" id="summarySection">
+        <div class="section-title" id="summarySectionTitle">Empresas no recorte</div>
+        <div class="summary-list" id="summaryCompanies"></div>
+      </div>
+
       <div class="kpis" id="kpiGrid"></div>
 
       <div class="grid-2">
@@ -189,33 +213,6 @@
           <h3>Receita por forma de pagamento</h3>
           <div class="chart sm"><canvas id="chartPagamento"></canvas></div>
         </div>
-      </div>
-
-      <div class="panel card">
-        <h3>Tabela executiva financeira por loja</h3>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Empresa</th>
-                <th>Loja</th>
-                <th>Pedidos</th>
-                <th>Receita Total</th>
-                <th>Itens</th>
-                <th>Ticket Médio</th>
-                <th>Descontos</th>
-                <th>Acréscimos</th>
-                <th>Entrega</th>
-                <th>Taxa Serviço</th>
-                <th>Cancelados</th>
-                <th>Valor Cancelado</th>
-                <th>Última linha / último dia</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-        </div>
-        <div class="foot">Os cards principais agora aparecem logo após a linha de resultado, mantendo o detalhamento financeiro e a tabela por loja no mesmo fluxo.</div>
       </div>
     </div>
   </div>
@@ -423,11 +420,6 @@ async function carregarBase(){
   fillSelect('fTurno', rowsBase.map(r=>r.turno), 'Todos');
   const last = reportsMeta[0];
   document.getElementById('lastUpdate').textContent = last ? `✅ Base lida em ${new Date(last.timestamp_upload).toLocaleString('pt-BR')}` : '⚠️ Sem uploads';
-  const parts = [];
-  if(chunkedReports) parts.push(`${chunkedReports} upload(s) já usam captura completa em blocos`);
-  if(truncatedLegacy) parts.push(`${truncatedLegacy} upload(s) antigos ainda indicam corte de linhas e precisam reprocessamento`);
-  if(rowsBase.length && detectedMonth) parts.push(`mês padrão carregado: ${String(detectedMonth.month).padStart(2,'0')}/${detectedMonth.year}`);
-  document.getElementById('noticeBox').textContent = parts.length ? parts.join(' • ') : 'Base captada com sucesso do portal de uploads.';
   aplicarFiltros();
 }
 function getFilteredRows(){
@@ -600,24 +592,23 @@ function renderDetails(rows, range){
   const descontos = validos.reduce((s,r)=>s+r.desconto,0);
   const acrescimos = validos.reduce((s,r)=>s+r.acrescimo,0);
   const entrega = validos.reduce((s,r)=>s+r.entrega,0);
-  const taxaServico = validos.reduce((s,r)=>s+r.taxaServico,0);
   const valorCancelado = cancelados.reduce((s,r)=>s+r.total,0);
   const ticket = validos.length ? receitaTotal / validos.length : 0;
   const taxaCancelamento = rows.length ? (cancelados.length / rows.length) * 100 : 0;
   const itensDesconto = validos.filter(r => r.desconto > 0).length;
-  const empresaTop = topLabel(groupAndSum(validos,'empresa','total'));
   const canalTop = topLabel(groupAndSum(validos,'canal','total'));
   const lojaTop = topLabel(groupAndSum(validos,'loja','total'));
   const turnoTop = topLabel(groupAndSum(validos,'turno','total'));
+  const ultimaLinha = rows[rows.length-1]?.data?.toLocaleDateString('pt-BR') || '—';
   const kpis = [
     ['Receita total', fmtMoney.format(receitaTotal), 'Pedidos válidos', fmtInt.format(validos.length), 'orange'],
-    ['Itens do desconto', fmtInt.format(itensDesconto), 'Descontos', fmtMoney.format(descontos), 'yellow'],
-    ['Cancelamentos', fmtInt.format(cancelados.length), 'Valor cancelado', fmtMoney.format(valorCancelado), 'green'],
     ['Receita de itens', fmtMoney.format(receitaItens), 'Ticket médio', fmtMoney.format(ticket), 'blue'],
-    ['Acréscimos', fmtMoney.format(acrescimos), 'Taxa de entrega', fmtMoney.format(entrega), 'cyan'],
-    ['Taxa de serviço', fmtMoney.format(taxaServico), 'Taxa cancelamento', `${taxaCancelamento.toFixed(1)}%`, 'orange'],
-    ['Empresa líder', empresaTop, 'Loja líder', lojaTop, 'blue'],
-    ['Canal líder', canalTop, 'Turno líder', turnoTop, 'cyan']
+    ['Descontos', fmtMoney.format(descontos), 'Itens com desconto', fmtInt.format(itensDesconto), 'yellow'],
+    ['Cancelamentos', fmtInt.format(cancelados.length), 'Valor cancelado', fmtMoney.format(valorCancelado), 'green'],
+    ['Tx de entrega', fmtMoney.format(entrega), 'Acréscimos', fmtMoney.format(acrescimos), 'cyan'],
+    ['Pedidos totais', fmtInt.format(rows.length), 'Taxa cancelamento', `${taxaCancelamento.toFixed(1)}%`, 'orange'],
+    ['Canal líder', canalTop, 'Turno líder', turnoTop, 'cyan'],
+    ['Loja líder', lojaTop, 'Última linha', ultimaLinha, 'blue']
   ];
   document.getElementById('kpiGrid').innerHTML = kpis.map(k => `<div class="panel kpi ${k[4]}"><div class="label">${k[0]}</div><div class="value">${k[1]}</div><div class="sub"><span>${k[2]}</span><strong>${k[3]}</strong></div></div>`).join('');
   const receitaDia = groupByDay(validos,'total');
@@ -626,13 +617,13 @@ function renderDetails(rows, range){
   const turno = groupAndSum(validos,'turno','total');
   const canal = groupAndSum(validos,'canal','total');
   const pagamento = groupAndSum(validos,'pagamento','total').slice(0,8);
-  draw('chartReceitaDia','line',{labels:receitaDia.map(i=>i.label),datasets:[{label:'Receita total',data:receitaDia.map(i=>i.value),borderColor:'#ff7a1a',backgroundColor:'rgba(255,122,26,.18)',fill:true,tension:.28}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}});
-  draw('chartEmpresa','doughnut',{labels:empresa.map(i=>i.label),datasets:[{data:empresa.map(i=>i.value),backgroundColor:['#ff7a1a','#6366f1','#06b6d4','#22c55e','#f59e0b','#ef4444']}]},{plugins:{legend:{labels:{color:'#e2e8f0'}}}});
-  draw('chartLoja','bar',{labels:loja.map(i=>shorten(i.label,24)),datasets:[{label:'Receita',data:loja.map(i=>i.value),backgroundColor:'rgba(99,102,241,.75)',borderRadius:10}]},{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}});
-  draw('chartTurno','bar',{labels:turno.map(i=>i.label),datasets:[{label:'Receita',data:turno.map(i=>i.value),backgroundColor:['#22c55e','#f59e0b','#6366f1']}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}});
-  draw('chartCanal','bar',{labels:canal.map(i=>shorten(i.label,18)),datasets:[{label:'Receita',data:canal.map(i=>i.value),backgroundColor:['#06b6d4','#ff7a1a','#6366f1','#22c55e','#f59e0b']}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}});
-  draw('chartComposicao','doughnut',{labels:['Receita Total','Descontos','Acréscimos','Entrega','Taxa Serviço','Valor Cancelado'],datasets:[{data:[receitaTotal,descontos,acrescimos,entrega,taxaServico,valorCancelado],backgroundColor:['#ff7a1a','#ef4444','#22c55e','#06b6d4','#6366f1','#f59e0b']}]},{plugins:{legend:{labels:{color:'#e2e8f0'}}}});
-  draw('chartPagamento','bar',{labels:pagamento.map(i=>shorten(i.label,16)),datasets:[{label:'Receita',data:pagamento.map(i=>i.value),backgroundColor:'rgba(34,197,94,.72)',borderRadius:10}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}});
+  draw('chartReceitaDia','line',{labels:receitaDia.map(i=>i.label),datasets:[{label:'Receita total',data:receitaDia.map(i=>i.value),borderColor:'#ff7a1a',backgroundColor:'rgba(255,122,26,.18)',fill:true,tension:.28}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#ffffff'}},y:{ticks:{color:'#ffffff'}}}});
+  draw('chartEmpresa','doughnut',{labels:empresa.map(i=>i.label),datasets:[{data:empresa.map(i=>i.value),backgroundColor:['#ff7a1a','#7c8cff','#38d9ff','#4ade80','#fbbf24','#fb7185']}]},{plugins:{legend:{labels:{color:'#ffffff'}}}});
+  draw('chartLoja','bar',{labels:loja.map(i=>shorten(i.label,24)),datasets:[{label:'Receita',data:loja.map(i=>i.value),backgroundColor:'rgba(124,140,255,.82)',borderRadius:10}]},{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#ffffff'}},y:{ticks:{color:'#ffffff'}}}});
+  draw('chartTurno','bar',{labels:turno.map(i=>i.label),datasets:[{label:'Receita',data:turno.map(i=>i.value),backgroundColor:['#4ade80','#fbbf24','#7c8cff']}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#ffffff'}},y:{ticks:{color:'#ffffff'}}}});
+  draw('chartCanal','bar',{labels:canal.map(i=>shorten(i.label,18)),datasets:[{label:'Receita',data:canal.map(i=>i.value),backgroundColor:['#38d9ff','#ff9d52','#7c8cff','#4ade80','#fbbf24']}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#ffffff'}},y:{ticks:{color:'#ffffff'}}}});
+  draw('chartComposicao','doughnut',{labels:['Receita Total','Descontos','Acréscimos','Entrega','Valor Cancelado'],datasets:[{data:[receitaTotal,descontos,acrescimos,entrega,valorCancelado],backgroundColor:['#ff9d52','#fb7185','#4ade80','#38d9ff','#fbbf24']}]},{plugins:{legend:{labels:{color:'#ffffff'}}}});
+  draw('chartPagamento','bar',{labels:pagamento.map(i=>shorten(i.label,16)),datasets:[{label:'Receita',data:pagamento.map(i=>i.value),backgroundColor:'rgba(74,222,128,.82)',borderRadius:10}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#ffffff'}},y:{ticks:{color:'#ffffff'}}}});
   renderTable(rows);
 }
 function syncDateInputsFromPreset(){
@@ -698,7 +689,6 @@ carregarBase().then(() => {
   aplicarFiltros();
 }).catch(err => {
   console.error(err);
-  document.getElementById('noticeBox').textContent = 'Erro ao carregar a base financeira do portal de uploads.';
   const box = document.getElementById('resultLine');
   if(box) box.innerHTML = '<span class="result-chip accent"><strong>Falha ao carregar os dados</strong></span>';
 });
