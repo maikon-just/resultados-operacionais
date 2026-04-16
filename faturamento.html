@@ -25,30 +25,44 @@
     .header p{margin:8px 0 0;color:var(--muted);font-size:14px}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-weight:800;font-size:12px;color:#dbeafe;box-shadow:var(--shadow)}
     .panel{background:var(--card);border:1px solid var(--line);border-radius:24px;backdrop-filter:blur(10px);box-shadow:var(--shadow)}
-    .filters{padding:18px 18px 14px;margin-bottom:18px}
-    .filter-grid{display:grid;grid-template-columns:1.15fr 1fr 1fr 1fr 1fr 1fr;gap:12px}
-    .filter-grid-bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-    .field{display:flex;flex-direction:column;gap:6px}
+    .filters-sticky{position:sticky;top:0;z-index:40;margin-bottom:18px}
+    .filters{padding:14px 16px 12px;border-radius:24px 24px 20px 20px;background:rgba(11,16,32,.88);backdrop-filter:blur(16px)}
+    .filter-toolbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:140px;flex:1 1 140px}
+    .field.period{flex:1.15 1 185px}
+    .field.store{flex:1.15 1 180px}
+    .field.date-compact{flex:0 0 138px;min-width:138px}
+    .field.actions{flex:0 0 auto;min-width:auto}
     .field label{font-size:11px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
-    .field select,.field input{height:48px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);border-radius:14px;padding:0 14px;font:800 14px 'Nunito',sans-serif;outline:none}
+    .field select,.field input{height:42px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);border-radius:12px;padding:0 12px;font:800 13px 'Nunito',sans-serif;outline:none;width:100%}
     .field select option{background:#111827;color:#fff}
-    .helper{font-size:12px;color:#cbd5e1;margin-top:12px}
+    .field input[type="date"]{padding-right:10px;cursor:pointer}
+    .date-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+    .btn{height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff7a1a,#ff9d52);color:#fff;font:900 13px Nunito,sans-serif;cursor:pointer;white-space:nowrap}
+    .btn.secondary{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#e2e8f0}
+    .helper{font-size:12px;color:#cbd5e1;margin-top:10px}
     .notice{padding:14px 16px;border-radius:16px;margin-bottom:18px;font-size:13px;font-weight:800;border:1px solid rgba(99,102,241,.25);background:rgba(99,102,241,.10);color:#c7d2fe}
-    .summary-list{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
-    .summary-card{padding:18px;cursor:pointer;transition:.18s transform,.18s border-color,.18s background}
+    .result-line{margin-top:0;border-top:1px solid rgba(255,255,255,.08);border-radius:0 0 20px 20px;padding:12px 16px;background:rgba(8,13,27,.92);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .result-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:12px;font-weight:800;color:#e2e8f0}
+    .result-chip strong{color:#fff}
+    .result-chip.accent{background:rgba(255,122,26,.10);border-color:rgba(255,122,26,.28)}
+    .summary-section{margin-bottom:18px}
+    .summary-section .section-title{margin-bottom:12px}
+    .summary-list{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+    .summary-card{padding:18px;transition:.18s transform,.18s border-color,.18s background}
     .summary-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.22)}
     .summary-card.active{border-color:rgba(255,122,26,.66);box-shadow:0 0 0 1px rgba(255,122,26,.40) inset;background:rgba(255,122,26,.08)}
     .summary-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
-    .summary-name{font-size:16px;font-weight:900}
+    .summary-name{font-size:15px;font-weight:900}
     .summary-space{font-size:11px;color:#94a3b8;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
-    .summary-value{font-size:28px;font-weight:900;letter-spacing:-.03em;margin:10px 0 8px}
+    .summary-value{font-size:24px;font-weight:900;letter-spacing:-.03em;margin:10px 0 8px}
     .summary-line{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#e2e8f0;margin-top:6px}
     .summary-line strong{color:#fff}
     .section-title{font-size:12px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:#cbd5e1;margin:0 0 10px}
-    .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
     .kpi{padding:18px}
     .kpi .label{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px}
-    .kpi .value{font-size:30px;font-weight:900;line-height:1.04;letter-spacing:-.03em}
+    .kpi .value{font-size:28px;font-weight:900;line-height:1.04;letter-spacing:-.03em}
     .kpi .sub{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#e2e8f0}
     .kpi.orange .value{color:#fdba74}.kpi.green .value{color:#86efac}.kpi.blue .value{color:#93c5fd}.kpi.cyan .value{color:#67e8f9}.kpi.yellow .value{color:#fde68a}
     .grid-2{display:grid;grid-template-columns:1.7fr 1.1fr;gap:18px;margin-bottom:18px}
@@ -65,8 +79,9 @@
     .empty{padding:36px;text-align:center;color:var(--muted);font-weight:800}
     .hidden{display:none!important}
     .foot{margin-top:12px;font-size:12px;color:var(--muted)}
-    @media(max-width:1280px){.summary-list{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(3,1fr)}.filter-grid{grid-template-columns:1fr 1fr 1fr}.grid-2,.grid-3{grid-template-columns:1fr}}
-    @media(max-width:760px){.summary-list,.kpis,.filter-grid,.filter-grid-bottom{grid-template-columns:1fr}.header h1{font-size:26px}.chart,.chart.sm{height:260px}}
+    @media(max-width:1360px){.summary-list{grid-template-columns:repeat(3,1fr)}.kpis{grid-template-columns:repeat(3,1fr)}.grid-2,.grid-3{grid-template-columns:1fr}}
+    @media(max-width:940px){.summary-list{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}.field,.field.period,.field.store,.field.date-compact{flex:1 1 calc(50% - 8px);min-width:0}.field.actions{flex:1 1 100%}.date-row{width:100%}}
+    @media(max-width:760px){.summary-list,.kpis{grid-template-columns:1fr}.header h1{font-size:26px}.chart,.chart.sm{height:260px}.filter-toolbar,.date-row{gap:8px}.field,.field.period,.field.store,.field.date-compact,.field.actions{flex:1 1 100%}}
   </style>
 </head>
 <body>
@@ -80,62 +95,61 @@
       <div class="pill" id="lastUpdate">⏳ Carregando base financeira...</div>
     </div>
 
-    <div class="panel filters">
-      <div class="filter-grid">
-        <div class="field">
-          <label>Período</label>
-          <select id="presetPeriodo">
-            <option value="mes_completo" selected>Mês completo</option>
-            <option value="ontem">Ontem</option>
-            <option value="ultima_semana">Última semana</option>
-            <option value="mes_atual">Mês atual</option>
-            <option value="mes_anterior">Mês anterior</option>
-            <option value="personalizado">Personalizado</option>
-          </select>
+    <div class="filters-sticky">
+      <div class="panel filters">
+        <div class="filter-toolbar">
+          <div class="field period">
+            <label>Período</label>
+            <select id="presetPeriodo">
+              <option value="mes_completo" selected>Mês completo</option>
+              <option value="ontem">Ontem</option>
+              <option value="ultima_semana">Última semana</option>
+              <option value="mes_atual">Mês atual</option>
+              <option value="mes_anterior">Mês anterior</option>
+              <option value="personalizado">Personalizado</option>
+            </select>
+          </div>
+          <div class="field hidden" id="fieldEmpresa">
+            <label>Empresa</label>
+            <select id="fEmpresa"><option value="todas">Todas</option></select>
+          </div>
+          <div class="field store">
+            <label>Loja</label>
+            <select id="fLoja"><option value="todas">Todas</option></select>
+          </div>
+          <div class="field">
+            <label>Canal</label>
+            <select id="fCanal"><option value="todos">Todos</option></select>
+          </div>
+          <div class="field">
+            <label>Turno</label>
+            <select id="fTurno"><option value="todos">Todos</option></select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="fStatusLinha">
+              <option value="todos">Todos</option>
+              <option value="ativos" selected>Somente válidos</option>
+              <option value="cancelados">Somente cancelados</option>
+            </select>
+          </div>
+          <div class="date-row" id="customRange">
+            <div class="field date-compact"><label>De</label><input type="date" id="dataInicio"></div>
+            <div class="field date-compact"><label>Até</label><input type="date" id="dataFim"></div>
+            <div class="field actions"><label>Ações</label><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="btnAplicarFiltros" class="btn">Aplicar filtros</button><button id="btnLimparFiltroView" class="btn secondary">Limpar visualização</button></div></div>
+          </div>
         </div>
-        <div class="field hidden" id="fieldEmpresa">
-          <label>Empresa</label>
-          <select id="fEmpresa"><option value="todas">Todas</option></select>
-        </div>
-        <div class="field">
-          <label>Loja</label>
-          <select id="fLoja"><option value="todas">Todas</option></select>
-        </div>
-        <div class="field">
-          <label>Canal</label>
-          <select id="fCanal"><option value="todos">Todos</option></select>
-        </div>
-        <div class="field">
-          <label>Turno</label>
-          <select id="fTurno"><option value="todos">Todos</option></select>
-        </div>
-        <div class="field">
-          <label>Status</label>
-          <select id="fStatusLinha">
-            <option value="todos">Todos</option>
-            <option value="ativos" selected>Somente válidos</option>
-            <option value="cancelados">Somente cancelados</option>
-          </select>
-        </div>
+        <div class="helper">Os filtros ficam fixos no topo. Ao clicar nos campos <b>De</b> e <b>Até</b>, o calendário abre direto no próprio campo.</div>
       </div>
-      <div class="filter-grid-bottom" id="customRange">
-        <div class="field"><label>De</label><input type="date" id="dataInicio"></div>
-        <div class="field"><label>Até</label><input type="date" id="dataFim"></div>
-      </div>
-      <div class="helper">Mantenha os atalhos de período e, se quiser precisão, preencha também os campos <b>De</b> e <b>Até</b>. Ao alterar qualquer filtro, clique em <b>Aplicar filtros</b> para atualizar o painel.</div>
-      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button id="btnAplicarFiltros" style="height:46px;padding:0 18px;border:none;border-radius:14px;background:linear-gradient(135deg,#ff7a1a,#ff9d52);color:#fff;font:900 14px Nunito,sans-serif;cursor:pointer">Aplicar filtros</button><button id="btnLimparFiltroView" style="height:46px;padding:0 18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.05);color:#e2e8f0;font:900 14px Nunito,sans-serif;cursor:pointer">Limpar visualização</button></div>
+      <div class="panel result-line" id="resultLine"></div>
     </div>
 
     <div class="notice" id="noticeBox">Lendo relatórios diretamente da base de uploads...</div>
 
-    <div class="panel" id="waitingPanel" style="padding:22px;margin-bottom:18px;display:none">
-      <div style="font-size:12px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:#cbd5e1;margin-bottom:8px">Visualização controlada por filtros</div>
-      <div style="font-size:20px;font-weight:900;margin-bottom:10px">Aplique os filtros para liberar os números</div>
-      <div style="color:#94a3b8;line-height:1.6">Resumo, KPIs, gráficos e tabela ficam ocultos até você confirmar o recorte desejado.</div>
+    <div class="summary-section" id="summarySection">
+      <div class="section-title" id="summarySectionTitle">Empresas no recorte</div>
+      <div class="summary-list" id="summaryCompanies"></div>
     </div>
-
-    <div class="section-title">Resumo geral por empresa</div>
-    <div class="summary-list" id="summaryCompanies"></div>
 
     <div id="detailWrap" class="hidden">
       <div class="kpis" id="kpiGrid"></div>
@@ -201,7 +215,7 @@
             <tbody id="tableBody"></tbody>
           </table>
         </div>
-        <div class="foot">As linhas de resumo sobem a referência da última linha / último dia identificado para cada empresa e a navegação começa pelo consolidado das empresas.</div>
+        <div class="foot">Os cards principais agora aparecem logo após a linha de resultado, mantendo o detalhamento financeiro e a tabela por loja no mesmo fluxo.</div>
       </div>
     </div>
   </div>
@@ -436,7 +450,10 @@ function getFilteredRows(){
     return true;
   });
 }
-function applyCompanyCard(company){ selectedCompanyCard = company; }
+function applyCompanyCard(company){
+  selectedCompanyCard = company;
+  renderSummaryCards(getSummaryBaseRows(rangeFromPreset(document.getElementById('presetPeriodo').value)));
+}
 function computeSummary(rows){
   const validos = rows.filter(r => !r.cancelado);
   const cancelados = rows.filter(r => r.cancelado);
@@ -451,30 +468,79 @@ function computeSummary(rows){
   const lastRow = rows.length ? rows.slice().sort((a,b)=>b.data-a.data)[0] : null;
   return {rows,validos,cancelados,receitaTotal,receitaItens,descontos,acrescimos,entrega,taxaServico,valorCancelado,ticket,lastRow};
 }
+function currentFilterState(){
+  return {
+    loja: document.getElementById('fLoja').value,
+    canal: document.getElementById('fCanal').value,
+    turno: document.getElementById('fTurno').value,
+    status: document.getElementById('fStatusLinha').value,
+    preset: document.getElementById('presetPeriodo').value
+  };
+}
+function shouldShowCompanyCards(){
+  const state = currentFilterState();
+  return state.loja === 'todos' && state.turno === 'todos';
+}
+function getSummaryBaseRows(range){
+  const state = currentFilterState();
+  return rowsBase.filter(r => {
+    if(range.from && r.data < range.from) return false;
+    if(range.to && r.data > range.to) return false;
+    if(state.canal !== 'todos' && r.canal !== state.canal) return false;
+    if(state.status === 'ativos' && r.cancelado) return false;
+    if(state.status === 'cancelados' && !r.cancelado) return false;
+    return true;
+  });
+}
+function renderResultLine(rows, range){
+  const box = document.getElementById('resultLine');
+  if(!box) return;
+  const validos = rows.filter(r => !r.cancelado);
+  const cancelados = rows.filter(r => r.cancelado);
+  const receita = validos.reduce((s,r)=>s+r.total,0);
+  const lojas = new Set(rows.map(r => r.loja).filter(Boolean)).size;
+  const empresas = new Set(rows.map(r => r.empresa).filter(Boolean)).size;
+  const canais = new Set(rows.map(r => r.canal).filter(Boolean)).size;
+  box.innerHTML = [
+    `<span class="result-chip accent"><strong>Total das empresas</strong></span>`,
+    `<span class="result-chip">Período <strong>${sanitizeHtml(rangeLabel(range.from, range.to))}</strong></span>`,
+    `<span class="result-chip">Receita <strong>${fmtMoney.format(receita)}</strong></span>`,
+    `<span class="result-chip">Pedidos válidos <strong>${fmtInt.format(validos.length)}</strong></span>`,
+    `<span class="result-chip">Cancelados <strong>${fmtInt.format(cancelados.length)}</strong></span>`,
+    `<span class="result-chip">Lojas <strong>${fmtInt.format(lojas)}</strong></span>`,
+    `<span class="result-chip">Empresas <strong>${fmtInt.format(empresas)}</strong></span>`,
+    `<span class="result-chip">Canais <strong>${fmtInt.format(canais)}</strong></span>`
+  ].join('');
+}
 function renderSummaryCards(allRows){
+  const section = document.getElementById('summarySection');
+  const title = document.getElementById('summarySectionTitle');
   const wrap = document.getElementById('summaryCompanies');
+  if(!section || !wrap) return;
+  if(!shouldShowCompanyCards()){
+    section.classList.add('hidden');
+    wrap.innerHTML = '';
+    return;
+  }
+  section.classList.remove('hidden');
+  if(title) title.textContent = 'Empresas no recorte';
   const summaries = COMPANY_EMPTY.map(c => {
     const rows = allRows.filter(r => r.empresa === c.empresa);
     return {empresa:c.empresa, ...computeSummary(rows)};
-  });
-  const consolidated = computeSummary(allRows);
-  wrap.innerHTML = [
-    {empresa:'Todas as empresas',...consolidated,isTotal:true},
-    ...summaries
-  ].map(item => {
-    const key = item.isTotal ? 'todas' : item.empresa;
-    const active = selectedCompanyCard === key ? ' active' : '';
-    return `<div class="panel summary-card${active}" data-company="${sanitizeHtml(key)}">
+  }).filter(item => item.rows.length || COMPANY_ORDER.includes(item.empresa));
+  wrap.innerHTML = summaries.map(item => {
+    const active = selectedCompanyCard === item.empresa ? ' active' : '';
+    return `<div class="panel summary-card${active}" data-company="${sanitizeHtml(item.empresa)}">
       <div class="summary-top">
         <div>
           <div class="summary-name">${sanitizeHtml(item.empresa)}</div>
-          <div class="summary-space">${item.rows.length ? 'com dados' : 'espaço pronto para novos relatórios'}</div>
+          <div class="summary-space">${item.rows.length ? 'com dados no recorte' : 'sem dados no recorte'}</div>
         </div>
         <div class="tag">${fmtInt.format(item.validos.length)} válidos</div>
       </div>
       <div class="summary-value">${fmtMoney.format(item.receitaTotal)}</div>
-      <div class="summary-line"><span>Resumo da última linha</span><strong>${item.lastRow ? item.lastRow.data.toLocaleDateString('pt-BR') : '—'}</strong></div>
-      <div class="summary-line"><span>Cancelamentos</span><strong>${fmtMoney.format(item.valorCancelado)}</strong></div>
+      <div class="summary-line"><span>Última linha</span><strong>${item.lastRow ? item.lastRow.data.toLocaleDateString('pt-BR') : '—'}</strong></div>
+      <div class="summary-line"><span>Valor cancelado</span><strong>${fmtMoney.format(item.valorCancelado)}</strong></div>
       <div class="summary-line"><span>Ticket médio</span><strong>${fmtMoney.format(item.ticket)}</strong></div>
     </div>`;
   }).join('');
@@ -538,17 +604,20 @@ function renderDetails(rows, range){
   const valorCancelado = cancelados.reduce((s,r)=>s+r.total,0);
   const ticket = validos.length ? receitaTotal / validos.length : 0;
   const taxaCancelamento = rows.length ? (cancelados.length / rows.length) * 100 : 0;
+  const itensDesconto = validos.filter(r => r.desconto > 0).length;
+  const empresaTop = topLabel(groupAndSum(validos,'empresa','total'));
+  const canalTop = topLabel(groupAndSum(validos,'canal','total'));
+  const lojaTop = topLabel(groupAndSum(validos,'loja','total'));
+  const turnoTop = topLabel(groupAndSum(validos,'turno','total'));
   const kpis = [
-    ['Receita Total', fmtMoney.format(receitaTotal), 'Pedidos válidos', fmtInt.format(validos.length), 'orange'],
-    ['Receita de Itens', fmtMoney.format(receitaItens), 'Ticket médio', fmtMoney.format(ticket), 'blue'],
-    ['Descontos', fmtMoney.format(descontos), 'Acréscimos', fmtMoney.format(acrescimos), 'yellow'],
-    ['Taxa de Entrega', fmtMoney.format(entrega), 'Taxa de serviço', fmtMoney.format(taxaServico), 'cyan'],
-    ['Cancelamentos', fmtInt.format(cancelados.length), 'Taxa cancelamento', `${taxaCancelamento.toFixed(1)}%`, 'green'],
-    ['Valor Cancelado', fmtMoney.format(valorCancelado), 'Pedidos totais', fmtInt.format(rows.length), 'orange'],
-    ['Empresa líder', topLabel(groupAndSum(validos,'empresa','total')), 'Loja líder', topLabel(groupAndSum(validos,'loja','total')), 'blue'],
-    ['Canal líder', topLabel(groupAndSum(validos,'canal','total')), 'Turno líder', topLabel(groupAndSum(validos,'turno','total')), 'cyan'],
-    ['Período', rangeLabel(range.from, range.to), 'Lojas no filtro', fmtInt.format(new Set(rows.map(r=>r.loja)).size), 'yellow'],
-    ['Última linha', rows[rows.length-1]?.data?.toLocaleDateString('pt-BR') || '—', 'Lojas no filtro', fmtInt.format(new Set(rows.map(r=>r.loja)).size), 'green']
+    ['Receita total', fmtMoney.format(receitaTotal), 'Pedidos válidos', fmtInt.format(validos.length), 'orange'],
+    ['Itens do desconto', fmtInt.format(itensDesconto), 'Descontos', fmtMoney.format(descontos), 'yellow'],
+    ['Cancelamentos', fmtInt.format(cancelados.length), 'Valor cancelado', fmtMoney.format(valorCancelado), 'green'],
+    ['Receita de itens', fmtMoney.format(receitaItens), 'Ticket médio', fmtMoney.format(ticket), 'blue'],
+    ['Acréscimos', fmtMoney.format(acrescimos), 'Taxa de entrega', fmtMoney.format(entrega), 'cyan'],
+    ['Taxa de serviço', fmtMoney.format(taxaServico), 'Taxa cancelamento', `${taxaCancelamento.toFixed(1)}%`, 'orange'],
+    ['Empresa líder', empresaTop, 'Loja líder', lojaTop, 'blue'],
+    ['Canal líder', canalTop, 'Turno líder', turnoTop, 'cyan']
   ];
   document.getElementById('kpiGrid').innerHTML = kpis.map(k => `<div class="panel kpi ${k[4]}"><div class="label">${k[0]}</div><div class="value">${k[1]}</div><div class="sub"><span>${k[2]}</span><strong>${k[3]}</strong></div></div>`).join('');
   const receitaDia = groupByDay(validos,'total');
@@ -566,83 +635,73 @@ function renderDetails(rows, range){
   draw('chartPagamento','bar',{labels:pagamento.map(i=>shorten(i.label,16)),datasets:[{label:'Receita',data:pagamento.map(i=>i.value),backgroundColor:'rgba(34,197,94,.72)',borderRadius:10}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}});
   renderTable(rows);
 }
-function aplicarFiltros(){
-  const rows = getFilteredRows();
+function syncDateInputsFromPreset(){
   const preset = document.getElementById('presetPeriodo').value;
   const range = rangeFromPreset(preset);
-  const baseForCards = rowsBase.filter(r => {
-    if(range.from && r.data < range.from) return false;
-    if(range.to && r.data > range.to) return false;
-    const fLoja = document.getElementById('fLoja').value;
-    const fCanal = document.getElementById('fCanal').value;
-    const fTurno = document.getElementById('fTurno').value;
-    const fStatus = document.getElementById('fStatusLinha').value;
-    if(fLoja !== 'todos' && r.loja !== fLoja) return false;
-    if(fCanal !== 'todos' && r.canal !== fCanal) return false;
-    if(fTurno !== 'todos' && r.turno !== fTurno) return false;
-    if(fStatus === 'ativos' && r.cancelado) return false;
-    if(fStatus === 'cancelados' && !r.cancelado) return false;
-    return true;
-  });
-  renderSummaryCards(baseForCards);
+  if(preset !== 'personalizado'){
+    document.getElementById('dataInicio').value = range.from ? ymd(range.from) : '';
+    document.getElementById('dataFim').value = range.to ? ymd(range.to) : '';
+  }
+}
+function openPickerDirect(el){
+  if(!el) return;
+  const open = () => { if(typeof el.showPicker === 'function'){ try{ el.showPicker(); }catch(e){} } };
+  el.addEventListener('focus', open);
+  el.addEventListener('click', open);
+}
+function aplicarFiltros(){
+  const rows = getFilteredRows();
+  const range = rangeFromPreset(document.getElementById('presetPeriodo').value);
+  renderResultLine(rows, range);
+  renderSummaryCards(getSummaryBaseRows(range));
   renderDetails(rows, range);
 }
-['presetPeriodo','fEmpresa','fLoja','fCanal','fTurno','fStatusLinha','dataInicio','dataFim'].forEach(id => document.addEventListener('change', e => { if(e.target && e.target.id === id) aplicarFiltros(); }));
-document.getElementById('fEmpresa').value = 'todas';
-document.addEventListener('change', e => {
-  if(e.target && (e.target.id === 'dataInicio' || e.target.id === 'dataFim')){
-    document.getElementById('presetPeriodo').value = 'personalizado';
-  }
-});
-carregarBase().catch(err => { console.error(err); document.getElementById('noticeBox').textContent = 'Erro ao carregar a base financeira do portal de uploads.'; });
-</script>
-
-<script>
-(function(){
-  let __filtersApplied = false;
-  function showWaiting(msg){
-    const wait = document.getElementById('waitingPanel');
-    const detail = document.getElementById('detailWrap');
-    const summary = document.getElementById('summaryCompanies');
-    if(wait){ wait.style.display = 'block'; if(msg){ const note = wait.querySelector('div:last-child'); if(note) note.textContent = msg; } }
-    if(summary) summary.innerHTML = '';
-    if(detail) detail.classList.add('hidden');
-    if(typeof destroyCharts === 'function') destroyCharts();
-  }
-  const originalApply = aplicarFiltros;
-  aplicarFiltros = function(){
-    if(!__filtersApplied){
-      showWaiting('Selecione período, loja, canal, turno e clique em Aplicar filtros.');
-      return;
-    }
-    const wait = document.getElementById('waitingPanel');
-    if(wait) wait.style.display = 'none';
-    originalApply();
-  };
-  const originalLoad = carregarBase;
-  carregarBase = async function(){
-    await originalLoad();
-    __filtersApplied = false;
-    showWaiting('Base pronta. Agora clique em Aplicar filtros para exibir o faturamento.');
-  };
-  function markPending(){
-    __filtersApplied = false;
-    showWaiting('Filtro alterado. Clique em Aplicar filtros para atualizar os números.');
-  }
-  ['presetPeriodo','fEmpresa','fLoja','fCanal','fTurno','fStatusLinha','dataInicio','dataFim'].forEach(id => {
-    document.addEventListener('change', e => { if(e.target && e.target.id === id) markPending(); });
-  });
-  document.addEventListener('click', e => {
-    if(e.target && e.target.id === 'btnAplicarFiltros'){
-      __filtersApplied = true;
+function limparVisualizacao(){
+  document.getElementById('presetPeriodo').value = 'mes_completo';
+  document.getElementById('fEmpresa').value = 'todas';
+  document.getElementById('fLoja').value = 'todos';
+  document.getElementById('fCanal').value = 'todos';
+  document.getElementById('fTurno').value = 'todos';
+  document.getElementById('fStatusLinha').value = 'ativos';
+  selectedCompanyCard = 'todas';
+  syncDateInputsFromPreset();
+  aplicarFiltros();
+}
+function bindAutoApply(){
+  ['presetPeriodo','fEmpresa','fLoja','fCanal','fTurno','fStatusLinha'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('change', () => {
+      if(id === 'presetPeriodo') syncDateInputsFromPreset();
       aplicarFiltros();
-    }
-    if(e.target && e.target.id === 'btnLimparFiltroView'){
-      __filtersApplied = false;
-      showWaiting('Visualização limpa. Ajuste o filtro e aplique novamente quando quiser ver os dados.');
+    });
+  });
+  ['dataInicio','dataFim'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el){
+      el.addEventListener('change', () => {
+        document.getElementById('presetPeriodo').value = 'personalizado';
+        aplicarFiltros();
+      });
     }
   });
-})();
+  const btnAplicar = document.getElementById('btnAplicarFiltros');
+  const btnLimpar = document.getElementById('btnLimparFiltroView');
+  if(btnAplicar) btnAplicar.addEventListener('click', aplicarFiltros);
+  if(btnLimpar) btnLimpar.addEventListener('click', limparVisualizacao);
+  openPickerDirect(document.getElementById('dataInicio'));
+  openPickerDirect(document.getElementById('dataFim'));
+}
+document.getElementById('fEmpresa').value = 'todas';
+bindAutoApply();
+carregarBase().then(() => {
+  syncDateInputsFromPreset();
+  aplicarFiltros();
+}).catch(err => {
+  console.error(err);
+  document.getElementById('noticeBox').textContent = 'Erro ao carregar a base financeira do portal de uploads.';
+  const box = document.getElementById('resultLine');
+  if(box) box.innerHTML = '<span class="result-chip accent"><strong>Falha ao carregar os dados</strong></span>';
+});
 </script>
 
 </body>
