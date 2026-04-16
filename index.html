@@ -2218,11 +2218,16 @@ carregarBase().catch(err => { console.error(err); document.getElementById('notic
     }
 
     function loadPage(pageKey) {
+      if (pageKey === 'faturamento') {
+        contentFrame.removeAttribute('srcdoc');
+        contentFrame.src = 'faturamento.html';
+        openCurrentPage.href = 'faturamento.html';
+        return;
+      }
+      contentFrame.removeAttribute('src');
       contentFrame.srcdoc = pages[pageKey] || '<h1>Página não encontrada</h1>';
       if (pageKey === 'resultados') {
         openCurrentPage.href = '#resultados-operacionais';
-      } else if (pageKey === 'faturamento') {
-        openCurrentPage.href = 'https://maikon-just.github.io/just-burger-producao/uploads.html?_cb=1776118799241';
       } else {
         openCurrentPage.href = '#compras';
       }
