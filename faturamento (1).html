@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faturamento</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#0b1020; --bg2:#121933; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.10);
+      --text:#f8fafc; --muted:rgba(248,250,252,.62); --brand:#ff7a1a; --brand2:#ff9d52;
+      --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#6366f1; --cyan:#06b6d4;
+      --shadow:0 24px 60px rgba(0,0,0,.30);
+    }
+    *{box-sizing:border-box} html,body{margin:0;padding:0}
+    body{font-family:'Nunito',sans-serif;background:linear-gradient(180deg,var(--bg) 0%, #111827 100%);color:var(--text);min-height:100vh}
+    .bg{position:fixed;inset:0;pointer-events:none;background:
+      radial-gradient(circle at 14% 18%, rgba(99,102,241,.20), transparent 22%),
+      radial-gradient(circle at 82% 12%, rgba(255,122,26,.18), transparent 24%),
+      radial-gradient(circle at 72% 72%, rgba(6,182,212,.12), transparent 18%)}
+    .page{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:22px 18px 40px}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+    .header h1{margin:0;font-size:32px;line-height:1.02;font-weight:900;letter-spacing:-.02em}
+    .header p{margin:8px 0 0;color:var(--muted);font-size:14px}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-weight:800;font-size:12px;color:#dbeafe;box-shadow:var(--shadow)}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:24px;backdrop-filter:blur(10px);box-shadow:var(--shadow)}
+    .filters{padding:18px 18px 14px;margin-bottom:18px}
+    .filter-grid{display:grid;grid-template-columns:1.15fr 1fr 1fr 1fr 1fr 1fr;gap:12px}
+    .filter-grid-bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-size:11px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+    .field select,.field input{height:48px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);border-radius:14px;padding:0 14px;font:800 14px 'Nunito',sans-serif;outline:none}
+    .field select option{background:#111827;color:#fff}
+    .helper{font-size:12px;color:#cbd5e1;margin-top:12px}
+    .notice{padding:14px 16px;border-radius:16px;margin-bottom:18px;font-size:13px;font-weight:800;border:1px solid rgba(99,102,241,.25);background:rgba(99,102,241,.10);color:#c7d2fe}
+    .summary-list{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+    .summary-card{padding:18px;cursor:pointer;transition:.18s transform,.18s border-color,.18s background}
+    .summary-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.22)}
+    .summary-card.active{border-color:rgba(255,122,26,.66);box-shadow:0 0 0 1px rgba(255,122,26,.40) inset;background:rgba(255,122,26,.08)}
+    .summary-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .summary-name{font-size:16px;font-weight:900}
+    .summary-space{font-size:11px;color:#94a3b8;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+    .summary-value{font-size:28px;font-weight:900;letter-spacing:-.03em;margin:10px 0 8px}
+    .summary-line{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#e2e8f0;margin-top:6px}
+    .summary-line strong{color:#fff}
+    .section-title{font-size:12px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:#cbd5e1;margin:0 0 10px}
+    .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
+    .kpi{padding:18px}
+    .kpi .label{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px}
+    .kpi .value{font-size:30px;font-weight:900;line-height:1.04;letter-spacing:-.03em}
+    .kpi .sub{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#e2e8f0}
+    .kpi.orange .value{color:#fdba74}.kpi.green .value{color:#86efac}.kpi.blue .value{color:#93c5fd}.kpi.cyan .value{color:#67e8f9}.kpi.yellow .value{color:#fde68a}
+    .grid-2{display:grid;grid-template-columns:1.7fr 1.1fr;gap:18px;margin-bottom:18px}
+    .grid-3{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:18px;margin-bottom:18px}
+    .card{padding:16px}
+    .card h3{margin:0 0 14px;font-size:13px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;color:#dbeafe}
+    .chart{height:330px}.chart.sm{height:290px}
+    .table-wrap{overflow:auto;border-radius:18px;border:1px solid rgba(255,255,255,.08)}
+    table{width:100%;border-collapse:collapse;min-width:1180px}
+    th,td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+    th{position:sticky;top:0;background:#111827;color:#dbeafe;text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase}
+    td{color:#f8fafc} tr:hover td{background:rgba(255,255,255,.03)}
+    .money{font-weight:900}.tag{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:11px;font-weight:900}
+    .empty{padding:36px;text-align:center;color:var(--muted);font-weight:800}
+    .hidden{display:none!important}
+    .foot{margin-top:12px;font-size:12px;color:var(--muted)}
+    @media(max-width:1280px){.summary-list{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(3,1fr)}.filter-grid{grid-template-columns:1fr 1fr 1fr}.grid-2,.grid-3{grid-template-columns:1fr}}
+    @media(max-width:760px){.summary-list,.kpis,.filter-grid,.filter-grid-bottom{grid-template-columns:1fr}.header h1{font-size:26px}.chart,.chart.sm{height:260px}}
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>Faturamento</h1>
+        <p>Dashboard financeiro ligado diretamente à base de uploads. A primeira tela abre com o resumo consolidado das empresas e deixa espaço pronto para novas operações.</p>
+      </div>
+      <div class="pill" id="lastUpdate">⏳ Carregando base financeira...</div>
+    </div>
+
+    <div class="panel filters">
+      <div class="filter-grid">
+        <div class="field">
+          <label>Período</label>
+          <select id="presetPeriodo">
+            <option value="mes_completo" selected>Mês completo</option>
+            <option value="ontem">Ontem</option>
+            <option value="ultima_semana">Última semana</option>
+            <option value="mes_atual">Mês atual</option>
+            <option value="mes_anterior">Mês anterior</option>
+            <option value="personalizado">Personalizado</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Empresa</label>
+          <select id="fEmpresa"><option value="todas">Todas</option></select>
+        </div>
+        <div class="field">
+          <label>Loja</label>
+          <select id="fLoja"><option value="todas">Todas</option></select>
+        </div>
+        <div class="field">
+          <label>Canal</label>
+          <select id="fCanal"><option value="todos">Todos</option></select>
+        </div>
+        <div class="field">
+          <label>Turno</label>
+          <select id="fTurno"><option value="todos">Todos</option></select>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="fStatusLinha">
+            <option value="todos">Todos</option>
+            <option value="ativos" selected>Somente válidos</option>
+            <option value="cancelados">Somente cancelados</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-grid-bottom hidden" id="customRange">
+        <div class="field"><label>De</label><input type="date" id="dataInicio"></div>
+        <div class="field"><label>Até</label><input type="date" id="dataFim"></div>
+      </div>
+      <div class="helper">O painel só exibe dados depois que você clicar em <b>Aplicar filtros</b>. Assim o faturamento abre limpo e só mostra números quando o filtro estiver confirmado.</div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button id="btnAplicarFiltros" style="height:46px;padding:0 18px;border:none;border-radius:14px;background:linear-gradient(135deg,#ff7a1a,#ff9d52);color:#fff;font:900 14px Nunito,sans-serif;cursor:pointer">Aplicar filtros</button><button id="btnLimparFiltroView" style="height:46px;padding:0 18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.05);color:#e2e8f0;font:900 14px Nunito,sans-serif;cursor:pointer">Limpar visualização</button></div>
+    </div>
+
+    <div class="notice" id="noticeBox">Lendo relatórios diretamente da base de uploads...</div>
+
+    <div class="panel" id="waitingPanel" style="padding:22px;margin-bottom:18px;display:none">
+      <div style="font-size:12px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:#cbd5e1;margin-bottom:8px">Visualização controlada por filtros</div>
+      <div style="font-size:20px;font-weight:900;margin-bottom:10px">Aplique os filtros para liberar os números</div>
+      <div style="color:#94a3b8;line-height:1.6">Resumo, KPIs, gráficos e tabela ficam ocultos até você confirmar o recorte desejado.</div>
+    </div>
+
+    <div class="section-title">Resumo geral por empresa</div>
+    <div class="summary-list" id="summaryCompanies"></div>
+
+    <div id="detailWrap" class="hidden">
+      <div class="kpis" id="kpiGrid"></div>
+
+      <div class="grid-2">
+        <div class="panel card">
+          <h3>Receita total por dia</h3>
+          <div class="chart"><canvas id="chartReceitaDia"></canvas></div>
+        </div>
+        <div class="panel card">
+          <h3>Receita por empresa</h3>
+          <div class="chart"><canvas id="chartEmpresa"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="panel card">
+          <h3>Receita por loja</h3>
+          <div class="chart sm"><canvas id="chartLoja"></canvas></div>
+        </div>
+        <div class="panel card">
+          <h3>Receita por turno</h3>
+          <div class="chart sm"><canvas id="chartTurno"></canvas></div>
+        </div>
+        <div class="panel card">
+          <h3>Receita por canal</h3>
+          <div class="chart sm"><canvas id="chartCanal"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel card">
+          <h3>Composição financeira</h3>
+          <div class="chart sm"><canvas id="chartComposicao"></canvas></div>
+        </div>
+        <div class="panel card">
+          <h3>Receita por forma de pagamento</h3>
+          <div class="chart sm"><canvas id="chartPagamento"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel card">
+        <h3>Tabela executiva financeira por loja</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>Loja</th>
+                <th>Pedidos</th>
+                <th>Receita Total</th>
+                <th>Itens</th>
+                <th>Ticket Médio</th>
+                <th>Descontos</th>
+                <th>Acréscimos</th>
+                <th>Entrega</th>
+                <th>Taxa Serviço</th>
+                <th>Cancelados</th>
+                <th>Valor Cancelado</th>
+                <th>Última linha / último dia</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div class="foot">As linhas de resumo sobem a referência da última linha / último dia identificado para cada empresa e a navegação começa pelo consolidado das empresas.</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const FIREBASE_URL = 'https://justburger-producao-e9b27-default-rtdb.firebaseio.com';
+const REPORTS_URL = FIREBASE_URL + '/relatorios_diarios.json';
+let rowsBase = [];
+let reportsMeta = [];
+let charts = {};
+let selectedCompanyCard = 'todas';
+let detectedMonth = null;
+const fmtMoney = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const fmtInt = new Intl.NumberFormat('pt-BR');
+const COMPANY_ORDER = ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi'];
+const COMPANY_EMPTY = COMPANY_ORDER.map(name => ({empresa:name}));
+
+function parseDateFlex(value){
+  if(value==null || value==='') return null;
+  if(value instanceof Date) return isNaN(value) ? null : value;
+  if(typeof value === 'number'){
+    const epoch = new Date(Math.round((value - 25569) * 86400 * 1000));
+    return isNaN(epoch) ? null : epoch;
+  }
+  const s = String(value).trim();
+  let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if(m) return new Date(Number(m[3]), Number(m[2])-1, Number(m[1]));
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  m = s.match(/^(\d{2})-(\d{2})-(\d{4})/);
+  if(m) return new Date(Number(m[3]), Number(m[2])-1, Number(m[1]));
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+function ymd(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function brDay(d){return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`}
+function moneyNumber(v){
+  if(v==null || v==='') return 0;
+  if(typeof v === 'number') return isFinite(v) ? v : 0;
+  const s = String(v).replace(/\./g,'').replace(',', '.').replace(/[^0-9.-]/g,'');
+  const n = Number(s);
+  return isFinite(n) ? n : 0;
+}
+function normalizeStr(v){ return String(v||'').trim(); }
+function normalizePayment(p=''){
+  const s = String(p).trim();
+  if(!s) return 'Não informado';
+  if(/voucher/i.test(s)) return 'Voucher';
+  if(/pago\s*online/i.test(s)) return 'Pago Online';
+  if(/dinheiro/i.test(s)) return 'Dinheiro';
+  if(/cart[aã]o/i.test(s)) return 'Cartão';
+  if(/pix/i.test(s)) return 'PIX';
+  return s;
+}
+const LOJA_CODIGO_MAP = {
+  '21870':'Burger Matriz'
+};
+function mapCompany(store='', code=''){
+  const cod = String(code||'').trim();
+  if(LOJA_CODIGO_MAP[cod]) return LOJA_CODIGO_MAP[cod];
+  const s = String(store||'').toLowerCase().trim();
+  if(!s) return 'Sem empresa';
+  if(s.includes('zona leste') || s.includes('matriz')) return 'Burger Matriz';
+  if(/(^|\s)abc(\s|$)/.test(s) || s.includes('santo andré') || s.includes('sao bernardo') || s.includes('são bernardo') || s.includes('são caetano')) return 'Burger ABC';
+  if(s.includes('gru') || s.includes('guarulhos')) return 'Burger GRU';
+  if(s.includes('gourmet')) return 'Gourmet';
+  if(s.includes('forneria') || s.includes('esfiha')) return 'Aham Forneria';
+  if(s.includes('sushi')) return 'Aham Sushi';
+  if(s.includes('burger')) return 'Burger Matriz';
+  return store.trim() || 'Sem empresa';
+}
+function normalizeStore(store='', code=''){
+  const name = String(store||'').trim();
+  if(name) return name;
+  const emp = mapCompany(store, code);
+  return emp === 'Sem empresa' ? 'Sem loja' : emp;
+}
+function rangeFromPreset(preset){
+  const today = new Date();
+  const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if(preset === 'ontem'){
+    const d = new Date(t0); d.setDate(d.getDate()-1); return {from:d,to:new Date(d)};
+  }
+  if(preset === 'ultima_semana'){
+    const from = new Date(t0); from.setDate(from.getDate()-6); return {from,to:t0};
+  }
+  if(preset === 'mes_atual') return {from:new Date(t0.getFullYear(), t0.getMonth(), 1), to:t0};
+  if(preset === 'mes_anterior') return {from:new Date(t0.getFullYear(), t0.getMonth()-1, 1), to:new Date(t0.getFullYear(), t0.getMonth(), 0)};
+  if(preset === 'mes_completo' && detectedMonth){
+    return {from:new Date(detectedMonth.year, detectedMonth.month-1, 1), to:new Date(detectedMonth.year, detectedMonth.month, 0)};
+  }
+  if(preset === 'personalizado'){
+    const from = document.getElementById('dataInicio').value ? new Date(document.getElementById('dataInicio').value+'T00:00:00') : null;
+    const to = document.getElementById('dataFim').value ? new Date(document.getElementById('dataFim').value+'T23:59:59') : null;
+    return {from,to};
+  }
+  return {from:null,to:null};
+}
+function rangeLabel(from,to){
+  if(!from && !to) return 'Todos';
+  const a = from ? from.toLocaleDateString('pt-BR') : '—';
+  const b = to ? to.toLocaleDateString('pt-BR') : '—';
+  return `${a} até ${b}`;
+}
+function topLabel(arr){ return arr.length ? arr[0].label : '—'; }
+function shorten(s,n){ s=String(s||''); return s.length>n ? s.slice(0,n-1)+'…' : s; }
+function sanitizeHtml(s){return String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+function destroyCharts(){ Object.values(charts).forEach(ch=>{try{ch.destroy()}catch(e){}}); charts={}; }
+function draw(id, type, data, options){
+  const canvas = document.getElementById(id); if(!canvas) return;
+  if(charts[id]) charts[id].destroy();
+  charts[id] = new Chart(canvas, {type, data, options: Object.assign({responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e2e8f0'}}}}, options || {})});
+}
+function fillSelect(id, values, labelAll='Todos'){
+  const el = document.getElementById(id);
+  const curr = el.value || (id==='fEmpresa'?'todas':'todos');
+  const firstValue = id==='fEmpresa' ? 'todas' : 'todos';
+  el.innerHTML = `<option value="${firstValue}">${labelAll}</option>` + [...new Set(values)].filter(Boolean).sort().map(v => `<option value="${sanitizeHtml(v)}">${sanitizeHtml(v)}</option>`).join('');
+  if([...el.options].some(o => o.value === curr)) el.value = curr;
+}
+async function fetchJson(url){ const res = await fetch(url, {cache:'no-store'}); if(!res.ok) throw new Error('Falha ao ler '+url); return await res.json(); }
+async function fetchReportRows(rep){
+  let parsed = {};
+  try{ parsed = JSON.parse(rep.dados_json || '{}'); }catch(e){ parsed = {}; }
+  let rows = Array.isArray(parsed.linhas) ? parsed.linhas.slice() : [];
+  let totalOriginal = Number(parsed.total_original || rows.length || rep.total_linhas || 0);
+  let chunkCount = 0;
+  if(rep.chunked && rep.chunks_path){
+    try{
+      const chunksObj = await fetchJson(`${FIREBASE_URL}/${rep.chunks_path}.json`);
+      const chunkList = Object.values(chunksObj || {}).sort((a,b)=>(a.chunk_index||0)-(b.chunk_index||0));
+      chunkCount = chunkList.length;
+      rows = chunkList.flatMap(c => Array.isArray(c.rows) ? c.rows : []);
+      if(!totalOriginal) totalOriginal = rows.length;
+    }catch(err){ console.error('Erro nos chunks', rep.nome_arquivo, err); }
+  }
+  return {rows, totalOriginal, chunkCount};
+}
+async function carregarBase(){
+  const obj = await fetchJson(REPORTS_URL) || {};
+  reportsMeta = Object.entries(obj).map(([id,v]) => ({id,...v})).filter(r => r.status !== 'deletado').sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
+  const dedupe = new Map();
+  let truncatedLegacy = 0, chunkedReports = 0;
+  for(const rep of reportsMeta){
+    const {rows, totalOriginal, chunkCount} = await fetchReportRows(rep);
+    if(rep.chunked) chunkedReports++;
+    if(!rep.chunked && totalOriginal > rows.length) truncatedLegacy++;
+    rows.forEach((row, idx) => {
+      const data = parseDateFlex(row['Data da venda'] || row['Data'] || row['Data da Venda']);
+      if(!data) return;
+      const code = row['Código da loja'] || row['Codigo da loja'] || row['Cód. loja'] || '';
+      const loja = normalizeStore(row['Nome da loja'] || row['Loja'] || '', code);
+      const empresa = mapCompany(loja, code);
+      const pedidoKey = row['Id do pedido no parceiro'] || row['Número do pedido no parceiro'] || row['Pedido'] || `${rep.id}_${idx}`;
+      const key = `${pedidoKey}||${loja}||${ymd(data)}`;
+      dedupe.set(key, {
+        pedido: pedidoKey,
+        data,
+        loja,
+        empresa,
+        codigoLoja: code,
+        canal: normalizeStr(row['Canal de venda']) || 'Não informado',
+        turno: normalizeStr(row['Turno']) || 'Não informado',
+        pagamento: normalizePayment(row['Pagamento']),
+        cancelado: /^S$/i.test(normalizeStr(row['Está cancelado'] || row['Esta cancelado'] || row['Cancelado'])),
+        motivoCancelamento: normalizeStr(row['Motivo do cancelamento']),
+        itens: moneyNumber(row['Itens']),
+        entrega: moneyNumber(row['Entrega']),
+        desconto: moneyNumber(row['Desconto']),
+        acrescimo: moneyNumber(row['Acréscimo'] || row['Acrescimo']),
+        total: moneyNumber(row['Total']),
+        taxaServico: moneyNumber(row['Total taxa de serviço'] || row['Total taxa de servico']),
+        nomeArquivo: rep.nome_arquivo || '',
+        reportId: rep.id,
+        dataReferencia: rep.data_referencia || null
+      });
+    });
+  }
+  rowsBase = [...dedupe.values()].sort((a,b)=>a.data-b.data);
+  if(rowsBase.length){
+    const lastRow = rowsBase[rowsBase.length-1];
+    detectedMonth = {year:lastRow.data.getFullYear(), month:lastRow.data.getMonth()+1};
+    document.getElementById('dataInicio').value = `${detectedMonth.year}-${String(detectedMonth.month).padStart(2,'0')}-01`;
+    document.getElementById('dataFim').value = ymd(new Date(detectedMonth.year, detectedMonth.month, 0));
+  }
+  fillSelect('fEmpresa', COMPANY_ORDER.concat(rowsBase.map(r=>r.empresa)), 'Todas');
+  fillSelect('fLoja', rowsBase.map(r=>r.loja), 'Todas');
+  fillSelect('fCanal', rowsBase.map(r=>r.canal), 'Todos');
+  fillSelect('fTurno', rowsBase.map(r=>r.turno), 'Todos');
+  const last = reportsMeta[0];
+  document.getElementById('lastUpdate').textContent = last ? `✅ Base lida em ${new Date(last.timestamp_upload).toLocaleString('pt-BR')}` : '⚠️ Sem uploads';
+  const parts = [];
+  if(chunkedReports) parts.push(`${chunkedReports} upload(s) já usam captura completa em blocos`);
+  if(truncatedLegacy) parts.push(`${truncatedLegacy} upload(s) antigos ainda indicam corte de linhas e precisam reprocessamento`);
+  if(rowsBase.length && detectedMonth) parts.push(`mês padrão carregado: ${String(detectedMonth.month).padStart(2,'0')}/${detectedMonth.year}`);
+  document.getElementById('noticeBox').textContent = parts.length ? parts.join(' • ') : 'Base captada com sucesso do portal de uploads.';
+  aplicarFiltros();
+}
+function getFilteredRows(){
+  const preset = document.getElementById('presetPeriodo').value;
+  document.getElementById('customRange').classList.toggle('hidden', preset !== 'personalizado');
+  const {from,to} = rangeFromPreset(preset);
+  const fEmpresa = document.getElementById('fEmpresa').value;
+  const fLoja = document.getElementById('fLoja').value;
+  const fCanal = document.getElementById('fCanal').value;
+  const fTurno = document.getElementById('fTurno').value;
+  const fStatus = document.getElementById('fStatusLinha').value;
+  return rowsBase.filter(r => {
+    if(from && r.data < from) return false;
+    if(to && r.data > to) return false;
+    if(fEmpresa !== 'todas' && r.empresa !== fEmpresa) return false;
+    if(fLoja !== 'todos' && r.loja !== fLoja) return false;
+    if(fCanal !== 'todos' && r.canal !== fCanal) return false;
+    if(fTurno !== 'todos' && r.turno !== fTurno) return false;
+    if(fStatus === 'ativos' && r.cancelado) return false;
+    if(fStatus === 'cancelados' && !r.cancelado) return false;
+    if(selectedCompanyCard !== 'todas' && r.empresa !== selectedCompanyCard) return false;
+    return true;
+  });
+}
+function applyCompanyCard(company){ selectedCompanyCard = company; aplicarFiltros(); }
+function computeSummary(rows){
+  const validos = rows.filter(r => !r.cancelado);
+  const cancelados = rows.filter(r => r.cancelado);
+  const receitaTotal = validos.reduce((s,r)=>s+r.total,0);
+  const receitaItens = validos.reduce((s,r)=>s+r.itens,0);
+  const descontos = validos.reduce((s,r)=>s+r.desconto,0);
+  const acrescimos = validos.reduce((s,r)=>s+r.acrescimo,0);
+  const entrega = validos.reduce((s,r)=>s+r.entrega,0);
+  const taxaServico = validos.reduce((s,r)=>s+r.taxaServico,0);
+  const valorCancelado = cancelados.reduce((s,r)=>s+r.total,0);
+  const ticket = validos.length ? receitaTotal / validos.length : 0;
+  const lastRow = rows.length ? rows.slice().sort((a,b)=>b.data-a.data)[0] : null;
+  return {rows,validos,cancelados,receitaTotal,receitaItens,descontos,acrescimos,entrega,taxaServico,valorCancelado,ticket,lastRow};
+}
+function renderSummaryCards(allRows){
+  const wrap = document.getElementById('summaryCompanies');
+  const summaries = COMPANY_EMPTY.map(c => {
+    const rows = allRows.filter(r => r.empresa === c.empresa);
+    return {empresa:c.empresa, ...computeSummary(rows)};
+  });
+  const consolidated = computeSummary(allRows);
+  wrap.innerHTML = [
+    {empresa:'Todas as empresas',...consolidated,isTotal:true},
+    ...summaries
+  ].map(item => {
+    const key = item.isTotal ? 'todas' : item.empresa;
+    const active = selectedCompanyCard === key ? ' active' : '';
+    return `<div class="panel summary-card${active}" data-company="${sanitizeHtml(key)}">
+      <div class="summary-top">
+        <div>
+          <div class="summary-name">${sanitizeHtml(item.empresa)}</div>
+          <div class="summary-space">${item.rows.length ? 'com dados' : 'espaço pronto para novos relatórios'}</div>
+        </div>
+        <div class="tag">${fmtInt.format(item.validos.length)} válidos</div>
+      </div>
+      <div class="summary-value">${fmtMoney.format(item.receitaTotal)}</div>
+      <div class="summary-line"><span>Resumo da última linha</span><strong>${item.lastRow ? item.lastRow.data.toLocaleDateString('pt-BR') : '—'}</strong></div>
+      <div class="summary-line"><span>Cancelamentos</span><strong>${fmtMoney.format(item.valorCancelado)}</strong></div>
+      <div class="summary-line"><span>Ticket médio</span><strong>${fmtMoney.format(item.ticket)}</strong></div>
+    </div>`;
+  }).join('');
+  [...wrap.querySelectorAll('.summary-card')].forEach(card => card.addEventListener('click', () => applyCompanyCard(card.dataset.company)));
+}
+function groupByDay(rows, field){
+  const map = new Map();
+  rows.forEach(r => map.set(ymd(r.data), (map.get(ymd(r.data))||0) + (r[field]||0)));
+  return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,v]) => ({label: brDay(new Date(k+'T00:00:00')), value:v}));
+}
+function groupAndSum(rows, field, valueField){
+  const map = new Map();
+  rows.forEach(r => map.set(r[field] || 'Não informado', (map.get(r[field] || 'Não informado')||0) + (r[valueField]||0)));
+  return [...map.entries()].map(([label,value]) => ({label,value})).sort((a,b)=>b.value-a.value);
+}
+function renderTable(rows){
+  const body = document.getElementById('tableBody');
+  const agg = new Map();
+  rows.forEach(r => {
+    const key = `${r.empresa}||${r.loja}`;
+    if(!agg.has(key)) agg.set(key,{empresa:r.empresa,loja:r.loja,pedidos:0,receita:0,itens:0,descontos:0,acrescimos:0,entrega:0,taxaServico:0,cancelados:0,valorCancelado:0,validos:0,lastDate:null});
+    const o = agg.get(key);
+    o.pedidos++;
+    if(!o.lastDate || r.data > o.lastDate) o.lastDate = r.data;
+    if(r.cancelado){ o.cancelados++; o.valorCancelado += r.total; }
+    else { o.validos++; o.receita += r.total; o.itens += r.itens; o.descontos += r.desconto; o.acrescimos += r.acrescimo; o.entrega += r.entrega; o.taxaServico += r.taxaServico; }
+  });
+  const list = [...agg.values()].sort((a,b)=>b.receita-a.receita);
+  body.innerHTML = list.length ? list.map(r => `<tr>
+    <td><span class="tag">${sanitizeHtml(r.empresa)}</span></td>
+    <td>${sanitizeHtml(r.loja)}</td>
+    <td>${fmtInt.format(r.pedidos)}</td>
+    <td class="money">${fmtMoney.format(r.receita)}</td>
+    <td>${fmtMoney.format(r.itens)}</td>
+    <td>${fmtMoney.format(r.validos ? r.receita/r.validos : 0)}</td>
+    <td>${fmtMoney.format(r.descontos)}</td>
+    <td>${fmtMoney.format(r.acrescimos)}</td>
+    <td>${fmtMoney.format(r.entrega)}</td>
+    <td>${fmtMoney.format(r.taxaServico)}</td>
+    <td>${fmtInt.format(r.cancelados)}</td>
+    <td>${fmtMoney.format(r.valorCancelado)}</td>
+    <td>${r.lastDate ? r.lastDate.toLocaleDateString('pt-BR') : '—'}</td>
+  </tr>`).join('') : '<tr><td colspan="13" class="empty">Nenhum dado encontrado para os filtros selecionados.</td></tr>';
+}
+function renderDetails(rows, range){
+  const detailWrap = document.getElementById('detailWrap');
+  if(!rows.length){
+    detailWrap.classList.add('hidden');
+    destroyCharts();
+    return;
+  }
+  detailWrap.classList.remove('hidden');
+  const validos = rows.filter(r => !r.cancelado);
+  const cancelados = rows.filter(r => r.cancelado);
+  const receitaTotal = validos.reduce((s,r)=>s+r.total,0);
+  const receitaItens = validos.reduce((s,r)=>s+r.itens,0);
+  const descontos = validos.reduce((s,r)=>s+r.desconto,0);
+  const acrescimos = validos.reduce((s,r)=>s+r.acrescimo,0);
+  const entrega = validos.reduce((s,r)=>s+r.entrega,0);
+  const taxaServico = validos.reduce((s,r)=>s+r.taxaServico,0);
+  const valorCancelado = cancelados.reduce((s,r)=>s+r.total,0);
+  const ticket = validos.length ? receitaTotal / validos.length : 0;
+  const taxaCancelamento = rows.length ? (cancelados.length / rows.length) * 100 : 0;
+  const kpis = [
+    ['Receita Total', fmtMoney.format(receitaTotal), 'Pedidos válidos', fmtInt.format(validos.length), 'orange'],
+    ['Receita de Itens', fmtMoney.format(receitaItens), 'Ticket médio', fmtMoney.format(ticket), 'blue'],
+    ['Descontos', fmtMoney.format(descontos), 'Acréscimos', fmtMoney.format(acrescimos), 'yellow'],
+    ['Taxa de Entrega', fmtMoney.format(entrega), 'Taxa de serviço', fmtMoney.format(taxaServico), 'cyan'],
+    ['Cancelamentos', fmtInt.format(cancelados.length), 'Taxa cancelamento', `${taxaCancelamento.toFixed(1)}%`, 'green'],
+    ['Valor Cancelado', fmtMoney.format(valorCancelado), 'Pedidos totais', fmtInt.format(rows.length), 'orange'],
+    ['Empresa líder', topLabel(groupAndSum(validos,'empresa','total')), 'Loja líder', topLabel(groupAndSum(validos,'loja','total')), 'blue'],
+    ['Canal líder', topLabel(groupAndSum(validos,'canal','total')), 'Turno líder', topLabel(groupAndSum(validos,'turno','total')), 'cyan'],
+    ['Período', rangeLabel(range.from, range.to), 'Lojas no filtro', fmtInt.format(new Set(rows.map(r=>r.loja)).size), 'yellow'],
+    ['Última linha', rows[rows.length-1]?.data?.toLocaleDateString('pt-BR') || '—', 'Empresa atual', selectedCompanyCard === 'todas' ? 'Todas' : selectedCompanyCard, 'green']
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k => `<div class="panel kpi ${k[4]}"><div class="label">${k[0]}</div><div class="value">${k[1]}</div><div class="sub"><span>${k[2]}</span><strong>${k[3]}</strong></div></div>`).join('');
+  const receitaDia = groupByDay(validos,'total');
+  const empresa = groupAndSum(validos,'empresa','total');
+  const loja = groupAndSum(validos,'loja','total').slice(0,10);
+  const turno = groupAndSum(validos,'turno','total');
+  const canal = groupAndSum(validos,'canal','total');
+  const pagamento = groupAndSum(validos,'pagamento','total').slice(0,8);
+  draw('chartReceitaDia','line',{labels:receitaDia.map(i=>i.label),datasets:[{label:'Receita total',data:receitaDia.map(i=>i.value),borderColor:'#ff7a1a',backgroundColor:'rgba(255,122,26,.18)',fill:true,tension:.28}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}});
+  draw('chartEmpresa','doughnut',{labels:empresa.map(i=>i.label),datasets:[{data:empresa.map(i=>i.value),backgroundColor:['#ff7a1a','#6366f1','#06b6d4','#22c55e','#f59e0b','#ef4444']}]},{plugins:{legend:{labels:{color:'#e2e8f0'}}}});
+  draw('chartLoja','bar',{labels:loja.map(i=>shorten(i.label,24)),datasets:[{label:'Receita',data:loja.map(i=>i.value),backgroundColor:'rgba(99,102,241,.75)',borderRadius:10}]},{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}});
+  draw('chartTurno','bar',{labels:turno.map(i=>i.label),datasets:[{label:'Receita',data:turno.map(i=>i.value),backgroundColor:['#22c55e','#f59e0b','#6366f1']}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}});
+  draw('chartCanal','bar',{labels:canal.map(i=>shorten(i.label,18)),datasets:[{label:'Receita',data:canal.map(i=>i.value),backgroundColor:['#06b6d4','#ff7a1a','#6366f1','#22c55e','#f59e0b']}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}});
+  draw('chartComposicao','doughnut',{labels:['Receita Total','Descontos','Acréscimos','Entrega','Taxa Serviço','Valor Cancelado'],datasets:[{data:[receitaTotal,descontos,acrescimos,entrega,taxaServico,valorCancelado],backgroundColor:['#ff7a1a','#ef4444','#22c55e','#06b6d4','#6366f1','#f59e0b']}]},{plugins:{legend:{labels:{color:'#e2e8f0'}}}});
+  draw('chartPagamento','bar',{labels:pagamento.map(i=>shorten(i.label,16)),datasets:[{label:'Receita',data:pagamento.map(i=>i.value),backgroundColor:'rgba(34,197,94,.72)',borderRadius:10}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}});
+  renderTable(rows);
+}
+function aplicarFiltros(){
+  const rows = getFilteredRows();
+  const preset = document.getElementById('presetPeriodo').value;
+  const range = rangeFromPreset(preset);
+  const baseForCards = rowsBase.filter(r => {
+    if(range.from && r.data < range.from) return false;
+    if(range.to && r.data > range.to) return false;
+    const fLoja = document.getElementById('fLoja').value;
+    const fCanal = document.getElementById('fCanal').value;
+    const fTurno = document.getElementById('fTurno').value;
+    const fStatus = document.getElementById('fStatusLinha').value;
+    if(fLoja !== 'todos' && r.loja !== fLoja) return false;
+    if(fCanal !== 'todos' && r.canal !== fCanal) return false;
+    if(fTurno !== 'todos' && r.turno !== fTurno) return false;
+    if(fStatus === 'ativos' && r.cancelado) return false;
+    if(fStatus === 'cancelados' && !r.cancelado) return false;
+    return true;
+  });
+  renderSummaryCards(baseForCards);
+  renderDetails(rows, range);
+}
+['presetPeriodo','fEmpresa','fLoja','fCanal','fTurno','fStatusLinha','dataInicio','dataFim'].forEach(id => document.addEventListener('change', e => { if(e.target && e.target.id === id) aplicarFiltros(); }));
+carregarBase().catch(err => { console.error(err); document.getElementById('noticeBox').textContent = 'Erro ao carregar a base financeira do portal de uploads.'; });
+</script>
+
+<script>
+(function(){
+  let __filtersApplied = false;
+  function showWaiting(msg){
+    const wait = document.getElementById('waitingPanel');
+    const detail = document.getElementById('detailWrap');
+    const summary = document.getElementById('summaryCompanies');
+    if(wait){ wait.style.display = 'block'; if(msg){ const note = wait.querySelector('div:last-child'); if(note) note.textContent = msg; } }
+    if(summary) summary.innerHTML = '';
+    if(detail) detail.classList.add('hidden');
+    if(typeof destroyCharts === 'function') destroyCharts();
+  }
+  const originalApply = aplicarFiltros;
+  aplicarFiltros = function(){
+    if(!__filtersApplied){
+      showWaiting('Selecione período, empresa, loja, canal, turno e clique em Aplicar filtros.');
+      return;
+    }
+    const wait = document.getElementById('waitingPanel');
+    if(wait) wait.style.display = 'none';
+    originalApply();
+  };
+  const originalLoad = carregarBase;
+  carregarBase = async function(){
+    await originalLoad();
+    __filtersApplied = false;
+    showWaiting('Base pronta. Agora clique em Aplicar filtros para exibir o faturamento.');
+  };
+  function markPending(){
+    __filtersApplied = false;
+    showWaiting('Filtro alterado. Clique em Aplicar filtros para atualizar os números.');
+  }
+  ['presetPeriodo','fEmpresa','fLoja','fCanal','fTurno','fStatusLinha','dataInicio','dataFim'].forEach(id => {
+    document.addEventListener('change', e => { if(e.target && e.target.id === id) markPending(); });
+  });
+  document.addEventListener('click', e => {
+    if(e.target && e.target.id === 'btnAplicarFiltros'){
+      __filtersApplied = true;
+      aplicarFiltros();
+    }
+    if(e.target && e.target.id === 'btnLimparFiltroView'){
+      __filtersApplied = false;
+      showWaiting('Visualização limpa. Ajuste o filtro e aplique novamente quando quiser ver os dados.');
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
