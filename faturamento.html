@@ -93,7 +93,7 @@
             <option value="personalizado">Personalizado</option>
           </select>
         </div>
-        <div class="field">
+        <div class="field hidden" id="fieldEmpresa">
           <label>Empresa</label>
           <select id="fEmpresa"><option value="todas">Todas</option></select>
         </div>
@@ -118,11 +118,11 @@
           </select>
         </div>
       </div>
-      <div class="filter-grid-bottom hidden" id="customRange">
+      <div class="filter-grid-bottom" id="customRange">
         <div class="field"><label>De</label><input type="date" id="dataInicio"></div>
         <div class="field"><label>Até</label><input type="date" id="dataFim"></div>
       </div>
-      <div class="helper">O painel só exibe dados depois que você clicar em <b>Aplicar filtros</b>. Assim o faturamento abre limpo e só mostra números quando o filtro estiver confirmado.</div>
+      <div class="helper">Mantenha os atalhos de período e, se quiser precisão, preencha também os campos <b>De</b> e <b>Até</b>. Ao alterar qualquer filtro, clique em <b>Aplicar filtros</b> para atualizar o painel.</div>
       <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button id="btnAplicarFiltros" style="height:46px;padding:0 18px;border:none;border-radius:14px;background:linear-gradient(135deg,#ff7a1a,#ff9d52);color:#fff;font:900 14px Nunito,sans-serif;cursor:pointer">Aplicar filtros</button><button id="btnLimparFiltroView" style="height:46px;padding:0 18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.05);color:#e2e8f0;font:900 14px Nunito,sans-serif;cursor:pointer">Limpar visualização</button></div>
     </div>
 
@@ -246,6 +246,14 @@ function moneyNumber(v){
   return isFinite(n) ? n : 0;
 }
 function normalizeStr(v){ return String(v||'').trim(); }
+function normalizeTurnoFinance(v=''){
+  const s = String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  if(!s) return 'Não informado';
+  if(s.includes('madrugada') || s.includes('noite') || s.includes('night') || s.includes('noturn')) return 'Noite';
+  if(s.includes('tarde') || s.includes('afternoon')) return 'Tarde';
+  if(s.includes('dia') || s.includes('manha') || s.includes('morning') || s.includes('day')) return 'Dia';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 function normalizePayment(p=''){
   const s = String(p).trim();
   if(!s) return 'Não informado';
@@ -274,10 +282,18 @@ function mapCompany(store='', code=''){
   return store.trim() || 'Sem empresa';
 }
 function normalizeStore(store='', code=''){
-  const name = String(store||'').trim();
-  if(name) return name;
-  const emp = mapCompany(store, code);
-  return emp === 'Sem empresa' ? 'Sem loja' : emp;
+  const cod = String(code||'').trim();
+  if(LOJA_CODIGO_MAP[cod]) return LOJA_CODIGO_MAP[cod];
+  const s = String(store||'').toLowerCase().trim();
+  if(!s) return 'Sem loja informada';
+  if(s.includes('zona leste') || s.includes('matriz') || s.includes('just burger') || s === 'burger') return 'Burger Matriz';
+  if(/(^|\s)abc(\s|$)/.test(s) || s.includes('santo andré') || s.includes('sao bernardo') || s.includes('são bernardo') || s.includes('são caetano')) return 'Burger ABC';
+  if(s.includes('gru') || s.includes('guarulhos')) return 'Burger GRU';
+  if(s.includes('gourmet')) return 'Gourmet';
+  if(s.includes('forneria') || s.includes('esfiha')) return 'Aham Forneria';
+  if(s.includes('sushi')) return 'Aham Sushi';
+  if(s.includes('burger')) return 'Burger Matriz';
+  return String(store||'').trim() || 'Sem loja informada';
 }
 function rangeFromPreset(preset){
   const today = new Date();
@@ -364,7 +380,7 @@ async function carregarBase(){
         empresa,
         codigoLoja: code,
         canal: normalizeStr(row['Canal de venda']) || 'Não informado',
-        turno: normalizeStr(row['Turno']) || 'Não informado',
+        turno: normalizeTurnoFinance(row['Turno']),
         pagamento: normalizePayment(row['Pagamento']),
         cancelado: /^S$/i.test(normalizeStr(row['Está cancelado'] || row['Esta cancelado'] || row['Cancelado'])),
         motivoCancelamento: normalizeStr(row['Motivo do cancelamento']),
@@ -402,9 +418,8 @@ async function carregarBase(){
 }
 function getFilteredRows(){
   const preset = document.getElementById('presetPeriodo').value;
-  document.getElementById('customRange').classList.toggle('hidden', preset !== 'personalizado');
   const {from,to} = rangeFromPreset(preset);
-  const fEmpresa = document.getElementById('fEmpresa').value;
+  const fEmpresa = 'todas';
   const fLoja = document.getElementById('fLoja').value;
   const fCanal = document.getElementById('fCanal').value;
   const fTurno = document.getElementById('fTurno').value;
@@ -418,11 +433,10 @@ function getFilteredRows(){
     if(fTurno !== 'todos' && r.turno !== fTurno) return false;
     if(fStatus === 'ativos' && r.cancelado) return false;
     if(fStatus === 'cancelados' && !r.cancelado) return false;
-    if(selectedCompanyCard !== 'todas' && r.empresa !== selectedCompanyCard) return false;
     return true;
   });
 }
-function applyCompanyCard(company){ selectedCompanyCard = company; aplicarFiltros(); }
+function applyCompanyCard(company){ selectedCompanyCard = company; }
 function computeSummary(rows){
   const validos = rows.filter(r => !r.cancelado);
   const cancelados = rows.filter(r => r.cancelado);
@@ -534,7 +548,7 @@ function renderDetails(rows, range){
     ['Empresa líder', topLabel(groupAndSum(validos,'empresa','total')), 'Loja líder', topLabel(groupAndSum(validos,'loja','total')), 'blue'],
     ['Canal líder', topLabel(groupAndSum(validos,'canal','total')), 'Turno líder', topLabel(groupAndSum(validos,'turno','total')), 'cyan'],
     ['Período', rangeLabel(range.from, range.to), 'Lojas no filtro', fmtInt.format(new Set(rows.map(r=>r.loja)).size), 'yellow'],
-    ['Última linha', rows[rows.length-1]?.data?.toLocaleDateString('pt-BR') || '—', 'Empresa atual', selectedCompanyCard === 'todas' ? 'Todas' : selectedCompanyCard, 'green']
+    ['Última linha', rows[rows.length-1]?.data?.toLocaleDateString('pt-BR') || '—', 'Lojas no filtro', fmtInt.format(new Set(rows.map(r=>r.loja)).size), 'green']
   ];
   document.getElementById('kpiGrid').innerHTML = kpis.map(k => `<div class="panel kpi ${k[4]}"><div class="label">${k[0]}</div><div class="value">${k[1]}</div><div class="sub"><span>${k[2]}</span><strong>${k[3]}</strong></div></div>`).join('');
   const receitaDia = groupByDay(validos,'total');
@@ -574,6 +588,12 @@ function aplicarFiltros(){
   renderDetails(rows, range);
 }
 ['presetPeriodo','fEmpresa','fLoja','fCanal','fTurno','fStatusLinha','dataInicio','dataFim'].forEach(id => document.addEventListener('change', e => { if(e.target && e.target.id === id) aplicarFiltros(); }));
+document.getElementById('fEmpresa').value = 'todas';
+document.addEventListener('change', e => {
+  if(e.target && (e.target.id === 'dataInicio' || e.target.id === 'dataFim')){
+    document.getElementById('presetPeriodo').value = 'personalizado';
+  }
+});
 carregarBase().catch(err => { console.error(err); document.getElementById('noticeBox').textContent = 'Erro ao carregar a base financeira do portal de uploads.'; });
 </script>
 
@@ -592,7 +612,7 @@ carregarBase().catch(err => { console.error(err); document.getElementById('notic
   const originalApply = aplicarFiltros;
   aplicarFiltros = function(){
     if(!__filtersApplied){
-      showWaiting('Selecione período, empresa, loja, canal, turno e clique em Aplicar filtros.');
+      showWaiting('Selecione período, loja, canal, turno e clique em Aplicar filtros.');
       return;
     }
     const wait = document.getElementById('waitingPanel');
