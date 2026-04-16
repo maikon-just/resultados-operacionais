@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    JUST BURGER 🍔 — firebase_v2.js
    Firebase Realtime Database — SDK compat (sem módulos ES)
 
