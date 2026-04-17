@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resultados Operacionais</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#f7faff;
+      --card:#ffffff;
+      --line:#dfe8f5;
+      --text:#1b2840;
+      --muted:#71839d;
+      --blue:#5f91ee;
+      --green:#4cbf72;
+      --orange:#f29b49;
+      --red:#e66a61;
+      --purple:#8d71e8;
+      --teal:#3ec5c0;
+      --indigo:#6f86ff;
+      --rose:#e6789b;
+      --shadow:0 14px 32px rgba(148,163,184,.18);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{font-family:'Montserrat',system-ui,sans-serif;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);color:var(--text);min-height:100vh}
+    .page{max-width:1560px;margin:0 auto;padding:18px 16px 34px}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+    .header h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.03em}
+    .header p{margin:8px 0 0;color:var(--muted);font-size:13px;font-weight:600;line-height:1.6}
+    .status-pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 20px rgba(15,23,42,.06);font-weight:800;font-size:12px;color:#334155}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+    .toolbar{padding:14px 16px;margin-bottom:16px}
+    .toolbar-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .toolbar-label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#64748b}
+    .metric-buttons,.turno-buttons,.feed-buttons{display:flex;gap:10px;flex-wrap:wrap}
+    .btn-chip{border:1px solid var(--line);background:#fff;color:#334155;border-radius:14px;padding:11px 14px;font:800 12px 'Montserrat',system-ui,sans-serif;cursor:pointer;transition:.18s ease;white-space:nowrap}
+    .btn-chip:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(15,23,42,.08)}
+    .btn-chip.active{border-color:transparent;color:#fff;box-shadow:0 10px 24px rgba(15,23,42,.14)}
+    .btn-chip.metric-negociacoes.active{background:linear-gradient(135deg,var(--blue),#4d7cfe)}
+    .btn-chip.metric-cancelamentos.active{background:linear-gradient(135deg,var(--red),#f0645a)}
+    .btn-chip.metric-qualidade.active{background:linear-gradient(135deg,var(--green),#10b981)}
+    .btn-chip.metric-cardapio.active{background:linear-gradient(135deg,var(--purple),#8b5cf6)}
+    .btn-chip.feed.active{background:linear-gradient(135deg,var(--teal),#06b6d4);color:#fff;border-color:transparent}
+    .store-strip-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:4px;margin-bottom:16px}
+    .store-strip{display:flex;gap:12px;min-width:max-content}
+    .store-card{min-width:190px;max-width:190px;padding:16px;border-radius:18px;color:#fff;cursor:pointer;border:0;text-align:left;box-shadow:0 16px 28px rgba(15,23,42,.14);transition:.18s ease}
+    .store-card:hover{transform:translateY(-2px)}
+    .store-card.active{outline:3px solid rgba(255,255,255,.88);outline-offset:-3px}
+    .store-card small{display:block;opacity:.9;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px}
+    .store-card strong{display:block;margin-top:8px;font-size:15px;font-weight:800}
+    .store-card span{display:block;margin-top:10px;font-size:12px;font-weight:700;opacity:.94}
+    .store-card.all{background:linear-gradient(135deg,#7e93b4,#a9bbd3)}
+    .store-card.matriz{background:linear-gradient(135deg,var(--blue),#7db2ff)}
+    .store-card.abc{background:linear-gradient(135deg,var(--green),#7bd899)}
+    .store-card.gru{background:linear-gradient(135deg,var(--orange),#f7bc7a)}
+    .store-card.gourmet{background:linear-gradient(135deg,var(--purple),#b79cff)}
+    .store-card.forneria{background:linear-gradient(135deg,var(--red),#f29a93)}
+    .store-card.sushi{background:linear-gradient(135deg,var(--teal),#6edbd7)}
+    .summary-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:16px}
+    .summary-card{padding:18px;border-radius:18px;color:#fff;cursor:pointer;transition:.18s ease;position:relative;overflow:hidden}
+    .summary-card:hover{transform:translateY(-2px)}
+    .summary-card .label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.75px;opacity:.94;margin-bottom:12px}
+    .summary-card .value{font-size:26px;font-weight:800;line-height:1.05;letter-spacing:-.03em}
+    .summary-card .sub{margin-top:12px;font-size:12px;font-weight:700;opacity:.94;display:flex;justify-content:space-between;gap:12px}
+    .summary-card .hint{margin-top:12px;font-size:11px;font-weight:700;opacity:.84}
+    .summary-card.blue{background:linear-gradient(135deg,var(--blue),#7db2ff)}
+    .summary-card.green{background:linear-gradient(135deg,var(--green),#7bd899)}
+    .summary-card.orange{background:linear-gradient(135deg,var(--orange),#f7bc7a)}
+    .summary-card.red{background:linear-gradient(135deg,var(--red),#f29a93)}
+    .summary-card.purple{background:linear-gradient(135deg,var(--purple),#b79cff)}
+    .summary-card.teal{background:linear-gradient(135deg,var(--teal),#6edbd7)}
+    .summary-card.indigo{background:linear-gradient(135deg,var(--indigo),#9cabff)}
+    .summary-card.rose{background:linear-gradient(135deg,var(--rose),#f3a0bb)}
+    .content-grid{display:grid;grid-template-columns:1.3fr .9fr;gap:16px;margin-bottom:16px}
+    .card{padding:16px}
+    .card h3{margin:0 0 14px;font-size:12px;font-weight:800;letter-spacing:.75px;text-transform:uppercase;color:#334155}
+    .chart-wrap{height:330px}
+    .feed-table-wrap,.detail-table-wrap{overflow:auto;border-radius:16px;border:1px solid rgba(148,163,184,.24)}
+    table{width:100%;border-collapse:collapse;min-width:640px}
+    th,td{padding:11px 12px;border-bottom:1px solid #e5edf6;font-size:12px;text-align:left}
+    th{background:#f8fbff;color:#334155;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;position:sticky;top:0}
+    td{font-weight:700;color:#1e293b}
+    tr:hover td{background:#f8fbff}
+    .empty{padding:36px;text-align:center;color:var(--muted);font-weight:800}
+    .feed-foot{margin-top:10px;font-size:12px;color:#64748b;font-weight:700}
+    .legend-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    .legend-item{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:12px;font-weight:800;color:#334155}
+    .legend-dot{width:10px;height:10px;border-radius:999px}
+    .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.68);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+    .modal-bg.open{display:flex}
+    .modal{width:min(1100px,100%);max-height:88vh;overflow:hidden;background:#fff;border-radius:24px;border:1px solid var(--line);box-shadow:0 24px 60px rgba(15,23,42,.24)}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
+    .modal-header h2{margin:0;font-size:18px}
+    .modal-close{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:16px}
+    .modal-body{padding:18px 20px;overflow:auto;max-height:calc(88vh - 82px)}
+    .mt16{margin-top:16px}
+    @media(max-width:1320px){.summary-grid{grid-template-columns:repeat(3,1fr)}.content-grid{grid-template-columns:1fr}.chart-wrap{height:300px}}
+    @media(max-width:760px){.summary-grid{grid-template-columns:1fr}.page{padding:14px 12px 28px}.header h1{font-size:25px}.toolbar-row{align-items:flex-start}.chart-wrap{height:260px}.modal-body{padding:14px}.modal-header{padding:14px 16px}.store-card{min-width:164px;max-width:164px}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>Análise completa</h1>
+        <p>Botões reorganizados para Negociações, Cancelamentos, Qualidade e Cardápio. O filtro de turno segue Manhã, Dia 11:00–17:59 e Noite 18:00+. Os cards usam cores mais fortes e comparação com o mesmo período do mês anterior.</p>
+      </div>
+      <div class="status-pill" id="statusPill">⏳ Carregando base operacional...</div>
+    </div>
+
+    <div class="panel toolbar">
+      <div class="toolbar-row" style="margin-bottom:12px">
+        <div>
+          <div class="toolbar-label">Matriz</div>
+          <div class="metric-buttons" id="metricButtons">
+            <button class="btn-chip metric-negociacoes" data-metric="negociacoes">Negociações</button>
+            <button class="btn-chip metric-cancelamentos active" data-metric="cancelamentos">Cancelamentos</button>
+            <button class="btn-chip metric-qualidade" data-metric="qualidade">Qualidade</button>
+            <button class="btn-chip metric-cardapio" data-metric="cardapio">Cardápio</button>
+          </div>
+        </div>
+        <div>
+          <div class="toolbar-label">Turno</div>
+          <div class="turno-buttons" id="turnoButtons">
+            <button class="btn-chip active" data-turno="todos">Todos</button>
+            <button class="btn-chip" data-turno="manha">Manhã</button>
+            <button class="btn-chip" data-turno="dia">Dia (11:00–17:59)</button>
+            <button class="btn-chip" data-turno="noite">Noite (18:00+)</button>
+          </div>
+        </div>
+        <div>
+          <div class="toolbar-label">Feed</div>
+          <div class="feed-buttons" id="feedButtons">
+            <button class="btn-chip feed active" data-feed="diario">Diário</button>
+            <button class="btn-chip feed" data-feed="semanal">Semanal</button>
+          </div>
+        </div>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>Cancelamentos</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span>Negociações</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>Qualidade</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--purple)"></span>Cardápio</div>
+      </div>
+      <div class="feed-foot" id="periodFoot">Período selecionado: mês atual.</div>
+    </div>
+
+    <div class="store-strip-wrap">
+      <div class="store-strip" id="storeStrip"></div>
+    </div>
+
+    <div class="summary-grid" id="summaryGrid"></div>
+
+    <div class="content-grid">
+      <div class="panel card">
+        <h3 id="trendTitle">Tendência diária</h3>
+        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+      </div>
+      <div class="panel card">
+        <h3 id="feedTitle">Feed diário</h3>
+        <div class="feed-table-wrap" id="feedWrap"></div>
+        <div class="feed-foot" id="feedFoot"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modalBg">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Detalhamento</h2>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+<script>
+const FIREBASE_URL = 'https://justburger-producao-e9b27-default-rtdb.firebaseio.com';
+const REPORTS_URL = `${FIREBASE_URL}/relatorios_diarios.json`;
+const OP_TYPES = ['cancelamentos','negociacoes','qualidade','cardapio','chamados'];
+const STORE_META = [
+  {key:'todas',label:'Todas as lojas',className:'all'},
+  {key:'burger matriz',label:'Just Matriz',className:'matriz'},
+  {key:'burger abc',label:'Just ABC',className:'abc'},
+  {key:'burger gru',label:'Just GRU',className:'gru'},
+  {key:'gourmet',label:'Just Gourmet',className:'gourmet'},
+  {key:'aham forneria',label:'Aham Forneria',className:'forneria'},
+  {key:'aham sushi',label:'Aham Sushi',className:'sushi'}
+];
+const state = { metric:'cancelamentos', turno:'todos', feed:'diario', store:'todas' };
+const parsed = { cancelamentos:[], negociacoes:[], qualidade:[], cardapio:[] };
+let trendChart = null;
+let latestBatchId = '';
+let latestStamp = 0;
+
+function normalize(value){
+  return String(value == null ? '' : value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+}
+function sanitize(text){
+  return String(text == null ? '' : text).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function toNumber(value){
+  if(value == null || value === '') return 0;
+  if(typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  let s = String(value).trim();
+  if(!s) return 0;
+  s = s.replace(/R\$/gi,'').replace(/\s/g,'');
+  if(s.includes(',') && s.includes('.')){
+    if(s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g,'').replace(',', '.');
+    else s = s.replace(/,/g,'');
+  } else if(s.includes(',')) {
+    s = s.replace(',', '.');
+  }
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
+function parseDateFlex(value){
+  if(value == null || value === '') return null;
+  if(value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if(typeof value === 'number'){
+    const d = new Date(Math.round((value - 25569) * 86400 * 1000));
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const s = String(value).trim();
+  let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if(m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function fmtMoney(value){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value || 0); }
+function fmtInt(value){ return new Intl.NumberFormat('pt-BR').format(value || 0); }
+function pctText(current, previous){
+  if(!previous) return '—';
+  const pct = ((current - previous) / previous) * 100;
+  const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '■';
+  return `${arrow} ${Math.abs(pct).toFixed(1).replace('.', ',')}%`;
+}
+function startOfCurrentMonth(ref){ return new Date(ref.getFullYear(), ref.getMonth(), 1); }
+function addMonths(date, delta){ return new Date(date.getFullYear(), date.getMonth() + delta, date.getDate()); }
+function endOfEquivalentPreviousPeriod(endDate){ return new Date(endDate.getFullYear(), endDate.getMonth() - 1, endDate.getDate()); }
+function startOfPreviousMonthEquivalent(endDate){ return new Date(endDate.getFullYear(), endDate.getMonth() - 1, 1); }
+function getHour(value){
+  if(value == null || value === '') return null;
+  if(typeof value === 'number') return Math.max(0, Math.min(23, Math.round(value * 24)));
+  const m = String(value).match(/(\d{1,2}):(\d{2})/);
+  return m ? Number(m[1]) : null;
+}
+function getTurno(hour){
+  if(hour == null || Number.isNaN(hour)) return 'Dia';
+  if(hour < 11) return 'Manhã';
+  if(hour < 18) return 'Dia';
+  return 'Noite';
+}
+function fieldValue(row, aliases){
+  const keys = Object.keys(row || {});
+  for(const alias of aliases){
+    const found = keys.find(key => normalize(key) === normalize(alias));
+    if(found && row[found] != null && row[found] !== '') return row[found];
+  }
+  for(const alias of aliases){
+    const target = normalize(alias);
+    const found = keys.find(key => normalize(key).includes(target));
+    if(found && row[found] != null && row[found] !== '') return row[found];
+  }
+  return '';
+}
+function normalizeStore(value){
+  const text = normalize(value || '');
+  if(!text) return 'sem loja';
+  if(text.includes('matriz')) return 'burger matriz';
+  if(text.includes('abc')) return 'burger abc';
+  if(text.includes('gru')) return 'burger gru';
+  if(text.includes('gourmet')) return 'gourmet';
+  if(text.includes('forneria')) return 'aham forneria';
+  if(text.includes('sushi')) return 'aham sushi';
+  return text;
+}
+function labelStore(key){
+  return (STORE_META.find(item => item.key === key) || {label:key}).label;
+}
+function isoDay(date){ return date ? date.toISOString().slice(0,10) : ''; }
+function weekKey(date){
+  const d = new Date(date);
+  const day = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - day);
+  return d.toISOString().slice(0,10);
+}
+function currentPeriodRange(){
+  const ref = latestStamp ? new Date(latestStamp) : new Date();
+  return { start:startOfCurrentMonth(ref), end:ref };
+}
+function previousPeriodRange(){
+  const cur = currentPeriodRange();
+  return { start:startOfPreviousMonthEquivalent(cur.end), end:endOfEquivalentPreviousPeriod(cur.end) };
+}
+function filterRows(rows, extra = {}){
+  const { start, end } = extra.range || currentPeriodRange();
+  return rows.filter(row => {
+    if(!(row.date instanceof Date) || Number.isNaN(row.date.getTime())) return false;
+    if(row.date < start || row.date > end) return false;
+    if(state.store !== 'todas' && row.store !== state.store) return false;
+    if(state.turno === 'manha' && row.turno !== 'Manhã') return false;
+    if(state.turno === 'dia' && row.turno !== 'Dia') return false;
+    if(state.turno === 'noite' && row.turno !== 'Noite') return false;
+    if(extra.cancelType && row.cancelType !== extra.cancelType) return false;
+    return true;
+  });
+}
+function sumField(rows, field){ return rows.reduce((acc,row)=>acc + (Number(row[field]) || 0),0); }
+function countField(rows, field){ return rows.reduce((acc,row)=>acc + (Number(row[field]) || 0),0); }
+function bucketMetric(rows){
+  if(state.metric === 'cancelamentos') return { count: rows.length, amount: sumField(rows,'value') };
+  if(state.metric === 'negociacoes') return { count: countField(rows,'attempts') || rows.length, amount: sumField(rows,'value') };
+  if(state.metric === 'qualidade') return { count: rows.length, amount: sumField(rows,'score') || rows.length };
+  return { count: sumField(rows,'quantity') || rows.length, amount: sumField(rows,'value') };
+}
+function describeMoM(currentValue, previousValue, formatter){
+  return `${formatter(currentValue)} · ${pctText(currentValue, previousValue)} vs mês anterior`;
+}
+function renderStoreStrip(){
+  const countsByStore = new Map();
+  const current = parsed[state.metric] || [];
+  current.forEach(row => countsByStore.set(row.store, (countsByStore.get(row.store) || 0) + 1));
+  const html = STORE_META.map(meta => {
+    const count = meta.key === 'todas' ? current.length : (countsByStore.get(meta.key) || 0);
+    return `<button class="store-card ${meta.className}${state.store === meta.key ? ' active' : ''}" data-store="${meta.key}"><small>${count ? fmtInt(count) : '0'} registros</small><strong>${meta.label}</strong><span>${meta.key === 'todas' ? 'Consolidado' : 'Toque para filtrar'}</span></button>`;
+  }).join('');
+  document.getElementById('storeStrip').innerHTML = html;
+  document.querySelectorAll('.store-card').forEach(btn => btn.addEventListener('click', () => { state.store = btn.dataset.store; render(); }));
+}
+function renderSummary(){
+  const grid = document.getElementById('summaryGrid');
+  if(state.metric === 'cancelamentos') return renderCancelamentosSummary(grid);
+  return renderGenericSummary(grid);
+}
+function renderCancelamentosSummary(grid){
+  const currentRows = filterRows(parsed.cancelamentos);
+  const previousRows = filterRows(parsed.cancelamentos,{range:previousPeriodRange()});
+  const totalRows = currentRows.filter(row => row.cancelType === 'total');
+  const partialRows = currentRows.filter(row => row.cancelType === 'parcial');
+  const prevTotalRows = previousRows.filter(row => row.cancelType === 'total');
+  const prevPartialRows = previousRows.filter(row => row.cancelType === 'parcial');
+  const negociacaoAtual = filterRows(parsed.negociacoes);
+  const negociacaoPrev = filterRows(parsed.negociacoes,{range:previousPeriodRange()});
+  const contestAtual = summarizeContest(currentRows);
+  const contestPrev = summarizeContest(previousRows);
+  const origemAtual = summarizeOrigem(currentRows);
+  const itemAtual = summarizeItems(currentRows);
+  const cards = [
+    {
+      key:'cancelado-total', color:'red', clickable:true,
+      label:'Cancelado total',
+      value:fmtMoney(sumField(totalRows,'value')),
+      subLeft:`${fmtInt(totalRows.length)} pedidos`,
+      subRight:pctText(sumField(totalRows,'value'), sumField(prevTotalRows,'value')),
+      hint:'Clique para ver motivo, quantidade, valor e impacto no super.'
+    },
+    {
+      key:'cancelado-parcial', color:'orange', clickable:true,
+      label:'Cancelado parcial',
+      value:fmtMoney(sumField(partialRows,'value')),
+      subLeft:`${fmtInt(partialRows.length)} pedidos`,
+      subRight:pctText(sumField(partialRows,'value'), sumField(prevPartialRows,'value')),
+      hint:'Clique para ver motivo, quantidade, valor e impacto no super.'
+    },
+    {
+      key:'tipos-itens', color:'purple', clickable:true,
+      label:'Tipos de itens cancelados',
+      value:fmtInt(itemAtual.length),
+      subLeft:'Total + parcial',
+      subRight:`${fmtInt(itemAtual.reduce((acc,row)=>acc + row.quantity,0))} itens`,
+      hint:'Clique para abrir o consolidado por item.'
+    },
+    {
+      key:'tentativas', color:'blue', clickable:true,
+      label:'Tentativas de negociação',
+      value:fmtInt(countField(negociacaoAtual,'attempts') || negociacaoAtual.length),
+      subLeft:`Atual ${fmtInt(negociacaoAtual.length)} linhas`,
+      subRight:pctText(countField(negociacaoAtual,'attempts') || negociacaoAtual.length, countField(negociacaoPrev,'attempts') || negociacaoPrev.length),
+      hint:'Clique para ver o detalhamento por dia e loja.'
+    },
+    {
+      key:'origem', color:'teal', clickable:true,
+      label:'Origem do cancelamento',
+      value:`${fmtInt((origemAtual.cliente||0) + (origemAtual.loja||0))}`,
+      subLeft:`Cliente ${fmtInt(origemAtual.cliente||0)}`,
+      subRight:`Loja ${fmtInt(origemAtual.loja||0)}`,
+      hint:'Merchant é tratado como Loja.'
+    },
+    {
+      key:'contestavel', color:'green', clickable:true,
+      label:'Cancelamento contestável',
+      value:fmtInt(contestAtual.contestavel + contestAtual.solicitada + contestAtual.naoContestavel),
+      subLeft:`Contestável ${fmtInt(contestAtual.contestavel)}`,
+      subRight:`Solicitada ${fmtInt(contestAtual.solicitada)}`,
+      hint:`Não contestável ${fmtInt(contestAtual.naoContestavel)}`
+    }
+  ];
+  grid.innerHTML = cards.map(card => `
+    <div class="summary-card ${card.color}" data-card="${card.key}">
+      <div class="label">${card.label}</div>
+      <div class="value">${card.value}</div>
+      <div class="sub"><span>${card.subLeft}</span><span>${card.subRight}</span></div>
+      <div class="hint">${card.hint}</div>
+    </div>
+  `).join('');
+  grid.querySelectorAll('[data-card]').forEach(el => el.addEventListener('click', () => openCancelamentoModal(el.dataset.card, currentRows)));
+}
+function renderGenericSummary(grid){
+  const currentRows = filterRows(parsed[state.metric]);
+  const previousRows = filterRows(parsed[state.metric], {range: previousPeriodRange()});
+  const currentMetric = bucketMetric(currentRows);
+  const previousMetric = bucketMetric(previousRows);
+  const colorMap = { negociacoes:'blue', qualidade:'green', cardapio:'purple' };
+  const secondaryMetric = state.metric === 'qualidade' ? averageScore(currentRows) : sumField(currentRows,'value');
+  const secondaryPrev = state.metric === 'qualidade' ? averageScore(previousRows) : sumField(previousRows,'value');
+  const extraCards = [
+    { label:'Registros', value:fmtInt(currentMetric.count), subLeft:'Período atual', subRight:pctText(currentMetric.count, previousMetric.count), color:colorMap[state.metric] || 'indigo' },
+    { label: state.metric === 'qualidade' ? 'Nota média' : 'Valor movimentado', value: state.metric === 'qualidade' ? averageScore(currentRows).toFixed(1).replace('.', ',') : fmtMoney(secondaryMetric), subLeft:'Mesmo período anterior', subRight: state.metric === 'qualidade' ? pctText(secondaryMetric, secondaryPrev) : pctText(secondaryMetric, secondaryPrev), color:'teal' },
+    { label:'Lojas com dados', value:fmtInt(new Set(currentRows.map(row => row.store)).size), subLeft:'Período selecionado', subRight:'Mês atual', color:'orange' },
+    { label:'Turnos cobertos', value:fmtInt(new Set(currentRows.map(row => row.turno)).size), subLeft:'Filtro atual', subRight:state.turno === 'todos' ? 'Todos' : state.turno, color:'rose' }
+  ];
+  grid.innerHTML = extraCards.map(card => `
+    <div class="summary-card ${card.color}">
+      <div class="label">${card.label}</div>
+      <div class="value">${card.value}</div>
+      <div class="sub"><span>${card.subLeft}</span><span>${card.subRight}</span></div>
+      <div class="hint">${state.metric.charAt(0).toUpperCase() + state.metric.slice(1)} · ${labelStore(state.store)}</div>
+    </div>
+  `).join('');
+}
+function averageScore(rows){
+  const valid = rows.map(row => Number(row.score)).filter(value => Number.isFinite(value) && value > 0);
+  return valid.length ? valid.reduce((a,b)=>a+b,0)/valid.length : 0;
+}
+function summarizeOrigem(rows){
+  return rows.reduce((acc,row) => {
+    const origem = normalize(row.origin);
+    if(origem.includes('cliente')) acc.cliente = (acc.cliente || 0) + 1;
+    else acc.loja = (acc.loja || 0) + 1;
+    return acc;
+  }, {cliente:0, loja:0});
+}
+function summarizeContest(rows){
+  return rows.reduce((acc,row) => {
+    const flag = normalize(row.contestStatus);
+    if(flag.includes('solicit')) acc.solicitada += 1;
+    else if(flag.includes('nao') || flag.includes('não')) acc.naoContestavel += 1;
+    else acc.contestavel += 1;
+    return acc;
+  }, {contestavel:0, solicitada:0, naoContestavel:0});
+}
+function summarizeItems(rows){
+  const map = new Map();
+  rows.forEach(row => {
+    const key = row.item || 'Item não informado';
+    if(!map.has(key)) map.set(key,{item:key, quantity:0, records:0, total:0, parcial:0});
+    const ref = map.get(key);
+    ref.quantity += Number(row.quantity) || 1;
+    ref.records += 1;
+    if(row.cancelType === 'parcial') ref.parcial += Number(row.quantity) || 1;
+    else ref.total += Number(row.quantity) || 1;
+  });
+  return [...map.values()].sort((a,b)=>b.quantity-a.quantity);
+}
+function openCancelamentoModal(cardKey, rows){
+  const modalTitle = document.getElementById('modalTitle');
+  const modalBody = document.getElementById('modalBody');
+  if(cardKey === 'cancelado-total' || cardKey === 'cancelado-parcial'){
+    const type = cardKey === 'cancelado-total' ? 'total' : 'parcial';
+    const title = type === 'total' ? 'Cancelado total' : 'Cancelado parcial';
+    const data = aggregateReasons(rows.filter(row => row.cancelType === type));
+    modalTitle.textContent = `${title} · motivos`;
+    modalBody.innerHTML = renderTable(['Motivo','Quantidade','Valor','Impacto no super'], data.map(row => [row.reason, fmtInt(row.count), fmtMoney(row.value), row.impact]));
+  } else if(cardKey === 'tipos-itens'){
+    const items = summarizeItems(rows);
+    modalTitle.textContent = 'Tipos de itens cancelados';
+    modalBody.innerHTML = renderTable(['Item','Ocorrências','Qtd total','Qtd total cancelada integral','Qtd total cancelada parcial'], items.map(row => [row.item, fmtInt(row.records), fmtInt(row.quantity), fmtInt(row.total), fmtInt(row.parcial)]));
+  } else if(cardKey === 'tentativas'){
+    const data = aggregateNegotiations(filterRows(parsed.negociacoes));
+    modalTitle.textContent = 'Tentativas de negociação';
+    modalBody.innerHTML = renderTable(['Data','Loja','Tentativas','Valor associado'], data.map(row => [row.day, labelStore(row.store), fmtInt(row.attempts), fmtMoney(row.value)]));
+  } else if(cardKey === 'origem'){
+    const origem = summarizeOrigem(rows);
+    modalTitle.textContent = 'Origem do cancelamento';
+    modalBody.innerHTML = renderTable(['Origem','Quantidade'], [['Cliente', fmtInt(origem.cliente || 0)], ['Loja', fmtInt(origem.loja || 0)]]);
+  } else if(cardKey === 'contestavel'){
+    const contest = summarizeContest(rows);
+    modalTitle.textContent = 'Cancelamento contestável';
+    modalBody.innerHTML = renderTable(['Status','Quantidade'], [['Contestável', fmtInt(contest.contestavel)], ['Solicitada contestação', fmtInt(contest.solicitada)], ['Não contestável', fmtInt(contest.naoContestavel)]]);
+  }
+  document.getElementById('modalBg').classList.add('open');
+}
+function aggregateReasons(rows){
+  const map = new Map();
+  rows.forEach(row => {
+    const key = row.reason || 'Motivo não informado';
+    if(!map.has(key)) map.set(key,{reason:key,count:0,value:0,impact:'Não'});
+    const ref = map.get(key);
+    ref.count += 1;
+    ref.value += Number(row.value) || 0;
+    if(normalize(row.impactSuper).includes('sim')) ref.impact = 'Sim';
+  });
+  return [...map.values()].sort((a,b)=>b.value-a.value);
+}
+function aggregateNegotiations(rows){
+  const map = new Map();
+  rows.forEach(row => {
+    const day = isoDay(row.date);
+    const key = `${day}__${row.store}`;
+    if(!map.has(key)) map.set(key,{day: formatDay(day), store: row.store, attempts:0, value:0});
+    const ref = map.get(key);
+    ref.attempts += Number(row.attempts) || 1;
+    ref.value += Number(row.value) || 0;
+  });
+  return [...map.values()].sort((a,b)=>a.day.localeCompare(b.day));
+}
+function formatDay(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function renderTable(headers, rows){
+  if(!rows.length) return '<div class="empty">Nenhum dado encontrado para o filtro atual.</div>';
+  return `<div class="detail-table-wrap"><table><thead><tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${sanitize(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+function renderFeed(){
+  const rows = filterRows(parsed[state.metric]);
+  const titleBase = state.feed === 'diario' ? 'Feed diário' : 'Feed semanal';
+  document.getElementById('feedTitle').textContent = `${titleBase} · ${state.metric}`;
+  const grouped = groupRows(rows, state.feed);
+  const headers = state.feed === 'diario' ? ['Período','Registros','Valor','Turnos'] : ['Semana','Registros','Valor','Turnos'];
+  const body = grouped.map(item => [item.label, fmtInt(item.count), fmtMoney(item.value), fmtInt(item.turnos)]);
+  document.getElementById('feedWrap').innerHTML = renderTable(headers, body);
+  document.getElementById('feedFoot').textContent = `${fmtInt(grouped.length)} linha(s) no feed ${state.feed}.`;
+}
+function groupRows(rows, mode){
+  const map = new Map();
+  rows.forEach(row => {
+    const key = mode === 'diario' ? isoDay(row.date) : weekKey(row.date);
+    if(!map.has(key)) map.set(key,{label:mode === 'diario' ? formatDay(key) : `Semana de ${formatDay(key)}`,count:0,value:0,turnos:new Set()});
+    const ref = map.get(key);
+    ref.count += state.metric === 'negociacoes' ? (Number(row.attempts) || 1) : 1;
+    ref.value += Number(row.value) || 0;
+    ref.turnos.add(row.turno);
+  });
+  return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([,value]) => ({...value, turnos:value.turnos.size}));
+}
+function renderTrend(){
+  const rows = filterRows(parsed[state.metric]);
+  const grouped = groupRows(rows, 'diario');
+  document.getElementById('trendTitle').textContent = `Tendência diária · ${state.metric}`;
+  const colors = { cancelamentos:'#dd3a33', negociacoes:'#3e8edb', qualidade:'#43b06c', cardapio:'#7a56d1' };
+  if(trendChart) trendChart.destroy();
+  trendChart = new Chart(document.getElementById('trendChart'), {
+    type:'line',
+    data:{
+      labels:grouped.map(item => item.label),
+      datasets:[{
+        label:state.metric,
+        data:grouped.map(item => item.value || item.count),
+        borderColor:colors[state.metric] || '#3e8edb',
+        backgroundColor:(colors[state.metric] || '#3e8edb') + '22',
+        fill:true,
+        tension:.28,
+        borderWidth:3,
+        pointRadius:3,
+        pointHoverRadius:4
+      }]
+    },
+    options:{
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#64748b',maxRotation:0,minRotation:0},grid:{color:'rgba(148,163,184,.18)'}},
+        y:{ticks:{color:'#64748b'},grid:{color:'rgba(148,163,184,.18)'}}
+      }
+    }
+  });
+}
+function renderPeriodFoot(){
+  const range = currentPeriodRange();
+  const prev = previousPeriodRange();
+  document.getElementById('periodFoot').textContent = `Período selecionado: ${formatDay(isoDay(range.start))} até ${formatDay(isoDay(range.end))}. Comparação: ${formatDay(isoDay(prev.start))} até ${formatDay(isoDay(prev.end))}.`;
+}
+function render(){
+  renderStoreStrip();
+  renderSummary();
+  renderFeed();
+  renderTrend();
+  renderPeriodFoot();
+}
+function canonicalType(tipo){
+  const key = normalize(tipo);
+  if(key === 'chamados') return 'negociacoes';
+  return key;
+}
+async function fetchJson(url){
+  const res = await fetch(url, {cache:'no-store'});
+  if(!res.ok) throw new Error(`Falha ao ler ${url}`);
+  return res.json();
+}
+async function readReportRows(report){
+  if(report.chunked && report.chunks_path){
+    const chunks = await fetchJson(`${FIREBASE_URL}${report.chunks_path}.json`);
+    const list = Object.values(chunks || {}).sort((a,b)=>(a.chunk_index||0)-(b.chunk_index||0));
+    return list.flatMap(chunk => Array.isArray(chunk.rows) ? chunk.rows : []);
+  }
+  if(report.preview_json){
+    try{
+      const parsedPreview = typeof report.preview_json === 'string' ? JSON.parse(report.preview_json) : report.preview_json;
+      return Array.isArray(parsedPreview.rows) ? parsedPreview.rows : [];
+    }catch(err){ return []; }
+  }
+  return [];
+}
+function parseCancelamentosRows(rows){
+  return rows.map((row,index) => {
+    const date = parseDateFlex(fieldValue(row,['Data','Data do pedido','Dia','Data cancelamento','Data/Hora']));
+    const hour = getHour(fieldValue(row,['Hora','Hora do pedido','Horário','Horario']));
+    const cancelText = normalize(fieldValue(row,['Tipo cancelamento','Classificação','Tipo','Parcial/Total','Status cancelamento']));
+    const cancelType = cancelText.includes('parcial') ? 'parcial' : 'total';
+    const origemRaw = normalize(fieldValue(row,['Origem','Responsável','Responsavel','Origem cancelamento']));
+    return {
+      id:index + 1,
+      date,
+      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Store','Unidade','Merchant'])),
+      turno:getTurno(hour),
+      value:toNumber(fieldValue(row,['Valor cancelado','Valor','Total cancelado','Total'])),
+      quantity:Math.max(1, Math.round(toNumber(fieldValue(row,['Quantidade','Qtd','Qtde','Qtd itens'])) || 1)),
+      reason:String(fieldValue(row,['Motivo','Motivo cancelamento','Razão','Razao']) || 'Motivo não informado').trim(),
+      impactSuper: String(fieldValue(row,['Impacto no super','Impacto super','Super impactado']) || 'Não').trim(),
+      origin: origemRaw.includes('merchant') || origemRaw.includes('loja') ? 'Loja' : (origemRaw.includes('cliente') ? 'Cliente' : 'Loja'),
+      contestStatus: String(fieldValue(row,['Contestável','Contestavel','Situação contestação','Situacao contestacao','Contestação solicitada']) || 'Contestável').trim(),
+      cancelType,
+      item: String(fieldValue(row,['Item','Nome item','Produto','Itens cancelados']) || 'Item não informado').trim(),
+      attempts: Math.max(0, Math.round(toNumber(fieldValue(row,['Tentativas','Tentativas negociação','Tentativas negociacao'])) || 0))
+    };
+  }).filter(row => row.date);
+}
+function parseNegotiationRows(rows){
+  return rows.map((row,index) => {
+    const date = parseDateFlex(fieldValue(row,['Data','Data do pedido','Dia','Data/Hora']));
+    const hour = getHour(fieldValue(row,['Hora','Hora do pedido','Horário','Horario']));
+    const attempts = Math.max(1, Math.round(toNumber(fieldValue(row,['Tentativas','Qtd tentativas','Quantidade tentativas'])) || 1));
+    return {
+      id:index + 1,
+      date,
+      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Store','Unidade','Merchant'])),
+      turno:getTurno(hour),
+      attempts,
+      value:toNumber(fieldValue(row,['Valor recuperado','Valor','Valor negociação','Valor negociado']))
+    };
+  }).filter(row => row.date);
+}
+function parseQualityRows(rows){
+  return rows.map((row,index) => {
+    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data/Hora']));
+    const hour = getHour(fieldValue(row,['Hora','Horário','Horario']));
+    return {
+      id:index + 1,
+      date,
+      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Store','Unidade'])),
+      turno:getTurno(hour),
+      value:toNumber(fieldValue(row,['Quantidade','Qtd','Ocorrências','Ocorrencias'])) || 1,
+      score:toNumber(fieldValue(row,['Nota','Score','Avaliação','Avaliacao']))
+    };
+  }).filter(row => row.date);
+}
+function parseCardapioRows(rows){
+  return rows.map((row,index) => {
+    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data/Hora']));
+    const hour = getHour(fieldValue(row,['Hora','Horário','Horario']));
+    return {
+      id:index + 1,
+      date,
+      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Store','Unidade'])),
+      turno:getTurno(hour),
+      quantity:Math.max(1, Math.round(toNumber(fieldValue(row,['Quantidade','Qtd','Qtde'])) || 1)),
+      item:String(fieldValue(row,['Item','Produto','Nome item']) || 'Item não informado').trim(),
+      value:toNumber(fieldValue(row,['Valor','Preço','Preco']))
+    };
+  }).filter(row => row.date);
+}
+async function loadData(){
+  document.getElementById('statusPill').textContent = '⏳ Carregando base operacional...';
+  const reportsObj = await fetchJson(REPORTS_URL);
+  const reports = Object.entries(reportsObj || {}).map(([id, value]) => ({id, ...value}))
+    .filter(report => report.status !== 'deletado' && report.status !== 'substituido')
+    .filter(report => OP_TYPES.includes(canonicalType(report.tipo)))
+    .sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
+
+  if(!reports.length){
+    document.getElementById('statusPill').textContent = '⚠️ Nenhum relatório operacional ativo encontrado';
+    render();
+    return;
+  }
+
+  latestStamp = reports[0].timestamp_upload || Date.now();
+  const reportsByBatch = new Map();
+  reports.forEach(report => {
+    const batch = report.batch_id || `legacy-${canonicalType(report.tipo)}`;
+    if(!reportsByBatch.has(batch)) reportsByBatch.set(batch, []);
+    reportsByBatch.get(batch).push(report);
+  });
+  const pickedBatch = [...reportsByBatch.entries()].sort((a,b)=>Math.max(...b[1].map(r=>r.timestamp_upload||0)) - Math.max(...a[1].map(r=>r.timestamp_upload||0)))[0];
+  latestBatchId = pickedBatch ? pickedBatch[0] : '';
+  const selectedReports = pickedBatch ? pickedBatch[1] : reports;
+
+  parsed.cancelamentos = [];
+  parsed.negociacoes = [];
+  parsed.qualidade = [];
+  parsed.cardapio = [];
+
+  for(const report of selectedReports){
+    const rows = await readReportRows(report);
+    const type = canonicalType(report.tipo);
+    if(type === 'cancelamentos') parsed.cancelamentos.push(...parseCancelamentosRows(rows));
+    if(type === 'negociacoes') parsed.negociacoes.push(...parseNegotiationRows(rows));
+    if(type === 'qualidade') parsed.qualidade.push(...parseQualityRows(rows));
+    if(type === 'cardapio') parsed.cardapio.push(...parseCardapioRows(rows));
+  }
+
+  document.getElementById('statusPill').textContent = `✅ Base operacional lida em ${new Date(latestStamp).toLocaleString('pt-BR')} · lote ${latestBatchId || 'legado'}`;
+  render();
+}
+
+document.getElementById('metricButtons').addEventListener('click', event => {
+  const btn = event.target.closest('[data-metric]');
+  if(!btn) return;
+  state.metric = btn.dataset.metric;
+  document.querySelectorAll('#metricButtons .btn-chip').forEach(node => node.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+});
+document.getElementById('turnoButtons').addEventListener('click', event => {
+  const btn = event.target.closest('[data-turno]');
+  if(!btn) return;
+  state.turno = btn.dataset.turno;
+  document.querySelectorAll('#turnoButtons .btn-chip').forEach(node => node.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+});
+document.getElementById('feedButtons').addEventListener('click', event => {
+  const btn = event.target.closest('[data-feed]');
+  if(!btn) return;
+  state.feed = btn.dataset.feed;
+  document.querySelectorAll('#feedButtons .btn-chip').forEach(node => node.classList.remove('active'));
+  btn.classList.add('active');
+  renderFeed();
+});
+document.getElementById('modalClose').addEventListener('click', () => document.getElementById('modalBg').classList.remove('open'));
+document.getElementById('modalBg').addEventListener('click', event => { if(event.target.id === 'modalBg') document.getElementById('modalBg').classList.remove('open'); });
+
+render();
+loadData().catch(error => {
+  console.error(error);
+  document.getElementById('statusPill').textContent = '❌ Erro ao carregar a base operacional';
+  document.getElementById('feedWrap').innerHTML = '<div class="empty">Não foi possível ler os relatórios operacionais. Reenvie a carga na página de uploads.</div>';
+});
+</script>
+</body>
+</html>

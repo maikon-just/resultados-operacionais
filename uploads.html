@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+  <title>Uploads — Just Burger</title>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <script src="js/firebase_v2.js?v=20260414"></script>
+  <script src="js/auth-guard.js?v=20260414"></script>
+  <script>
+  (function(){
+    const PAPEIS_OK  = ['admin','lider','uploader','financeiro','aux_financeiro'];
+    const SAFE_HOSTS = ['localhost','127.0.0.1','gitpod','preview','genspark'];
+    const isSafe = SAFE_HOSTS.some(s => (location.hostname||'').includes(s)) || location.protocol === 'blob:';
+    try {
+      const params = new URLSearchParams(location.search);
+      const token = params.get('_jbs');
+      if (token) {
+        const json = decodeURIComponent(escape(atob(decodeURIComponent(token))));
+        const sess = JSON.parse(json);
+        if (sess && sess.username && sess.papel) {
+          if (typeof JbAuth !== 'undefined') JbAuth.save(sess);
+          else sessionStorage.setItem('jb_user', JSON.stringify(sess));
+        }
+        params.delete('_jbs'); params.delete('_cb');
+        history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params.toString() : ''));
+      }
+    } catch(e) {}
+    let user = null;
+    try {
+      if (typeof JbAuth !== 'undefined') user = JbAuth.read();
+      else user = JSON.parse(sessionStorage.getItem('jb_user') || 'null');
+    } catch(e) {}
+    if (!user && !isSafe) { location.replace('portal.html?_acesso=negado'); return; }
+    if (user && !PAPEIS_OK.includes(user.papel)) {
+      if (typeof JbAuth !== 'undefined') JbAuth.logout('portal.html?_acesso=negado');
+      else { sessionStorage.clear(); location.replace('portal.html?_acesso=negado'); }
+      return;
+    }
+  })();
+  </script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#6e86ad;--bg2:#90a7cb;--card:rgba(255,255,255,.2);--line:rgba(255,255,255,.26);
+      --text:#f8fbff;--muted:rgba(255,255,255,.84);--blue:#6b93ff;--green:#38c172;--orange:#f5a623;
+      --red:#ef6b6b;--purple:#9a7cff;--teal:#33c5b7;--shadow:0 16px 36px rgba(66,84,120,.18)
+    }
+    body{font-family:'Nunito',system-ui,sans-serif;background:linear-gradient(180deg,#6f86ad 0%,#92a9cc 100%);color:var(--text);min-height:100vh;padding-bottom:60px}
+    .bg-glow{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 52% 34% at 18% 18%, rgba(107,147,255,.14), transparent 70%),radial-gradient(ellipse 42% 30% at 82% 78%, rgba(245,166,35,.1), transparent 70%)}
+    .page{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:0 16px}
+    .header{display:flex;align-items:center;gap:14px;padding:22px 0 18px;border-bottom:1px solid var(--line);margin-bottom:22px}
+    .btn-back{width:42px;height:42px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--text);display:grid;place-items:center;text-decoration:none;cursor:pointer}
+    .header-copy{flex:1}
+    .header-copy h1{font-size:22px;font-weight:900;line-height:1.15}
+    .header-copy p{margin-top:4px;font-size:12px;color:var(--muted)}
+    .user-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:12px;font-weight:800;color:var(--muted)}
+    .user-pill i{color:var(--blue)}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow);margin-bottom:18px}
+    .panel-title{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#eef4ff}
+    .panel-title i{color:var(--blue)}
+    .upload-zone{position:relative;border:2px dashed rgba(99,102,241,.45);border-radius:18px;padding:34px 18px;text-align:center;cursor:pointer;background:rgba(255,255,255,.08);transition:.2s ease}
+    .upload-zone.dragover,.upload-zone:hover{border-color:var(--blue);background:rgba(255,255,255,.14);transform:translateY(-1px)}
+    .upload-zone input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+    .upload-icon{font-size:42px;margin-bottom:12px}
+    .upload-main{font-size:16px;font-weight:900}
+    .upload-sub{font-size:12px;color:var(--muted);margin-top:6px}
+    .formats{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:11px;font-weight:900;border:1px solid transparent}
+    .chip.blue{background:rgba(77,124,254,.18);border-color:rgba(77,124,254,.28);color:#eef4ff}
+    .chip.green{background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.26);color:#bbf7d0}
+    .chip.orange{background:rgba(245,158,11,.16);border-color:rgba(245,158,11,.26);color:#fde68a}
+    .chip.purple{background:rgba(139,92,246,.16);border-color:rgba(139,92,246,.26);color:#ddd6fe}
+    .form-grid{display:grid;grid-template-columns:1.15fr .85fr .85fr;gap:14px;margin-top:18px}
+    .field{display:flex;flex-direction:column;gap:7px}
+    .field label{font-size:12px;font-weight:800;color:var(--muted)}
+    .field select,.field input{height:44px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);padding:0 14px;font:700 14px 'Nunito',system-ui,sans-serif;outline:none}
+    .field select option{background:#6d84ab;color:#fff}
+    .field-note{font-size:11px;color:var(--muted);margin-top:8px}
+    .batch-box{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px;padding:14px;border-radius:16px;background:rgba(20,184,166,.09);border:1px solid rgba(20,184,166,.18)}
+    .batch-box strong{display:block;font-size:13px}
+    .batch-box span{display:block;font-size:12px;color:#eef6ff;margin-top:4px}
+    .mini-btn{border:1px solid var(--line);background:rgba(255,255,255,.12);color:#fff;padding:10px 14px;border-radius:12px;font:800 12px 'Nunito',system-ui,sans-serif;cursor:pointer}
+    .mini-btn:hover{background:rgba(255,255,255,.12)}
+    .preview{display:none;margin-top:18px}
+    .preview-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}
+    .preview-title{font-size:13px;font-weight:900;color:#eef4ff}
+    .preview-meta{font-size:11px;color:var(--muted)}
+    .table-wrap{overflow:auto;border-radius:14px;border:1px solid var(--line)}
+    table{width:100%;border-collapse:collapse;min-width:680px}
+    th,td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.12);text-align:left}
+    th{position:sticky;top:0;background:rgba(107,147,255,.14);color:#dbeafe;font-size:11px;text-transform:uppercase;letter-spacing:.7px}
+    td{font-size:12px;color:#eff6ff;font-weight:700}
+    tr:hover td{background:rgba(255,255,255,.03)}
+    .progress{display:none;margin-top:18px}
+    .progress-bar{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+    .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width .35s ease}
+    .progress-text{font-size:12px;color:var(--muted);margin-top:8px;text-align:center;font-weight:800}
+    .submit{margin-top:18px;width:100%;height:48px;border:0;border-radius:16px;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font:900 15px 'Nunito',system-ui,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 16px 28px rgba(77,124,254,.28)}
+    .submit:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+    .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+    .filter-btn{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--muted);font:800 12px 'Nunito',system-ui,sans-serif;cursor:pointer}
+    .filter-btn.active,.filter-btn:hover{color:#fff;background:rgba(77,124,254,.18);border-color:rgba(77,124,254,.28)}
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.08)}
+    .item-icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:18px;flex:0 0 46px}
+    .icon-xlsx{background:rgba(34,197,94,.16)} .icon-csv{background:rgba(107,147,255,.14)} .icon-xls{background:rgba(245,158,11,.16)}
+    .item-main{flex:1;min-width:0}
+    .item-main strong{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+    .meta span{font-size:11px;color:var(--muted);font-weight:800}
+    .badge{font-size:10px;font-weight:900;padding:3px 8px;border-radius:999px;text-transform:uppercase;border:1px solid transparent}
+    .badge-financeiro{background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.26);color:#bbf7d0}
+    .badge-motoboys{background:rgba(245,158,11,.16);border-color:rgba(245,158,11,.26);color:#fde68a}
+    .badge-cancelamentos{background:rgba(239,68,68,.16);border-color:rgba(239,68,68,.26);color:#fecaca}
+    .badge-negociacoes{background:rgba(107,147,255,.14);border-color:rgba(77,124,254,.26);color:#dbeafe}
+    .badge-qualidade{background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.26);color:#bbf7d0}
+    .badge-cardapio{background:rgba(139,92,246,.16);border-color:rgba(139,92,246,.26);color:#ddd6fe}
+    .item-actions{display:flex;gap:8px}
+    .icon-btn{width:36px;height:36px;border-radius:12px;border:0;cursor:pointer;display:grid;place-items:center}
+    .view-btn{background:rgba(77,124,254,.18);color:#dbeafe}
+    .del-btn{background:rgba(239,68,68,.16);color:#fecaca}
+    .empty{padding:38px 20px;text-align:center;color:var(--muted);font-weight:800}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(67,83,113,.96);color:#fff;border:1px solid rgba(255,255,255,.22);padding:12px 18px;border-radius:999px;font-size:13px;font-weight:900;opacity:0;transition:.25s ease;z-index:90;max-width:92vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:80}
+    .modal-bg.open{display:flex}
+    .modal{width:min(900px,100%);max-height:84vh;overflow:hidden;background:#7b93b9;border:1px solid var(--line);border-radius:22px}
+    .modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}
+    .modal-body{padding:16px 18px;overflow:auto;max-height:calc(84vh - 72px)}
+    @media(max-width:760px){.page{padding:0 12px}.header{flex-wrap:wrap}.form-grid{grid-template-columns:1fr}.item{align-items:flex-start}.item-actions{flex-direction:column}.panel{padding:16px}}
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="page">
+    <div class="header">
+      <a href="index.html" class="btn-back" title="Voltar">←</a>
+      <div class="header-copy">
+        <h1>Central única de uploads</h1>
+        <p>Área unificada para financeiro, motoboys, cancelamentos, negociações, qualidade e cardápio. O erro de conexão foi contornado com envio direto pela API do Firebase e tentativas automáticas de recuperação.</p>
+      </div>
+      <div class="user-pill"><i class="fa-solid fa-user"></i><span id="userLabel">Sessão ativa</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><i class="fa-solid fa-cloud-arrow-up"></i>Enviar relatório</div>
+      <div class="upload-zone" id="uploadZone">
+        <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" />
+        <div class="upload-icon">📁</div>
+        <div class="upload-main">Arraste ou selecione um arquivo</div>
+        <div class="upload-sub">A mesma área atende os quatro relatórios operacionais e também os arquivos de financeiro e motoboys.</div>
+        <div class="formats">
+          <span class="chip blue">XLSX</span>
+          <span class="chip green">XLS</span>
+          <span class="chip orange">CSV</span>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Tipo do relatório</label>
+          <select id="tipoInput">
+            <option value="financeiro">Financeiro</option>
+            <option value="motoboys">Motoboys</option>
+            <option value="cancelamentos">Cancelamentos</option>
+            <option value="negociacoes">Negociações / Chamados</option>
+            <option value="qualidade">Qualidade</option>
+            <option value="cardapio">Cardápio</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Data de referência</label>
+          <input id="dataInput" type="date" />
+        </div>
+        <div class="field">
+          <label>Arquivo selecionado</label>
+          <input id="fileNameInput" type="text" readonly placeholder="Nenhum arquivo" />
+        </div>
+      </div>
+      <div class="field-note">Para relatórios operacionais, a primeira carga de um novo lote limpa a base anterior e reaproveita o mesmo lote para os próximos arquivos até você iniciar uma nova carga.</div>
+
+      <div class="batch-box" id="batchBox">
+        <div>
+          <strong id="batchTitle">Lote operacional atual</strong>
+          <span id="batchInfo">Nenhum lote operacional iniciado.</span>
+        </div>
+        <button class="mini-btn" id="newBatchBtn" type="button">Iniciar nova carga operacional</button>
+      </div>
+
+      <div class="preview" id="previewWrap">
+        <div class="preview-head">
+          <div class="preview-title">Pré-visualização</div>
+          <div class="preview-meta" id="previewMeta">0 colunas · 0 linhas</div>
+        </div>
+        <div class="table-wrap" id="previewTableWrap"></div>
+      </div>
+
+      <div class="progress" id="progressWrap">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-text" id="progressText">Preparando envio...</div>
+      </div>
+
+      <button class="submit" id="submitBtn" type="button" disabled>
+        <i class="fa-solid fa-paper-plane"></i>
+        <span>Enviar relatório</span>
+      </button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><i class="fa-solid fa-database"></i>Relatórios enviados</div>
+      <div class="filters" id="filterBar">
+        <button class="filter-btn active" data-filter="todos">Todos</button>
+        <button class="filter-btn" data-filter="financeiro">Financeiro</button>
+        <button class="filter-btn" data-filter="motoboys">Motoboys</button>
+        <button class="filter-btn" data-filter="cancelamentos">Cancelamentos</button>
+        <button class="filter-btn" data-filter="negociacoes">Negociações</button>
+        <button class="filter-btn" data-filter="qualidade">Qualidade</button>
+        <button class="filter-btn" data-filter="cardapio">Cardápio</button>
+      </div>
+      <div class="list" id="reportList"></div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modalBg">
+    <div class="modal">
+      <div class="modal-head">
+        <strong id="modalTitle">Prévia</strong>
+        <button class="mini-btn" id="closeModalBtn" type="button">Fechar</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+<script>
+const FIREBASE_URL = 'https://justburger-producao-e9b27-default-rtdb.firebaseio.com';
+const REPORTS_PATH = '/relatorios_diarios';
+const CHUNKS_PATH = '/relatorios_diarios_chunks';
+const OP_TYPES = ['cancelamentos','negociacoes','qualidade','cardapio','chamados'];
+const BATCH_KEY = 'jb_operational_batch_id';
+let selectedFile = null;
+let parsedRows = [];
+let parsedCols = [];
+let reportCache = [];
+let currentFilter = 'todos';
+
+const fileInput = document.getElementById('fileInput');
+const fileNameInput = document.getElementById('fileNameInput');
+const tipoInput = document.getElementById('tipoInput');
+const dataInput = document.getElementById('dataInput');
+const previewWrap = document.getElementById('previewWrap');
+const previewMeta = document.getElementById('previewMeta');
+const previewTableWrap = document.getElementById('previewTableWrap');
+const submitBtn = document.getElementById('submitBtn');
+const progressWrap = document.getElementById('progressWrap');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+
+function showToast(message){
+  const el = document.getElementById('toast');
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+function normalize(value){
+  return String(value == null ? '' : value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+}
+function sanitize(text){
+  return String(text == null ? '' : text).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function sleep(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+function getSessionUser(){
+  try{
+    if(typeof JbAuth !== 'undefined' && JbAuth.read) return JbAuth.read();
+    return JSON.parse(sessionStorage.getItem('jb_user') || 'null');
+  }catch(err){ return null; }
+}
+function badgeClass(tipo){ return `badge-${normalize(tipo)}`; }
+function iconClass(name){
+  const lower = String(name || '').toLowerCase();
+  if(lower.endsWith('.csv')) return 'icon-csv';
+  if(lower.endsWith('.xls')) return 'icon-xls';
+  return 'icon-xlsx';
+}
+function currentBatchId(){ return localStorage.getItem(BATCH_KEY) || ''; }
+function refreshBatchInfo(){
+  const batch = currentBatchId();
+  document.getElementById('batchInfo').textContent = batch ? `Lote ${batch} em andamento. Os próximos uploads operacionais entram neste mesmo lote.` : 'Nenhum lote operacional iniciado.';
+}
+function startNewBatch(forceId = ''){
+  const id = forceId || `op-${Date.now()}`;
+  localStorage.setItem(BATCH_KEY, id);
+  refreshBatchInfo();
+  return id;
+}
+function clearBatch(){
+  localStorage.removeItem(BATCH_KEY);
+  refreshBatchInfo();
+}
+function canonicalType(tipo){
+  const key = normalize(tipo);
+  return key === 'chamados' ? 'negociacoes' : key;
+}
+async function apiRequest(path, options = {}, retry = 1){
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 25000);
+  try {
+    const response = await fetch(`${FIREBASE_URL}${path}`, {
+      cache:'no-store',
+      headers:{'Content-Type':'application/json', ...(options.headers || {})},
+      ...options,
+      signal:controller.signal
+    });
+    clearTimeout(timer);
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
+  } catch(error) {
+    clearTimeout(timer);
+    if(retry > 0){
+      await sleep(800);
+      return apiRequest(path, options, retry - 1);
+    }
+    throw error;
+  }
+}
+async function fetchReports(){
+  const obj = await apiRequest(`${REPORTS_PATH}.json`, {method:'GET'}).catch(() => ({}));
+  reportCache = Object.entries(obj || {}).map(([id, value]) => ({id, ...value}))
+    .filter(item => item.status !== 'deletado')
+    .sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
+  renderList();
+}
+function chunkRows(rows, size = 500){
+  const chunks = [];
+  for(let i=0;i<rows.length;i+=size) chunks.push(rows.slice(i, i + size));
+  return chunks;
+}
+function updateProgress(percent, text){
+  progressWrap.style.display = 'block';
+  progressFill.style.width = `${percent}%`;
+  progressText.textContent = text;
+}
+function resetProgress(){
+  progressFill.style.width = '0%';
+  progressText.textContent = '';
+  progressWrap.style.display = 'none';
+}
+function renderPreview(){
+  if(!parsedRows.length){
+    previewWrap.style.display = 'none';
+    return;
+  }
+  previewWrap.style.display = 'block';
+  previewMeta.textContent = `${parsedCols.length} colunas · ${parsedRows.length} linhas`;
+  const sample = parsedRows.slice(0,8);
+  previewTableWrap.innerHTML = `<div class="table-wrap"><table><thead><tr>${parsedCols.map(col => `<th>${sanitize(col)}</th>`).join('')}</tr></thead><tbody>${sample.map(row => `<tr>${parsedCols.map(col => `<td>${sanitize(row[col] == null ? '' : row[col])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+function resetFileState(){
+  selectedFile = null;
+  parsedRows = [];
+  parsedCols = [];
+  fileInput.value = '';
+  fileNameInput.value = '';
+  previewWrap.style.display = 'none';
+  submitBtn.disabled = true;
+}
+function inferUploadIdentity(rows, tipo, fileName){
+  const first = rows[0] || {};
+  const keyCols = Object.keys(first).slice(0,4).join('|');
+  return `${canonicalType(tipo)}::${normalize(fileName || '')}::${normalize(keyCols)}`;
+}
+async function markPreviousOperationalAsReplaced(batchIdToKeep = ''){
+  const activeOps = reportCache.filter(item => item.status !== 'substituido' && OP_TYPES.includes(canonicalType(item.tipo)) && (!batchIdToKeep || item.batch_id !== batchIdToKeep));
+  for(const item of activeOps){
+    await apiRequest(`${REPORTS_PATH}/${item.id}.json`, {method:'PATCH', body:JSON.stringify({status:'substituido', substituido_em:Date.now()})});
+  }
+}
+async function saveChunks(reportId, rows){
+  const basePath = `${CHUNKS_PATH}/${reportId}`;
+  const chunks = chunkRows(rows);
+  for(let i=0;i<chunks.length;i++){
+    await apiRequest(`${basePath}/${i}.json`, {method:'PUT', body:JSON.stringify({chunk_index:i, rows:chunks[i]})});
+  }
+  return { basePath, totalChunks: chunks.length };
+}
+async function processFile(file){
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if(!['xlsx','xls','csv'].includes(ext)){
+    showToast('Formato inválido. Use XLSX, XLS ou CSV.');
+    return;
+  }
+  selectedFile = file;
+  fileNameInput.value = file.name;
+  const buffer = await file.arrayBuffer();
+  const wb = XLSX.read(buffer, {type:'array'});
+  const firstSheet = wb.SheetNames[0];
+  const sheet = wb.Sheets[firstSheet];
+  parsedRows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+  parsedCols = parsedRows.length ? Object.keys(parsedRows[0]) : [];
+  renderPreview();
+  submitBtn.disabled = !parsedRows.length;
+  showToast(`${parsedRows.length} linha(s) carregadas para prévia.`);
+}
+async function sendReport(){
+  if(!selectedFile || !parsedRows.length){ showToast('Selecione um arquivo válido antes de enviar.'); return; }
+  if(!dataInput.value){ showToast('Informe a data de referência.'); return; }
+  const tipo = canonicalType(tipoInput.value);
+  const user = getSessionUser() || {username:'sistema', papel:'local'};
+  submitBtn.disabled = true;
+  updateProgress(10, 'Validando arquivo e preparando envio...');
+  let batchId = '';
+  const isOperational = OP_TYPES.includes(tipo);
+  try {
+    if(isOperational){
+      batchId = currentBatchId();
+      const needsReset = !batchId;
+      if(needsReset){
+        batchId = startNewBatch();
+        updateProgress(22, 'Limpando lote operacional anterior...');
+        await markPreviousOperationalAsReplaced(batchId);
+        await fetchReports();
+      }
+    }
+    updateProgress(40, 'Criando registro principal...');
+    const reportPayload = {
+      tipo,
+      status:'ativo',
+      batch_scope:isOperational ? 'operacional' : tipo,
+      batch_id:isOperational ? batchId : '',
+      data_referencia:dataInput.value,
+      nome_arquivo:selectedFile.name,
+      total_linhas:parsedRows.length,
+      enviado_por:user.username || 'sistema',
+      papel_envio:user.papel || '',
+      timestamp_upload:Date.now(),
+      upload_identity:inferUploadIdentity(parsedRows, tipo, selectedFile.name),
+      capture_mode:'full_replace',
+      chunked:true,
+      preview_json:JSON.stringify({columns:parsedCols, rows:parsedRows.slice(0,20)})
+    };
+    const created = await apiRequest(`${REPORTS_PATH}.json`, {method:'POST', body:JSON.stringify(reportPayload)});
+    updateProgress(64, 'Enviando blocos do arquivo...');
+    const chunkInfo = await saveChunks(created.name, parsedRows);
+    updateProgress(86, 'Finalizando metadados...');
+    await apiRequest(`${REPORTS_PATH}/${created.name}.json`, {method:'PATCH', body:JSON.stringify({chunks_path:`${CHUNKS_PATH}/${created.name}`, total_chunks:chunkInfo.totalChunks})});
+    updateProgress(100, 'Upload concluído com sucesso.');
+    if(!isOperational) clearBatch();
+    showToast(`Upload concluído: ${selectedFile.name}`);
+    await fetchReports();
+    resetFileState();
+    setTimeout(resetProgress, 900);
+  } catch(error) {
+    console.error(error);
+    resetProgress();
+    submitBtn.disabled = false;
+    showToast('Falha no envio. A conexão foi restabelecida mas o arquivo precisa ser reenviado.');
+    return;
+  }
+  submitBtn.disabled = false;
+}
+function renderList(){
+  const list = document.getElementById('reportList');
+  const visible = reportCache.filter(item => currentFilter === 'todos' || canonicalType(item.tipo) === currentFilter);
+  if(!visible.length){
+    list.innerHTML = '<div class="empty">Nenhum relatório encontrado para este filtro.</div>';
+    return;
+  }
+  list.innerHTML = visible.map(item => `
+    <div class="item">
+      <div class="item-icon ${iconClass(item.nome_arquivo)}">📄</div>
+      <div class="item-main">
+        <strong>${sanitize(item.nome_arquivo || 'Arquivo sem nome')}</strong>
+        <div class="meta">
+          <span><span class="badge ${badgeClass(item.tipo)}">${sanitize(item.tipo || 'tipo')}</span></span>
+          <span>Referência ${sanitize(item.data_referencia || '—')}</span>
+          <span>${sanitize(item.enviado_por || 'sistema')}</span>
+          <span>${new Date(item.timestamp_upload || Date.now()).toLocaleString('pt-BR')}</span>
+          <span>${(item.total_linhas || 0).toLocaleString('pt-BR')} linhas</span>
+          ${item.batch_id ? `<span>Lote ${sanitize(item.batch_id)}</span>` : ''}
+        </div>
+      </div>
+      <div class="item-actions">
+        <button class="icon-btn view-btn" data-view="${item.id}" title="Visualizar">👁</button>
+        <button class="icon-btn del-btn" data-delete="${item.id}" title="Excluir">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+async function openPreview(reportId){
+  const report = reportCache.find(item => item.id === reportId);
+  if(!report) return;
+  document.getElementById('modalTitle').textContent = report.nome_arquivo || 'Prévia';
+  let rows = [];
+  if(report.chunked && report.chunks_path){
+    const chunks = await apiRequest(`/${report.chunks_path.replace(/^\//,'')}.json`, {method:'GET'}).catch(() => ({}));
+    rows = Object.values(chunks || {}).sort((a,b)=>(a.chunk_index||0)-(b.chunk_index||0)).flatMap(chunk => Array.isArray(chunk.rows) ? chunk.rows : []);
+  } else if(report.preview_json){
+    try {
+      const parsed = typeof report.preview_json === 'string' ? JSON.parse(report.preview_json) : report.preview_json;
+      rows = parsed.rows || [];
+    } catch(err){ rows = []; }
+  }
+  const cols = rows.length ? Object.keys(rows[0]) : [];
+  document.getElementById('modalBody').innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr>${cols.map(col => `<th>${sanitize(col)}</th>`).join('')}</tr></thead><tbody>${rows.slice(0,40).map(row => `<tr>${cols.map(col => `<td>${sanitize(row[col])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '<div class="empty">Sem dados de pré-visualização.</div>';
+  document.getElementById('modalBg').classList.add('open');
+}
+async function deleteReport(reportId){
+  const report = reportCache.find(item => item.id === reportId);
+  if(!report) return;
+  if(!confirm(`Excluir ${report.nome_arquivo}?`)) return;
+  await apiRequest(`${REPORTS_PATH}/${reportId}.json`, {method:'PATCH', body:JSON.stringify({status:'deletado', deletado_em:Date.now()})});
+  showToast('Relatório movido para status deletado.');
+  await fetchReports();
+}
+
+fileInput.addEventListener('change', event => {
+  const file = event.target.files && event.target.files[0];
+  if(file) processFile(file);
+});
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', event => { event.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', event => {
+  event.preventDefault();
+  uploadZone.classList.remove('dragover');
+  const file = event.dataTransfer.files && event.dataTransfer.files[0];
+  if(file) processFile(file);
+});
+document.getElementById('submitBtn').addEventListener('click', sendReport);
+document.getElementById('newBatchBtn').addEventListener('click', () => { clearBatch(); startNewBatch(); showToast('Novo lote operacional iniciado.'); });
+document.getElementById('filterBar').addEventListener('click', event => {
+  const btn = event.target.closest('[data-filter]');
+  if(!btn) return;
+  currentFilter = btn.dataset.filter;
+  document.querySelectorAll('#filterBar .filter-btn').forEach(node => node.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+});
+document.getElementById('reportList').addEventListener('click', event => {
+  const viewBtn = event.target.closest('[data-view]');
+  const delBtn = event.target.closest('[data-delete]');
+  if(viewBtn) openPreview(viewBtn.dataset.view);
+  if(delBtn) deleteReport(delBtn.dataset.delete);
+});
+document.getElementById('closeModalBtn').addEventListener('click', () => document.getElementById('modalBg').classList.remove('open'));
+document.getElementById('modalBg').addEventListener('click', event => { if(event.target.id === 'modalBg') document.getElementById('modalBg').classList.remove('open'); });
+
+(function init(){
+  const now = new Date();
+  dataInput.value = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 0).toISOString().slice(0,10);
+  const user = getSessionUser();
+  if(user && user.username) document.getElementById('userLabel').textContent = `${user.username} · ${user.papel || 'perfil'}`;
+  refreshBatchInfo();
+  fetchReports().catch(error => {
+    console.error(error);
+    showToast('Não foi possível carregar a lista de relatórios.');
+  });
+})();
+</script>
+</body>
+</html>
