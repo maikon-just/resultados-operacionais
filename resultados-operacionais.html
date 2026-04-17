@@ -34,22 +34,23 @@
     .header p{margin:8px 0 0;color:var(--muted);font-size:13px;font-weight:600;line-height:1.6}
     .status-pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 20px rgba(15,23,42,.06);font-weight:800;font-size:12px;color:#334155}
     .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
-    .toolbar{padding:14px 16px;margin-bottom:16px;display:grid;grid-template-columns:minmax(0,1.8fr) minmax(320px,.9fr);gap:14px;align-items:end}
-    .toolbar-row{display:grid;grid-template-columns:minmax(360px,1.35fr) minmax(180px,.8fr) minmax(190px,.72fr) minmax(170px,.62fr);gap:12px;align-items:end;margin-bottom:0!important}
-    .period-controls{display:flex;gap:10px;align-items:end;flex-wrap:nowrap;margin-bottom:0;padding-top:0;border-top:none;justify-content:flex-end}
+    .toolbar{padding:14px 16px;margin-bottom:16px}
+    .toolbar-row{display:grid;grid-template-columns:minmax(340px,1.55fr) minmax(170px,.78fr) minmax(180px,.86fr) minmax(160px,.6fr) minmax(150px,.54fr);gap:12px;align-items:end}
+    .period-controls{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin:10px 0 0;padding-top:10px;border-top:1px solid #edf3fb}
     .period-field{display:flex;flex-direction:column;gap:6px}
     .period-input,.period-select{height:42px;border:1px solid var(--line);border-radius:12px;background:#fbfdff;color:#0f172a;padding:0 12px;font:700 13px 'Montserrat',system-ui,sans-serif;outline:none;min-width:150px}
     .custom-range{display:none;gap:10px;align-items:end;flex-wrap:wrap}
     .custom-range.show{display:flex}
     .toolbar-label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#64748b;margin-bottom:6px}
-    .metric-buttons,.turno-buttons,.feed-buttons{display:flex;gap:8px;flex-wrap:nowrap;align-items:center}
-    .btn-chip{border:1px solid var(--line);background:#fff;color:#334155;border-radius:14px;padding:10px 12px;font:800 11px 'Montserrat',system-ui,sans-serif;cursor:pointer;transition:.18s ease;white-space:nowrap;flex:0 0 auto}
+    .metric-buttons,.turno-buttons,.feed-buttons{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .btn-chip{border:1px solid var(--line);background:#fff;color:#334155;border-radius:14px;padding:10px 12px;font:800 11px 'Montserrat',system-ui,sans-serif;cursor:pointer;transition:.18s ease;white-space:nowrap;flex:0 0 auto;min-width:58px;text-align:center}
     .btn-chip:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(15,23,42,.08)}
     .btn-chip.active{border-color:transparent;color:#fff;box-shadow:0 10px 24px rgba(15,23,42,.14)}
     .btn-chip.metric-negociacoes.active{background:linear-gradient(135deg,var(--blue),#4d7cfe)}
     .btn-chip.metric-cancelamentos.active{background:linear-gradient(135deg,var(--red),#f0645a)}
     .btn-chip.metric-qualidade.active{background:linear-gradient(135deg,var(--green),#10b981)}
     .btn-chip.metric-cardapio.active{background:linear-gradient(135deg,var(--purple),#8b5cf6)}
+    .turno-buttons .btn-chip.active{background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:#5b21b6;border-color:#c4b5fd;box-shadow:0 10px 24px rgba(124,58,237,.14)}
     .btn-chip.feed.active{background:linear-gradient(135deg,var(--teal),#06b6d4);color:#fff;border-color:transparent}
     .store-strip-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:4px;margin-bottom:16px}
     .store-strip{display:grid;grid-template-columns:repeat(6,minmax(170px,1fr));gap:12px;min-width:1120px}
@@ -81,11 +82,12 @@
     .summary-card.teal{background:linear-gradient(135deg,var(--teal),#6edbd7)}
     .summary-card.indigo{background:linear-gradient(135deg,var(--indigo),#9cabff)}
     .summary-card.rose{background:linear-gradient(135deg,var(--rose),#f3a0bb)}
-    .content-grid{display:grid;grid-template-columns:1.3fr .9fr;gap:16px;margin-bottom:16px}
+    .content-grid{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px}
     .card{padding:16px}
     .card h3{margin:0 0 14px;font-size:12px;font-weight:800;letter-spacing:.75px;text-transform:uppercase;color:#334155}
     .chart-wrap{height:330px}
     .feed-table-wrap,.detail-table-wrap{overflow:auto;border-radius:16px;border:1px solid rgba(148,163,184,.24)}
+    .detail-section{margin-top:16px}
     table{width:100%;border-collapse:collapse;min-width:640px}
     th,td{padding:11px 12px;border-bottom:1px solid #e5edf6;font-size:12px;text-align:left}
     th{background:#f8fbff;color:#334155;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;position:sticky;top:0}
@@ -93,9 +95,6 @@
     tr:hover td{background:#f8fbff}
     .empty{padding:36px;text-align:center;color:var(--muted);font-weight:800}
     .feed-foot{margin-top:10px;font-size:12px;color:#64748b;font-weight:700}
-    .legend-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-    .legend-item{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:12px;font-weight:800;color:#334155}
-    .legend-dot{width:10px;height:10px;border-radius:999px}
     .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.68);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
     .modal-bg.open{display:flex}
     .modal{width:min(1100px,100%);max-height:88vh;overflow:hidden;background:#fff;border-radius:24px;border:1px solid var(--line);box-shadow:0 24px 60px rgba(15,23,42,.24)}
@@ -104,7 +103,7 @@
     .modal-close{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:16px}
     .modal-body{padding:18px 20px;overflow:auto;max-height:calc(88vh - 82px)}
     .mt16{margin-top:16px}
-    @media(max-width:1320px){.summary-grid{grid-template-columns:repeat(3,1fr)}.content-grid{grid-template-columns:1fr}.chart-wrap{height:300px}.toolbar{grid-template-columns:1fr}.period-controls{justify-content:flex-start;padding-top:10px;border-top:1px solid #edf3fb}}
+    @media(max-width:1320px){.summary-grid{grid-template-columns:repeat(3,1fr)}.content-grid{grid-template-columns:1fr}.chart-wrap{height:300px}.toolbar-row{grid-template-columns:repeat(3,minmax(0,1fr))}}
     @media(max-width:1120px){.toolbar-row{grid-template-columns:repeat(2,minmax(0,1fr))}.metric-buttons,.turno-buttons,.feed-buttons{flex-wrap:wrap}.period-controls{flex-wrap:wrap}}
     @media(max-width:980px){.toolbar-row{grid-template-columns:1fr}.store-strip{grid-template-columns:repeat(3,minmax(170px,1fr));min-width:560px}}
     @media(max-width:760px){.summary-grid{grid-template-columns:1fr}.page{padding:14px 12px 28px}.header h1{font-size:25px}.chart-wrap{height:260px}.modal-body{padding:14px}.modal-header{padding:14px 16px}.store-strip{grid-template-columns:repeat(2,minmax(150px,1fr));min-width:320px}.store-card{min-width:0;max-width:none}.period-input,.period-select{min-width:150px}.metric-buttons,.turno-buttons,.feed-buttons,.period-controls{flex-wrap:wrap}}
@@ -130,6 +129,14 @@
             <button class="btn-chip metric-qualidade" data-metric="qualidade">Qualidade</button>
             <button class="btn-chip metric-cardapio" data-metric="cardapio">Cardápio</button>
           </div>
+        </div>
+        <div>
+          <div class="toolbar-label">Período</div>
+          <select class="period-select" id="periodPreset">
+            <option value="mes_atual" selected>Mês atual</option>
+            <option value="mes_anterior">Mês anterior</option>
+            <option value="personalizado">Personalizado</option>
+          </select>
         </div>
         <div>
           <div class="toolbar-label">Lojas</div>
@@ -160,14 +167,6 @@
         </div>
       </div>
       <div class="period-controls">
-        <div class="period-field">
-          <div class="toolbar-label">Período</div>
-          <select class="period-select" id="periodPreset">
-            <option value="mes_atual" selected>Mês atual</option>
-            <option value="mes_anterior">Mês anterior</option>
-            <option value="personalizado">Personalizado</option>
-          </select>
-        </div>
         <div class="custom-range" id="customRange">
           <div class="period-field">
             <div class="toolbar-label">De</div>
@@ -178,12 +177,6 @@
             <input class="period-input" id="endDate" type="date" />
           </div>
         </div>
-      </div>
-      <div class="legend-row">
-        <div class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>Cancelamentos</div>
-        <div class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span>Negociações</div>
-        <div class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>Qualidade</div>
-        <div class="legend-item"><span class="legend-dot" style="background:var(--purple)"></span>Cardápio</div>
       </div>
       <div class="feed-foot" id="periodFoot">Período selecionado: mês atual.</div>
     </div>
@@ -204,6 +197,11 @@
         <div class="feed-table-wrap" id="feedWrap"></div>
         <div class="feed-foot" id="feedFoot"></div>
       </div>
+    </div>
+
+    <div class="panel card detail-section hidden" id="detailSection">
+      <h3 id="detailTitle">Detalhamento do card</h3>
+      <div id="detailBody"></div>
     </div>
   </div>
 
@@ -290,10 +288,23 @@ function getHour(value){
   const m = String(value).match(/(\d{1,2}):(\d{2})/);
   return m ? Number(m[1]) : null;
 }
-function getTurno(hour){
-  if(hour == null || Number.isNaN(hour)) return 'Dia';
-  if(hour < 18) return 'Dia';
+function getTurno(value){
+  if(typeof value === 'string'){
+    const text = normalize(value);
+    if(text.includes('noite') || text.includes('madrugada')) return 'Noite';
+    if(text.includes('manha') || text.includes('manhã') || text.includes('tarde') || text.includes('cafe da tarde') || text.includes('café da tarde') || text.includes('dia')) return 'Dia';
+    const parsedHour = getHour(value);
+    if(parsedHour != null && !Number.isNaN(parsedHour)) return parsedHour < 18 ? 'Dia' : 'Noite';
+    return 'Dia';
+  }
+  if(value == null || Number.isNaN(value)) return 'Dia';
+  if(value < 18) return 'Dia';
   return 'Noite';
+}
+function effectiveCount(row, metric = state.metric){
+  if(metric === 'cancelamentos' || metric === 'cardapio') return Math.max(1, Number(row.quantity) || 1);
+  if(metric === 'negociacoes') return Math.max(1, Number(row.attempts) || 1);
+  return 1;
 }
 function fieldValue(row, aliases){
   const keys = Object.keys(row || {});
@@ -399,7 +410,7 @@ function renderStoreStrip(){
   wrap.classList.remove('hidden');
   const countsByStore = new Map();
   const current = filterRows(parsed[state.metric] || []);
-  current.forEach(row => countsByStore.set(row.store, (countsByStore.get(row.store) || 0) + 1));
+  current.forEach(row => countsByStore.set(row.store, (countsByStore.get(row.store) || 0) + effectiveCount(row)));
   const visibleStores = STORE_META.filter(meta => meta.key !== 'todas');
   host.innerHTML = visibleStores.map(meta => {
     const count = countsByStore.get(meta.key) || 0;
@@ -437,7 +448,7 @@ function renderCancelamentosSummary(grid){
       key:'cancelado-total', color:'red', clickable:true,
       label:'Cancelado total',
       value:fmtMoney(sumField(totalRows,'value')),
-      subLeft:`${fmtInt(totalRows.length)} pedidos`,
+      subLeft:`${fmtInt(totalRows.reduce((acc,row)=>acc + effectiveCount(row,'cancelamentos'),0))} pedidos`,
       subRight:pctText(sumField(totalRows,'value'), sumField(prevTotalRows,'value')),
       hint:'Clique para ver motivo, quantidade, valor e impacto no super.'
     },
@@ -445,7 +456,7 @@ function renderCancelamentosSummary(grid){
       key:'cancelado-parcial', color:'orange', clickable:true,
       label:'Cancelado parcial',
       value:fmtMoney(sumField(partialRows,'value')),
-      subLeft:`${fmtInt(partialRows.length)} pedidos`,
+      subLeft:`${fmtInt(partialRows.reduce((acc,row)=>acc + effectiveCount(row,'cancelamentos'),0))} pedidos`,
       subRight:pctText(sumField(partialRows,'value'), sumField(prevPartialRows,'value')),
       hint:'Clique para ver motivo, quantidade, valor e impacto no super.'
     },
@@ -594,8 +605,9 @@ function summarizeItems(rows){
   return [...map.values()].sort((a,b)=>b.quantity-a.quantity);
 }
 function openCancelamentoModal(cardKey, rows){
-  const modalTitle = document.getElementById('modalTitle');
-  const modalBody = document.getElementById('modalBody');
+  const modalTitle = document.getElementById('detailTitle');
+  const modalBody = document.getElementById('detailBody');
+  const detailSection = document.getElementById('detailSection');
   if(cardKey === 'cancelado-total' || cardKey === 'cancelado-parcial'){
     const type = cardKey === 'cancelado-total' ? 'total' : 'parcial';
     const title = type === 'total' ? 'Cancelado total' : 'Cancelado parcial';
@@ -619,7 +631,10 @@ function openCancelamentoModal(cardKey, rows){
     modalTitle.textContent = 'Cancelamento contestável';
     modalBody.innerHTML = renderTable(['Status','Quantidade'], [['Contestável', fmtInt(contest.contestavel)], ['Solicitada contestação', fmtInt(contest.solicitada)], ['Não contestável', fmtInt(contest.naoContestavel)]]);
   }
-  document.getElementById('modalBg').classList.add('open');
+  if(detailSection){
+    detailSection.classList.remove('hidden');
+    detailSection.scrollIntoView({behavior:'smooth', block:'start'});
+  }
 }
 function aggregateReasons(rows){
   const map = new Map();
@@ -627,7 +642,7 @@ function aggregateReasons(rows){
     const key = row.reason || 'Motivo não informado';
     if(!map.has(key)) map.set(key,{reason:key,count:0,value:0,impact:'Não'});
     const ref = map.get(key);
-    ref.count += 1;
+    ref.count += effectiveCount(row,'cancelamentos');
     ref.value += Number(row.value) || 0;
     if(normalize(row.impactSuper).includes('sim')) ref.impact = 'Sim';
   });
@@ -715,6 +730,8 @@ function renderPeriodFoot(){
   document.getElementById('periodFoot').textContent = `Período selecionado (${presetLabel}): ${formatDay(isoDay(range.start))} até ${formatDay(isoDay(range.end))}. Comparação: ${formatDay(isoDay(prev.start))} até ${formatDay(isoDay(prev.end))}.`;
 }
 function render(){
+  const detailSection = document.getElementById('detailSection');
+  if(detailSection) detailSection.classList.add('hidden');
   syncPeriodControls();
   renderStoreStrip();
   renderSummary();
@@ -746,54 +763,57 @@ async function readReportRows(report){
   }
   return [];
 }
-function parseCancelamentosRows(rows){
+function parseCancelamentosRows(rows, report = {}){
   return rows.map((row,index) => {
-    const date = parseDateFlex(fieldValue(row,['Data','Data do pedido','Dia','Data cancelamento','Data/Hora']));
-    const hour = getHour(fieldValue(row,['Hora','Hora do pedido','Horário','Horario']));
-    const cancelText = normalize(fieldValue(row,['Tipo cancelamento','Classificação','Tipo','Parcial/Total','Status cancelamento']));
+    const date = parseDateFlex(fieldValue(row,['Data','Data do pedido','Dia','Data cancelamento','Data/Hora','Data fim período','Data final período','Data referência']) || report.period_end || report.data_referencia || '');
+    const turnoRaw = fieldValue(row,['Turno','Faixa','Período','Periodo']);
+    const hour = getHour(fieldValue(row,['Hora','Hora do pedido','Horário','Horario','Data/Hora']));
+    const cancelText = normalize(fieldValue(row,['Tipo cancelamento','Classificação','Tipo','Parcial/Total','Status cancelamento','Tipo de cancelamento']));
     const cancelType = cancelText.includes('parcial') ? 'parcial' : 'total';
     const origemRaw = normalize(fieldValue(row,['Origem','Responsável','Responsavel','Origem cancelamento']));
     return {
       id:index + 1,
       date,
-      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Nome da Loja','Loja arquivo','Store','Unidade','Merchant'])),
-      turno:getTurno(hour),
-      value:toNumber(fieldValue(row,['Valor cancelado','Valor','Total cancelado','Total'])),
-      quantity:Math.max(1, Math.round(toNumber(fieldValue(row,['Quantidade','Qtd','Qtde','Qtd itens'])) || 1)),
-      reason:String(fieldValue(row,['Motivo','Motivo cancelamento','Razão','Razao']) || 'Motivo não informado').trim(),
+      store:normalizeStore(fieldValue(row,['Chave loja arquivo','Loja','Nome loja','Nome da Loja','Loja arquivo','Store','Unidade','Merchant']) || report.chave_loja_arquivo || report.loja_arquivo || ''),
+      turno:getTurno(turnoRaw || hour),
+      value:toNumber(fieldValue(row,['Valor cancelado','Valor','Total cancelado','Total','Valor total cancelado','Prejuízo']) || 0),
+      quantity:Math.max(1, Math.round(toNumber(fieldValue(row,['Quantidade','Qtd','Qtde','Qtd itens','Quantidade cancelada','Itens cancelados','Pedidos']) || 1))),
+      reason:String(fieldValue(row,['Motivo','Motivo cancelamento','Razão','Razao','Motivo do cancelamento']) || 'Motivo não informado').trim(),
       impactSuper: String(fieldValue(row,['Impacto no super','Impacto super','Super impactado']) || 'Não').trim(),
       origin: origemRaw.includes('merchant') || origemRaw.includes('loja') ? 'Loja' : (origemRaw.includes('cliente') ? 'Cliente' : 'Loja'),
       contestStatus: String(fieldValue(row,['Contestável','Contestavel','Situação contestação','Situacao contestacao','Contestação solicitada']) || 'Contestável').trim(),
       cancelType,
-      item: String(fieldValue(row,['Item','Nome item','Produto','Itens cancelados']) || 'Item não informado').trim(),
-      attempts: Math.max(0, Math.round(toNumber(fieldValue(row,['Tentativas','Tentativas negociação','Tentativas negociacao'])) || 0))
+      item: String(fieldValue(row,['Item','Nome item','Produto','Itens cancelados','Nome do item']) || 'Item não informado').trim(),
+      attempts: Math.max(0, Math.round(toNumber(fieldValue(row,['Tentativas','Tentativas negociação','Tentativas negociacao']) || 0)))
     };
   }).filter(row => row.date);
 }
-function parseNegotiationRows(rows){
+function parseNegotiationRows(rows, report = {}){
   return rows.map((row,index) => {
-    const date = parseDateFlex(fieldValue(row,['Data','Data do pedido','Dia','Data/Hora']));
-    const hour = getHour(fieldValue(row,['Hora','Hora do pedido','Horário','Horario']));
+    const date = parseDateFlex(fieldValue(row,['Data','Data do pedido','Dia','Data/Hora','Data fim período','Data referência']) || report.period_end || report.data_referencia || '');
+    const turnoRaw = fieldValue(row,['Turno','Faixa','Período','Periodo']);
+    const hour = getHour(fieldValue(row,['Hora','Hora do pedido','Horário','Horario','Data/Hora']));
     const attempts = Math.max(1, Math.round(toNumber(fieldValue(row,['Tentativas','Qtd tentativas','Quantidade tentativas'])) || 1));
     return {
       id:index + 1,
       date,
-      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Nome da Loja','Loja arquivo','Store','Unidade','Merchant'])),
-      turno:getTurno(hour),
+      store:normalizeStore(fieldValue(row,['Chave loja arquivo','Loja','Nome loja','Nome da Loja','Loja arquivo','Store','Unidade','Merchant']) || report.chave_loja_arquivo || report.loja_arquivo || ''),
+      turno:getTurno(turnoRaw || hour),
       attempts,
       value:toNumber(fieldValue(row,['Valor recuperado','Valor','Valor negociação','Valor negociado']))
     };
   }).filter(row => row.date);
 }
-function parseQualityRows(rows){
+function parseQualityRows(rows, report = {}){
   return rows.map((row,index) => {
-    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data/Hora','Data fim período']));
-    const hour = getHour(fieldValue(row,['Hora','Horário','Horario']));
+    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data/Hora','Data fim período','Data referência']) || report.period_end || report.data_referencia || '');
+    const turnoRaw = fieldValue(row,['Turno','Faixa','Período','Periodo']);
+    const hour = getHour(fieldValue(row,['Hora','Horário','Horario','Data/Hora']));
     return {
       id:index + 1,
       date,
-      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Nome da Loja','Loja arquivo','Store','Unidade'])),
-      turno:getTurno(hour),
+      store:normalizeStore(fieldValue(row,['Chave loja arquivo','Loja','Nome loja','Nome da Loja','Loja arquivo','Store','Unidade']) || report.chave_loja_arquivo || report.loja_arquivo || ''),
+      turno:getTurno(turnoRaw || hour),
       value:toNumber(fieldValue(row,['Pedidos com chamados','Quantidade','Qtd','Ocorrências','Ocorrencias'])) || 0,
       score:toNumber(fieldValue(row,['Nota','Score','Avaliação','Avaliacao'])),
       reviews:toNumber(fieldValue(row,['Quantidade avaliações','Quantidade de avaliações'])),
@@ -803,15 +823,16 @@ function parseQualityRows(rows){
     };
   }).filter(row => row.date);
 }
-function parseCardapioRows(rows){
+function parseCardapioRows(rows, report = {}){
   return rows.map((row,index) => {
-    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data/Hora','Data fim período']));
-    const hour = getHour(fieldValue(row,['Hora','Horário','Horario']));
+    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data/Hora','Data fim período','Data referência']) || report.period_end || report.data_referencia || '');
+    const turnoRaw = fieldValue(row,['Turno','Faixa','Período','Periodo']);
+    const hour = getHour(fieldValue(row,['Hora','Horário','Horario','Data/Hora']));
     return {
       id:index + 1,
       date,
-      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Nome da Loja','Loja arquivo','Store','Unidade'])),
-      turno:getTurno(hour),
+      store:normalizeStore(fieldValue(row,['Chave loja arquivo','Loja','Nome loja','Nome da Loja','Loja arquivo','Store','Unidade']) || report.chave_loja_arquivo || report.loja_arquivo || ''),
+      turno:getTurno(turnoRaw || hour),
       quantity:Math.max(1, Math.round(toNumber(fieldValue(row,['Quantidade','Qtd','Qtde','Vendas total (quantidade)','Pedidos'])) || 1)),
       item:String(fieldValue(row,['Item','Produto','Nome item','Nome do item']) || 'Item não informado').trim(),
       value:toNumber(fieldValue(row,['Valor','Preço','Preco','Valor Total']))
@@ -861,10 +882,10 @@ async function loadData(){
   for(const report of selectedReports){
     const rows = await readReportRows(report);
     const type = canonicalType(report.tipo);
-    if(type === 'cancelamentos') parsed.cancelamentos.push(...parseCancelamentosRows(rows));
-    if(type === 'negociacoes') parsed.negociacoes.push(...parseNegotiationRows(rows));
-    if(type === 'qualidade') parsed.qualidade.push(...parseQualityRows(rows));
-    if(type === 'cardapio') parsed.cardapio.push(...parseCardapioRows(rows));
+    if(type === 'cancelamentos') parsed.cancelamentos.push(...parseCancelamentosRows(rows, report));
+    if(type === 'negociacoes') parsed.negociacoes.push(...parseNegotiationRows(rows, report));
+    if(type === 'qualidade') parsed.qualidade.push(...parseQualityRows(rows, report));
+    if(type === 'cardapio') parsed.cardapio.push(...parseCardapioRows(rows, report));
   }
 
   document.getElementById('statusPill').textContent = `✅ Base operacional lida em ${new Date(latestStamp).toLocaleString('pt-BR')} · lote ${latestBatchId || 'legado'}`;
