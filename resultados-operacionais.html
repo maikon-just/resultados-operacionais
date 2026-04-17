@@ -37,6 +37,16 @@
     .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
     .toolbar{padding:14px 16px;margin-bottom:16px}
     .toolbar-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .period-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:14px}
+    .period-field{display:flex;flex-direction:column;gap:6px}
+    .period-input,.period-select{height:42px;border:1px solid var(--line);border-radius:12px;background:#fbfdff;color:#0f172a;padding:0 12px;font:700 13px 'Montserrat',system-ui,sans-serif;outline:none;min-width:170px}
+    .custom-range{display:none;gap:10px;align-items:end;flex-wrap:wrap}
+    .custom-range.show{display:flex}
+    .period-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:14px}
+    .period-field{display:flex;flex-direction:column;gap:6px}
+    .period-input,.period-select{height:42px;border:1px solid var(--line);border-radius:12px;background:#fbfdff;color:#0f172a;padding:0 12px;font:700 13px 'Montserrat',system-ui,sans-serif;outline:none;min-width:170px}
+    .custom-range{display:none;gap:10px;align-items:end;flex-wrap:wrap}
+    .custom-range.show{display:flex}
     .toolbar-label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#64748b}
     .metric-buttons,.turno-buttons,.feed-buttons{display:flex;gap:10px;flex-wrap:wrap}
     .btn-chip{border:1px solid var(--line);background:#fff;color:#334155;border-radius:14px;padding:11px 14px;font:800 12px 'Montserrat',system-ui,sans-serif;cursor:pointer;transition:.18s ease;white-space:nowrap}
@@ -142,6 +152,46 @@
           </div>
         </div>
       </div>
+      <div class="period-controls">
+        <div class="period-field">
+          <div class="toolbar-label">Período</div>
+          <select class="period-select" id="periodPreset">
+            <option value="mes_atual" selected>Mês atual</option>
+            <option value="mes_anterior">Mês anterior</option>
+            <option value="personalizado">Personalizado</option>
+          </select>
+        </div>
+        <div class="custom-range" id="customRange">
+          <div class="period-field">
+            <div class="toolbar-label">De</div>
+            <input class="period-input" id="startDate" type="date" />
+          </div>
+          <div class="period-field">
+            <div class="toolbar-label">Até</div>
+            <input class="period-input" id="endDate" type="date" />
+          </div>
+        </div>
+      </div>
+      <div class="period-controls">
+        <div class="period-field">
+          <div class="toolbar-label">Período</div>
+          <select class="period-select" id="periodPreset">
+            <option value="mes_atual" selected>Mês atual</option>
+            <option value="mes_anterior">Mês anterior</option>
+            <option value="personalizado">Personalizado</option>
+          </select>
+        </div>
+        <div class="custom-range" id="customRange">
+          <div class="period-field">
+            <div class="toolbar-label">De</div>
+            <input class="period-input" id="startDate" type="date" />
+          </div>
+          <div class="period-field">
+            <div class="toolbar-label">Até</div>
+            <input class="period-input" id="endDate" type="date" />
+          </div>
+        </div>
+      </div>
       <div class="legend-row">
         <div class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>Cancelamentos</div>
         <div class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span>Negociações</div>
@@ -193,7 +243,7 @@ const STORE_META = [
   {key:'aham forneria',label:'Aham Forneria',className:'forneria'},
   {key:'aham sushi',label:'Aham Sushi',className:'sushi'}
 ];
-const state = { metric:'cancelamentos', turno:'todos', feed:'diario', store:'todas' };
+const state = { metric:'cancelamentos', turno:'todos', feed:'diario', store:'todas', periodPreset:'mes_atual', startDate:'', endDate:'' };
 const parsed = { cancelamentos:[], negociacoes:[], qualidade:[], cardapio:[] };
 let trendChart = null;
 let latestBatchId = '';
@@ -293,13 +343,38 @@ function weekKey(date){
   d.setDate(d.getDate() - day);
   return d.toISOString().slice(0,10);
 }
+function toInputDate(date){ return date ? new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0,10) : ''; }
+function endOfMonth(date){ return new Date(date.getFullYear(), date.getMonth() + 1, 0); }
 function currentPeriodRange(){
   const ref = latestStamp ? new Date(latestStamp) : new Date();
+  if(state.periodPreset === 'mes_anterior'){
+    return { start:new Date(ref.getFullYear(), ref.getMonth() - 1, 1), end:endOfMonth(new Date(ref.getFullYear(), ref.getMonth() - 1, 1)) };
+  }
+  if(state.periodPreset === 'personalizado'){
+    const start = parseDateFlex(state.startDate);
+    const end = parseDateFlex(state.endDate);
+    return { start:start || startOfCurrentMonth(ref), end:end || ref };
+  }
   return { start:startOfCurrentMonth(ref), end:ref };
 }
 function previousPeriodRange(){
   const cur = currentPeriodRange();
-  return { start:startOfPreviousMonthEquivalent(cur.end), end:endOfEquivalentPreviousPeriod(cur.end) };
+  const days = Math.max(1, Math.round((cur.end - cur.start) / 86400000) + 1);
+  const end = new Date(cur.start);
+  end.setDate(end.getDate() - 1);
+  const start = new Date(end);
+  start.setDate(start.getDate() - (days - 1));
+  return { start, end };
+}
+function syncPeriodControls(){
+  const preset = document.getElementById('periodPreset');
+  const custom = document.getElementById('customRange');
+  const startInput = document.getElementById('startDate');
+  const endInput = document.getElementById('endDate');
+  if(preset) preset.value = state.periodPreset;
+  if(custom) custom.classList.toggle('show', state.periodPreset === 'personalizado');
+  if(startInput && state.startDate) startInput.value = state.startDate;
+  if(endInput && state.endDate) endInput.value = state.endDate;
 }
 function filterRows(rows, extra = {}){
   const { start, end } = extra.range || currentPeriodRange();
@@ -339,6 +414,7 @@ function renderStoreStrip(){
 function renderSummary(){
   const grid = document.getElementById('summaryGrid');
   if(state.metric === 'cancelamentos') return renderCancelamentosSummary(grid);
+  if(state.metric === 'qualidade') return renderQualitySummary(grid);
   return renderGenericSummary(grid);
 }
 function renderCancelamentosSummary(grid){
@@ -414,6 +490,50 @@ function renderCancelamentosSummary(grid){
   `).join('');
   grid.querySelectorAll('[data-card]').forEach(el => el.addEventListener('click', () => openCancelamentoModal(el.dataset.card, currentRows)));
 }
+function renderQualitySummary(grid){
+  const currentRows = filterRows(parsed.qualidade);
+  const previousRows = filterRows(parsed.qualidade, {range: previousPeriodRange()});
+  const sumMetric = (rows, field) => rows.reduce((acc,row)=>acc + (Number(row[field]) || 0), 0);
+  const cards = [
+    { label:'Pedidos totais', value:fmtInt(sumMetric(currentRows,'pedidosTotal')), subLeft:'Período atual', subRight:pctText(sumMetric(currentRows,'pedidosTotal'), sumMetric(previousRows,'pedidosTotal')), color:'green' },
+    { label:'Chamados', value:fmtInt(sumMetric(currentRows,'value')), subLeft:'Período atual', subRight:pctText(sumMetric(currentRows,'value'), sumMetric(previousRows,'value')), color:'teal' },
+    { label:'Chamados com impacto', value:fmtInt(sumMetric(currentRows,'impactCalls')), subLeft:'No Super', subRight:pctText(sumMetric(currentRows,'impactCalls'), sumMetric(previousRows,'impactCalls')), color:'orange' },
+    { label:'Nota média', value:(averageScore(currentRows) || 0).toFixed(2).replace('.', ','), subLeft:'Avaliações', subRight:pctText(averageScore(currentRows), averageScore(previousRows)), color:'purple' },
+    { label:'Qtd. avaliações', value:fmtInt(sumMetric(currentRows,'reviews')), subLeft:'Período atual', subRight:pctText(sumMetric(currentRows,'reviews'), sumMetric(previousRows,'reviews')), color:'blue' },
+    { label:'Cancelamentos impacto', value:fmtInt(sumMetric(currentRows,'impactCancels')), subLeft:'No Super', subRight:pctText(sumMetric(currentRows,'impactCancels'), sumMetric(previousRows,'impactCancels')), color:'red' }
+  ];
+  grid.innerHTML = cards.map(card => `
+    <div class="summary-card ${card.color}">
+      <div class="label">${card.label}</div>
+      <div class="value">${card.value}</div>
+      <div class="sub"><span>${card.subLeft}</span><span>${card.subRight}</span></div>
+      <div class="hint">Qualidade · ${labelStore(state.store)}</div>
+    </div>
+  `).join('');
+}
+
+function renderQualitySummary(grid){
+  const currentRows = filterRows(parsed.qualidade);
+  const previousRows = filterRows(parsed.qualidade, {range: previousPeriodRange()});
+  const sumMetric = (rows, field) => rows.reduce((acc,row)=>acc + (Number(row[field]) || 0), 0);
+  const cards = [
+    { label:'Pedidos totais', value:fmtInt(sumMetric(currentRows,'pedidosTotal')), subLeft:'Período atual', subRight:pctText(sumMetric(currentRows,'pedidosTotal'), sumMetric(previousRows,'pedidosTotal')), color:'green' },
+    { label:'Chamados', value:fmtInt(sumMetric(currentRows,'value')), subLeft:'Período atual', subRight:pctText(sumMetric(currentRows,'value'), sumMetric(previousRows,'value')), color:'teal' },
+    { label:'Chamados com impacto', value:fmtInt(sumMetric(currentRows,'impactCalls')), subLeft:'No Super', subRight:pctText(sumMetric(currentRows,'impactCalls'), sumMetric(previousRows,'impactCalls')), color:'orange' },
+    { label:'Nota média', value:(averageScore(currentRows) || 0).toFixed(2).replace('.', ','), subLeft:'Avaliações', subRight:pctText(averageScore(currentRows), averageScore(previousRows)), color:'purple' },
+    { label:'Qtd. avaliações', value:fmtInt(sumMetric(currentRows,'reviews')), subLeft:'Período atual', subRight:pctText(sumMetric(currentRows,'reviews'), sumMetric(previousRows,'reviews')), color:'blue' },
+    { label:'Cancelamentos impacto', value:fmtInt(sumMetric(currentRows,'impactCancels')), subLeft:'No Super', subRight:pctText(sumMetric(currentRows,'impactCancels'), sumMetric(previousRows,'impactCancels')), color:'red' }
+  ];
+  grid.innerHTML = cards.map(card => `
+    <div class="summary-card ${card.color}">
+      <div class="label">${card.label}</div>
+      <div class="value">${card.value}</div>
+      <div class="sub"><span>${card.subLeft}</span><span>${card.subRight}</span></div>
+      <div class="hint">Qualidade · ${labelStore(state.store)}</div>
+    </div>
+  `).join('');
+}
+
 function renderGenericSummary(grid){
   const currentRows = filterRows(parsed[state.metric]);
   const previousRows = filterRows(parsed[state.metric], {range: previousPeriodRange()});
@@ -589,9 +709,11 @@ function renderTrend(){
 function renderPeriodFoot(){
   const range = currentPeriodRange();
   const prev = previousPeriodRange();
-  document.getElementById('periodFoot').textContent = `Período selecionado: ${formatDay(isoDay(range.start))} até ${formatDay(isoDay(range.end))}. Comparação: ${formatDay(isoDay(prev.start))} até ${formatDay(isoDay(prev.end))}.`;
+  const presetLabel = state.periodPreset === 'mes_anterior' ? 'Mês anterior' : (state.periodPreset === 'personalizado' ? 'Personalizado' : 'Mês atual');
+  document.getElementById('periodFoot').textContent = `Período selecionado (${presetLabel}): ${formatDay(isoDay(range.start))} até ${formatDay(isoDay(range.end))}. Comparação: ${formatDay(isoDay(prev.start))} até ${formatDay(isoDay(prev.end))}.`;
 }
 function render(){
+  syncPeriodControls();
   renderStoreStrip();
   renderSummary();
   renderFeed();
@@ -632,7 +754,7 @@ function parseCancelamentosRows(rows){
     return {
       id:index + 1,
       date,
-      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Store','Unidade','Merchant'])),
+      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Nome da Loja','Loja arquivo','Store','Unidade','Merchant'])),
       turno:getTurno(hour),
       value:toNumber(fieldValue(row,['Valor cancelado','Valor','Total cancelado','Total'])),
       quantity:Math.max(1, Math.round(toNumber(fieldValue(row,['Quantidade','Qtd','Qtde','Qtd itens'])) || 1)),
@@ -654,7 +776,7 @@ function parseNegotiationRows(rows){
     return {
       id:index + 1,
       date,
-      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Store','Unidade','Merchant'])),
+      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Nome da Loja','Loja arquivo','Store','Unidade','Merchant'])),
       turno:getTurno(hour),
       attempts,
       value:toNumber(fieldValue(row,['Valor recuperado','Valor','Valor negociação','Valor negociado']))
@@ -663,30 +785,34 @@ function parseNegotiationRows(rows){
 }
 function parseQualityRows(rows){
   return rows.map((row,index) => {
-    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data/Hora']));
+    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data/Hora','Data fim período']));
     const hour = getHour(fieldValue(row,['Hora','Horário','Horario']));
     return {
       id:index + 1,
       date,
-      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Store','Unidade'])),
+      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Nome da Loja','Loja arquivo','Store','Unidade'])),
       turno:getTurno(hour),
-      value:toNumber(fieldValue(row,['Quantidade','Qtd','Ocorrências','Ocorrencias'])) || 1,
-      score:toNumber(fieldValue(row,['Nota','Score','Avaliação','Avaliacao']))
+      value:toNumber(fieldValue(row,['Pedidos com chamados','Quantidade','Qtd','Ocorrências','Ocorrencias'])) || 0,
+      score:toNumber(fieldValue(row,['Nota','Score','Avaliação','Avaliacao'])),
+      reviews:toNumber(fieldValue(row,['Quantidade avaliações','Quantidade de avaliações'])),
+      impactCalls:toNumber(fieldValue(row,['Chamados com impacto no super','Pedidos com chamados com impacto no Super'])),
+      impactCancels:toNumber(fieldValue(row,['Cancelamentos com impacto no super','Pedidos cancelados com impacto no Super'])),
+      pedidosTotal:toNumber(fieldValue(row,['Pedidos totais']))
     };
   }).filter(row => row.date);
 }
 function parseCardapioRows(rows){
   return rows.map((row,index) => {
-    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data/Hora']));
+    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data/Hora','Data fim período']));
     const hour = getHour(fieldValue(row,['Hora','Horário','Horario']));
     return {
       id:index + 1,
       date,
-      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Store','Unidade'])),
+      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Nome da Loja','Loja arquivo','Store','Unidade'])),
       turno:getTurno(hour),
-      quantity:Math.max(1, Math.round(toNumber(fieldValue(row,['Quantidade','Qtd','Qtde'])) || 1)),
-      item:String(fieldValue(row,['Item','Produto','Nome item']) || 'Item não informado').trim(),
-      value:toNumber(fieldValue(row,['Valor','Preço','Preco']))
+      quantity:Math.max(1, Math.round(toNumber(fieldValue(row,['Quantidade','Qtd','Qtde','Vendas total (quantidade)','Pedidos'])) || 1)),
+      item:String(fieldValue(row,['Item','Produto','Nome item','Nome do item']) || 'Item não informado').trim(),
+      value:toNumber(fieldValue(row,['Valor','Preço','Preco','Valor Total']))
     };
   }).filter(row => row.date);
 }
@@ -705,6 +831,16 @@ async function loadData(){
   }
 
   latestStamp = reports[0].timestamp_upload || Date.now();
+  if(!state.startDate || !state.endDate){
+    const ref = new Date(latestStamp);
+    state.startDate = toInputDate(startOfCurrentMonth(ref));
+    state.endDate = toInputDate(ref);
+  }
+  if(!state.startDate || !state.endDate){
+    const ref = new Date(latestStamp);
+    state.startDate = toInputDate(startOfCurrentMonth(ref));
+    state.endDate = toInputDate(ref);
+  }
   const reportsByBatch = new Map();
   reports.forEach(report => {
     const batch = report.batch_id || `legacy-${canonicalType(report.tipo)}`;
@@ -748,6 +884,32 @@ document.getElementById('turnoButtons').addEventListener('click', event => {
   document.querySelectorAll('#turnoButtons .btn-chip').forEach(node => node.classList.remove('active'));
   btn.classList.add('active');
   render();
+});
+document.getElementById('periodPreset').addEventListener('change', event => {
+  state.periodPreset = event.target.value;
+  syncPeriodControls();
+  render();
+});
+document.getElementById('startDate').addEventListener('change', event => {
+  state.startDate = event.target.value;
+  if(state.periodPreset === 'personalizado') render();
+});
+document.getElementById('endDate').addEventListener('change', event => {
+  state.endDate = event.target.value;
+  if(state.periodPreset === 'personalizado') render();
+});
+document.getElementById('periodPreset').addEventListener('change', event => {
+  state.periodPreset = event.target.value;
+  syncPeriodControls();
+  render();
+});
+document.getElementById('startDate').addEventListener('change', event => {
+  state.startDate = event.target.value;
+  if(state.periodPreset === 'personalizado') render();
+});
+document.getElementById('endDate').addEventListener('change', event => {
+  state.endDate = event.target.value;
+  if(state.periodPreset === 'personalizado') render();
 });
 document.getElementById('feedButtons').addEventListener('click', event => {
   const btn = event.target.closest('[data-feed]');
