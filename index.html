@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Resultados Operacionais</title>
+  <title>Faturamento</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -81,13 +81,13 @@
         </div>
       </div>
       <nav class="sidebar-nav">
-        <button class="nav-item active" data-page="resultados" data-title="Resultados Operacionais" data-description="Dashboard operacional final preservado sem alterações internas.">
-          <span class="nav-icon">📊</span>
-          <span class="nav-label">Resultados Operacionais</span>
-        </button>
-        <button class="nav-item" data-page="faturamento" data-title="Faturamento" data-description="Dashboard financeiro conectado à área de uploads, com filtros de período, empresa, loja, canal e turno.">
+        <button class="nav-item active" data-page="faturamento" data-title="Faturamento" data-description="Dashboard financeiro conectado à área de uploads, com filtros de período, empresa, loja, canal e turno.">
           <span class="nav-icon">💰</span>
           <span class="nav-label">Faturamento</span>
+        </button>
+        <button class="nav-item" data-page="resultados" data-title="Resultados Operacionais" data-description="Dashboard operacional final preservado sem alterações internas.">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Resultados Operacionais</span>
         </button>
         <button class="nav-item" data-page="compras" data-title="Compras" data-description="Área reservada para o dashboard de compras.">
           <span class="nav-icon">🛒</span>
@@ -100,8 +100,8 @@
         <div class="topbar-left">
           <button class="toggle-btn" id="toggleSidebar" aria-label="Expandir ou recolher menu lateral">☰</button>
           <div>
-            <h1 id="pageTitle">Resultados Operacionais</h1>
-            <p id="pageDescription">Dashboard operacional final preservado sem alterações internas.</p>
+            <h1 id="pageTitle">Faturamento</h1>
+            <p id="pageDescription">Dashboard financeiro conectado à área de uploads, com filtros de período, empresa, loja, canal e turno.</p>
           </div>
         </div>
         <div class="topbar-right">
@@ -109,7 +109,7 @@
         </div>
       </header>
       <section class="content-area">
-        <iframe id="contentFrame" class="content-frame" title="Resultados Operacionais"></iframe>
+        <iframe id="contentFrame" class="content-frame" title="Faturamento"></iframe>
       </section>
     </main>
   </div>
@@ -2246,7 +2246,7 @@ carregarBase().catch(err => { console.error(err); document.getElementById('notic
     navItems.forEach(button => button.addEventListener('click', () => setActivePage(button)));
     toggleSidebar.addEventListener('click', () => { sidebar.classList.toggle('collapsed'); syncLayout(); });
     syncLayout();
-    loadPage('resultados');
+    setActivePage(document.querySelector('.nav-item[data-page="faturamento"]'));
   </script>
 </body>
 </html>

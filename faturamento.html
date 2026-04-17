@@ -63,6 +63,20 @@
     .kpi .value{font-size:28px;font-weight:800;line-height:1.04;letter-spacing:-.03em;text-shadow:none;color:#0f172a}
     .kpi .sub{margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#64748b;font-weight:700}
     .kpi.orange .value{color:#4f46e5}.kpi.green .value{color:#0f766e}.kpi.blue .value{color:#2563eb}.kpi.cyan .value{color:#7c3aed}.kpi.yellow .value{color:#d97706}
+    .hero-strip-wrap{margin:-2px 0 18px;overflow-x:auto;overflow-y:hidden;padding-bottom:2px}
+    .hero-strip{display:grid;grid-template-columns:repeat(8,minmax(170px,1fr));gap:14px;min-width:1430px}
+    .hero-card{border-radius:16px;padding:18px 18px 16px;color:#fff;box-shadow:0 14px 30px rgba(15,23,42,.12);display:flex;flex-direction:column;justify-content:center;min-height:112px}
+    .hero-card .hero-value{font-size:18px;font-weight:800;line-height:1.15;letter-spacing:-.03em;margin:0 0 10px}
+    .hero-card .hero-label{font-size:12px;font-weight:700;opacity:.96}
+    .hero-card .hero-sub{font-size:11px;font-weight:600;opacity:.88;margin-top:6px}
+    .hero-card.blue{background:linear-gradient(135deg,#4f9ae1 0%,#3f86d1 100%)}
+    .hero-card.green{background:linear-gradient(135deg,#4ecb7b 0%,#3bb56c 100%)}
+    .hero-card.orange{background:linear-gradient(135deg,#f79a33 0%,#f07a1f 100%)}
+    .hero-card.red{background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%)}
+    .hero-card.purple{background:linear-gradient(135deg,#8b5cf6 0%,#6d41cf 100%)}
+    .hero-card.cyan{background:linear-gradient(135deg,#42b9b5 0%,#299fa6 100%)}
+    .hero-card.indigo{background:linear-gradient(135deg,#5b8def 0%,#3b82f6 100%)}
+    .hero-card.rose{background:linear-gradient(135deg,#fb7185 0%,#e11d48 100%)}
     .grid-2{display:grid;grid-template-columns:1.7fr 1.1fr;gap:18px;margin-bottom:18px}
     .grid-3{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:18px;margin-bottom:18px}
     .card{padding:16px}
@@ -150,6 +164,7 @@
       </div>
 
       <div class="kpis" id="kpiGrid"></div>
+      <div class="hero-strip-wrap"><div class="hero-strip" id="heroStrip"></div></div>
       <div class="panel card" style="margin-bottom:18px">
         <h3>Tabela executiva financeira por loja</h3>
         <div class="table-wrap">
@@ -613,6 +628,18 @@ function renderDetails(rows, range){
     ['Pedidos com cupom', fmtInt.format(cupomQtd), 'Tem cupom = S', fmtInt.format(cupomQtd), 'cyan']
   ];
   document.getElementById('kpiGrid').innerHTML = kpis.map(k => `<div class="panel kpi ${k[4]}"><div class="label">${k[0]}</div><div class="value">${k[1]}</div><div class="sub"><span>${k[2]}</span><strong>${k[3]}</strong></div></div>`).join('');
+  const heroCards = [
+    ['blue', fmtInt.format(rows.length), 'Total de Pedidos', `Pedidos válidos: ${fmtInt.format(validos.length)}`],
+    ['green', fmtMoney.format(receitaItens), 'Valor Itens', `Base: ${validos.length ? 'válidos' : 'cancelados'}`],
+    ['orange', fmtMoney.format(entrega), 'Taxa Entrega', `Acréscimos: ${fmtMoney.format(acrescimos)}`],
+    ['red', fmtMoney.format(descontos), 'Total Descontos', `Pedidos com desconto: ${fmtInt.format(pedidosComDesconto)}`],
+    ['purple', fmtMoney.format(receitaTotal), 'Faturamento Total', `Recorte: ${sanitizeHtml(rangeLabel(range.from, range.to))}`],
+    ['cyan', fmtMoney.format(ticket), 'Ticket Médio', `Base: ${fmtInt.format(baseFinanceira.length)}`],
+    ['indigo', fmtInt.format(canceladosQtd), 'Cancelados Qtd', 'Está cancelado = S'],
+    ['rose', fmtMoney.format(valorCancelado), 'Valor Cancelado', `Pedidos cancelados: ${fmtInt.format(canceladosQtd)}`]
+  ];
+  const heroStrip = document.getElementById('heroStrip');
+  if(heroStrip) heroStrip.innerHTML = heroCards.map(c => `<div class="hero-card ${c[0]}"><div class="hero-value">${c[1]}</div><div class="hero-label">${c[2]}</div><div class="hero-sub">${c[3]}</div></div>`).join('');
   const receitaDia = groupByDay(baseFinanceira,'total');
   const empresa = groupAndSum(baseFinanceira,'empresa','total');
   const loja = groupAndSum(baseFinanceira,'loja','total').slice(0,10);
