@@ -35,8 +35,8 @@
     .status-pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 20px rgba(15,23,42,.06);font-weight:800;font-size:12px;color:#334155}
     .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
     .toolbar{padding:14px 16px;margin-bottom:16px}
-    .toolbar-row{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:14px;align-items:start}
-    .period-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:6px;padding-top:2px;border-top:1px solid #edf3fb}
+    .toolbar-row{display:grid;grid-template-columns:repeat(4,minmax(200px,1fr));gap:14px;align-items:start}
+    .period-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:6px;padding-top:12px;border-top:1px solid #edf3fb}
     .period-field{display:flex;flex-direction:column;gap:6px}
     .period-input,.period-select{height:42px;border:1px solid var(--line);border-radius:12px;background:#fbfdff;color:#0f172a;padding:0 12px;font:700 13px 'Montserrat',system-ui,sans-serif;outline:none;min-width:170px}
     .custom-range{display:none;gap:10px;align-items:end;flex-wrap:wrap}
@@ -52,20 +52,20 @@
     .btn-chip.metric-cardapio.active{background:linear-gradient(135deg,var(--purple),#8b5cf6)}
     .btn-chip.feed.active{background:linear-gradient(135deg,var(--teal),#06b6d4);color:#fff;border-color:transparent}
     .store-strip-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:4px;margin-bottom:16px}
-    .store-strip{display:flex;gap:12px;min-width:max-content}
-    .store-card{min-width:190px;max-width:190px;padding:16px;border-radius:18px;color:#fff;cursor:pointer;border:0;text-align:left;box-shadow:0 16px 28px rgba(15,23,42,.14);transition:.18s ease}
+    .store-strip{display:grid;grid-template-columns:repeat(6,minmax(170px,1fr));gap:12px;min-width:1120px}
+    .store-card{min-width:170px;max-width:none;padding:16px;border-radius:18px;color:#1b2840;cursor:pointer;border:1px solid var(--line);text-align:left;box-shadow:none;transition:.18s ease;background:#fff}
     .store-card:hover{transform:translateY(-2px)}
-    .store-card.active{outline:3px solid rgba(255,255,255,.88);outline-offset:-3px}
-    .store-card small{display:block;opacity:.9;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px}
-    .store-card strong{display:block;margin-top:8px;font-size:15px;font-weight:800}
-    .store-card span{display:block;margin-top:10px;font-size:12px;font-weight:700;opacity:.94}
-    .store-card.all{background:linear-gradient(135deg,#7e93b4,#a9bbd3)}
-    .store-card.matriz{background:linear-gradient(135deg,var(--blue),#7db2ff)}
-    .store-card.abc{background:linear-gradient(135deg,var(--green),#7bd899)}
-    .store-card.gru{background:linear-gradient(135deg,var(--orange),#f7bc7a)}
-    .store-card.gourmet{background:linear-gradient(135deg,var(--purple),#b79cff)}
-    .store-card.forneria{background:linear-gradient(135deg,var(--red),#f29a93)}
-    .store-card.sushi{background:linear-gradient(135deg,var(--teal),#6edbd7)}
+    .store-card.active{border-color:#b9c9df;box-shadow:0 0 0 1px rgba(95,145,238,.18) inset}
+    .store-card small{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#71839d}
+    .store-card strong{display:block;margin-top:0;font-size:15px;font-weight:800}
+    .store-card span{display:block;margin-top:14px;font-size:28px;font-weight:800;line-height:1.05;color:#1b2840;text-align:center}
+    
+    
+    
+    
+    
+    
+    
     .summary-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:16px}
     .summary-card{padding:18px;border-radius:18px;color:#fff;cursor:pointer;transition:.18s ease;position:relative;overflow:hidden}
     .summary-card:hover{transform:translateY(-2px)}
@@ -105,8 +105,9 @@
     .modal-body{padding:18px 20px;overflow:auto;max-height:calc(88vh - 82px)}
     .mt16{margin-top:16px}
     @media(max-width:1320px){.summary-grid{grid-template-columns:repeat(3,1fr)}.content-grid{grid-template-columns:1fr}.chart-wrap{height:300px}}
-    @media(max-width:980px){.toolbar-row{grid-template-columns:1fr}}
-    @media(max-width:760px){.summary-grid{grid-template-columns:1fr}.page{padding:14px 12px 28px}.header h1{font-size:25px}.chart-wrap{height:260px}.modal-body{padding:14px}.modal-header{padding:14px 16px}.store-card{min-width:164px;max-width:164px}.period-input,.period-select{min-width:150px}}
+    @media(max-width:1120px){.toolbar-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:980px){.toolbar-row{grid-template-columns:1fr}.store-strip{grid-template-columns:repeat(3,minmax(170px,1fr));min-width:560px}}
+    @media(max-width:760px){.summary-grid{grid-template-columns:1fr}.page{padding:14px 12px 28px}.header h1{font-size:25px}.chart-wrap{height:260px}.modal-body{padding:14px}.modal-header{padding:14px 16px}.store-strip{grid-template-columns:repeat(2,minmax(150px,1fr));min-width:320px}.store-card{min-width:0;max-width:none}.period-input,.period-select{min-width:150px}}
   </style>
 </head>
 <body>
@@ -114,7 +115,7 @@
     <div class="header">
       <div>
         <h1>Análise completa</h1>
-        <p>Filtros organizados por bloco: tipo de resultado, turno, frequência e período. O painel mantém mês atual, mês anterior e personalizado para todos os resultados operacionais.</p>
+        <p>Filtros organizados por tipo de relatório, loja, turno, frequência e período. A tela sempre abre consolidada com todas as lojas no mês atual.</p>
       </div>
       <div class="status-pill" id="statusPill">⏳ Carregando base operacional...</div>
     </div>
@@ -122,7 +123,7 @@
     <div class="panel toolbar">
       <div class="toolbar-row" style="margin-bottom:12px">
         <div>
-          <div class="toolbar-label">Matriz</div>
+          <div class="toolbar-label">Tipo de relatório</div>
           <div class="metric-buttons" id="metricButtons">
             <button class="btn-chip metric-negociacoes" data-metric="negociacoes">Negociações</button>
             <button class="btn-chip metric-cancelamentos active" data-metric="cancelamentos">Cancelamentos</button>
@@ -131,16 +132,27 @@
           </div>
         </div>
         <div>
+          <div class="toolbar-label">Lojas</div>
+          <select class="period-select" id="storeSelect">
+            <option value="todas" selected>Todas as lojas</option>
+            <option value="burger matriz">Just Matriz</option>
+            <option value="burger abc">Just ABC</option>
+            <option value="burger gru">Just GRU</option>
+            <option value="gourmet">Just Gourmet</option>
+            <option value="aham forneria">Aham Forneria</option>
+            <option value="aham sushi">Aham Sushi</option>
+          </select>
+        </div>
+        <div>
           <div class="toolbar-label">Turno</div>
           <div class="turno-buttons" id="turnoButtons">
             <button class="btn-chip active" data-turno="todos">Todos</button>
-            <button class="btn-chip" data-turno="manha">Manhã</button>
-            <button class="btn-chip" data-turno="dia">Dia (11:00–17:59)</button>
-            <button class="btn-chip" data-turno="noite">Noite (18:00+)</button>
+            <button class="btn-chip" data-turno="dia">Dia</button>
+            <button class="btn-chip" data-turno="noite">Noite</button>
           </div>
         </div>
         <div>
-          <div class="toolbar-label">Feed</div>
+          <div class="toolbar-label">Frequência</div>
           <div class="feed-buttons" id="feedButtons">
             <button class="btn-chip feed active" data-feed="diario">Diário</button>
             <button class="btn-chip feed" data-feed="semanal">Semanal</button>
@@ -176,7 +188,7 @@
       <div class="feed-foot" id="periodFoot">Período selecionado: mês atual.</div>
     </div>
 
-    <div class="store-strip-wrap">
+    <div class="store-strip-wrap" id="storeStripWrap">
       <div class="store-strip" id="storeStrip"></div>
     </div>
 
@@ -280,7 +292,6 @@ function getHour(value){
 }
 function getTurno(hour){
   if(hour == null || Number.isNaN(hour)) return 'Dia';
-  if(hour < 11) return 'Manhã';
   if(hour < 18) return 'Dia';
   return 'Noite';
 }
@@ -357,7 +368,6 @@ function filterRows(rows, extra = {}){
     if(!(row.date instanceof Date) || Number.isNaN(row.date.getTime())) return false;
     if(row.date < start || row.date > end) return false;
     if(state.store !== 'todas' && row.store !== state.store) return false;
-    if(state.turno === 'manha' && row.turno !== 'Manhã') return false;
     if(state.turno === 'dia' && row.turno !== 'Dia') return false;
     if(state.turno === 'noite' && row.turno !== 'Noite') return false;
     if(extra.cancelType && row.cancelType !== extra.cancelType) return false;
@@ -376,15 +386,32 @@ function describeMoM(currentValue, previousValue, formatter){
   return `${formatter(currentValue)} · ${pctText(currentValue, previousValue)} vs mês anterior`;
 }
 function renderStoreStrip(){
+  const wrap = document.getElementById('storeStripWrap');
+  const host = document.getElementById('storeStrip');
+  if(!wrap || !host) return;
+  if(state.store !== 'todas'){
+    wrap.classList.add('hidden');
+    host.innerHTML = '';
+    const select = document.getElementById('storeSelect');
+    if(select) select.value = state.store;
+    return;
+  }
+  wrap.classList.remove('hidden');
   const countsByStore = new Map();
-  const current = parsed[state.metric] || [];
+  const current = filterRows(parsed[state.metric] || []);
   current.forEach(row => countsByStore.set(row.store, (countsByStore.get(row.store) || 0) + 1));
-  const html = STORE_META.map(meta => {
-    const count = meta.key === 'todas' ? current.length : (countsByStore.get(meta.key) || 0);
-    return `<button class="store-card ${meta.className}${state.store === meta.key ? ' active' : ''}" data-store="${meta.key}"><small>${count ? fmtInt(count) : '0'} registros</small><strong>${meta.label}</strong><span>${meta.key === 'todas' ? 'Consolidado' : 'Toque para filtrar'}</span></button>`;
+  const visibleStores = STORE_META.filter(meta => meta.key !== 'todas');
+  host.innerHTML = visibleStores.map(meta => {
+    const count = countsByStore.get(meta.key) || 0;
+    return `<button class="store-card ${meta.className}" data-store="${meta.key}"><small>${meta.label}</small><span>${fmtInt(count)}</span></button>`;
   }).join('');
-  document.getElementById('storeStrip').innerHTML = html;
-  document.querySelectorAll('.store-card').forEach(btn => btn.addEventListener('click', () => { state.store = btn.dataset.store; render(); }));
+  const select = document.getElementById('storeSelect');
+  if(select) select.value = 'todas';
+  document.querySelectorAll('.store-card').forEach(btn => btn.addEventListener('click', () => {
+    state.store = btn.dataset.store;
+    if(select) select.value = state.store;
+    render();
+  }));
 }
 function renderSummary(){
   const grid = document.getElementById('summaryGrid');
@@ -850,6 +877,10 @@ document.getElementById('metricButtons').addEventListener('click', event => {
   state.metric = btn.dataset.metric;
   document.querySelectorAll('#metricButtons .btn-chip').forEach(node => node.classList.remove('active'));
   btn.classList.add('active');
+  render();
+});
+document.getElementById('storeSelect').addEventListener('change', event => {
+  state.store = event.target.value;
   render();
 });
 document.getElementById('turnoButtons').addEventListener('click', event => {

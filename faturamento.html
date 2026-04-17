@@ -20,7 +20,7 @@
     .header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:14px}
     .header h1{margin:0;font-size:32px;line-height:1.02;font-weight:800;letter-spacing:-.03em;color:#1e293b}
     .header p{margin:8px 0 0;color:var(--muted);font-size:14px;font-weight:600}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#ffffff;border:1px solid var(--line);font-weight:700;font-size:12px;color:#334155;box-shadow:0 8px 22px rgba(15,23,42,.06)}
+    .pill{display:none!important}
     .panel{background:#ffffff;border:1px solid var(--line);border-radius:18px;backdrop-filter:none;box-shadow:var(--shadow)}
     .filters-sticky{position:sticky;top:0;z-index:40;margin-bottom:18px;padding-top:4px;background:linear-gradient(180deg, rgba(245,247,250,.96) 0%, rgba(245,247,250,.82) 72%, rgba(245,247,250,0) 100%)}
     .filters{padding:14px 16px 12px;border-radius:18px 18px 14px 14px;background:#ffffff;backdrop-filter:blur(10px);border:1px solid var(--line);overflow-x:auto;overflow-y:hidden}
@@ -46,17 +46,17 @@
     .result-chip.accent{background:#eef2ff;border-color:#c7d2fe}
     .summary-section{margin-bottom:18px}
     .summary-section .section-title{margin-bottom:12px}
-    .summary-list{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
-    .summary-card{padding:18px;transition:.18s transform,.18s border-color,.18s background;box-shadow:0 6px 20px rgba(15,23,42,.04)}
+    .summary-list{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+    .summary-card{padding:16px 14px;transition:.18s transform,.18s border-color,.18s background;box-shadow:none;background:#fff;border:1px solid #dbe5f1;min-height:118px;display:flex;flex-direction:column;justify-content:space-between}
     .summary-card:hover{transform:translateY(-2px);border-color:#c7d8ee}
-    .summary-card.active{border-color:rgba(255,122,26,.66);box-shadow:0 0 0 1px rgba(255,122,26,.40) inset;background:rgba(255,122,26,.08)}
-    .summary-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
-    .summary-name{font-size:15px;font-weight:800;color:#1e293b}
-    .summary-space{font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
-    .summary-value{font-size:24px;font-weight:800;letter-spacing:-.03em;margin:10px 0 8px;color:#0f172a}
-    .summary-line{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#475569;margin-top:6px;font-weight:700}
+    .summary-card.active{border-color:#94a3b8;box-shadow:0 0 0 1px rgba(148,163,184,.24) inset;background:#fff}
+    .summary-top{display:block}
+    .summary-name{font-size:14px;font-weight:800;line-height:1.25}
+    .summary-space{display:none}
+    .summary-value{font-size:30px;font-weight:800;letter-spacing:-.03em;margin:14px 0 10px;color:#0f172a;text-align:center}
+    .summary-line{display:none}
     .summary-line strong{color:#0f172a;font-weight:800}
-    .section-title{font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#334155;margin:0 0 10px}
+    .section-title{display:none}
     .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
     .kpi{padding:18px;background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%)}
     .kpi .label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#64748b;margin-bottom:10px}
@@ -68,18 +68,18 @@
     .card{padding:16px}
     .card h3{margin:0 0 14px;font-size:13px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#334155}
     .chart{height:330px}.chart.sm{height:290px}
-    .table-wrap{overflow:auto;border-radius:18px;border:1px solid rgba(148,163,184,.22)}
-    table{width:100%;border-collapse:collapse;min-width:1180px}
-    th,td{padding:12px 14px;border-bottom:1px solid #e5edf6;font-size:13px}
-    th{position:sticky;top:0;background:#f8fbff;color:#334155;text-align:left;font-size:11px;letter-spacing:.6px;text-transform:uppercase;font-weight:800}
-    td{color:#1f2937;font-weight:600} tr:hover td{background:#f8fbff}
-    .money{font-weight:900}.tag{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:#eef4ff;color:#16325c;font-size:11px;font-weight:900;border:1px solid #d7e2f0}
+    .table-wrap{overflow:auto;border-radius:16px;border:1px solid #dbe5f1;background:#fff}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:980px}
+    th,td{padding:14px 14px;border-bottom:1px solid #e5edf6;font-size:13px;white-space:nowrap}
+    th{position:sticky;top:0;background:#334155;color:#fff;text-align:left;font-size:11px;letter-spacing:.4px;text-transform:none;font-weight:800}
+    td{color:#1f2937;font-weight:600;background:#fff} tr:hover td{background:#f8fbff}
+    .money{font-weight:900}.tag{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:#eef4ff;color:#16325c;font-size:11px;font-weight:900;border:1px solid #d7e2f0}.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;background:#4f9ae6;color:#fff;font-weight:800;font-size:12px}.cell-loja{font-weight:800;color:#334155}.money-itens{color:#4cbf72;font-weight:800}.money-entrega{color:#5f91ee;font-weight:800}.money-desconto{color:#ef4444;font-weight:800}.money-total{color:#4cbf72;font-weight:900}.pct-share{font-weight:800;color:#111827}
     .empty{padding:36px;text-align:center;color:var(--muted);font-weight:800}
     .hidden{display:none!important}
     .foot{margin-top:12px;font-size:12px;color:#475569;font-weight:700}
     @media(max-width:1360px){.summary-list{grid-template-columns:repeat(3,1fr)}.kpis{grid-template-columns:repeat(3,1fr)}.grid-2,.grid-3{grid-template-columns:1fr}}
-    @media(max-width:940px){.summary-list{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}.filters{padding-bottom:10px}}
-    @media(max-width:760px){.summary-list,.kpis{grid-template-columns:1fr}.header h1{font-size:26px}.chart,.chart.sm{height:260px}}
+    @media(max-width:940px){.summary-list{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}.filters{padding-bottom:10px}.filter-toolbar{grid-template-columns:repeat(2,minmax(0,1fr));min-width:0}.date-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field.actions{grid-column:1/-1;min-width:0}.btn,.btn.secondary{width:100%}}
+    @media(max-width:760px){.summary-list,.kpis{grid-template-columns:1fr}.header h1{font-size:26px}.page{padding:14px 12px 26px}.filters-sticky{position:static}.filters{overflow:visible;padding:12px}.filter-toolbar{grid-template-columns:1fr}.date-row{display:grid;grid-template-columns:1fr}.chart,.chart.sm{height:260px}table{min-width:860px}}
   </style>
 </head>
 <body>
@@ -88,9 +88,9 @@
     <div class="header">
       <div>
         <h1>Faturamento</h1>
-        <p>Dashboard financeiro ligado diretamente à base de uploads. A primeira tela abre com o resumo consolidado das empresas e deixa espaço pronto para novas operações.</p>
+        <p>Resultado financeiro consolidado por loja, com abertura padrão no mês atual, todas as lojas e status em todos.</p>
       </div>
-      <div class="pill" id="lastUpdate">⏳ Carregando base financeira...</div>
+      
     </div>
 
     <div class="filters-sticky">
@@ -99,10 +99,10 @@
           <div class="field period">
             <label>Período</label>
             <select id="presetPeriodo">
-              <option value="mes_completo" selected>Mês completo</option>
+              <option value="mes_completo">Mês completo</option>
               <option value="ontem">Ontem</option>
               <option value="ultima_semana">Última semana</option>
-              <option value="mes_atual">Mês atual</option>
+              <option value="mes_atual" selected>Mês atual</option>
               <option value="mes_anterior">Mês anterior</option>
               <option value="personalizado">Personalizado</option>
             </select>
@@ -117,7 +117,7 @@
           </div>
           <div class="field">
             <label>Canal</label>
-            <select id="fCanal"><option value="todos">Todos</option></select>
+            <select id="fCanal"><option value="todos" selected>Todos</option></select>
           </div>
           <div class="field">
             <label>Turno</label>
@@ -127,7 +127,7 @@
             <label>Status</label>
             <select id="fStatusLinha">
               <option value="todos">Todos</option>
-              <option value="ativos" selected>Somente válidos</option>
+              <option value="ativos">Somente válidos</option>
               <option value="cancelados">Somente cancelados</option>
             </select>
           </div>
@@ -145,30 +145,26 @@
     <div id="detailWrap" class="hidden">
 
       <div class="summary-section" id="summarySection">
-        <div class="section-title" id="summarySectionTitle">Empresas no recorte</div>
+        <div class="section-title" id="summarySectionTitle"></div>
         <div class="summary-list" id="summaryCompanies"></div>
       </div>
 
       <div class="kpis" id="kpiGrid"></div>
       <div class="panel card" style="margin-bottom:18px">
-        <h3>Tabela executiva financeira por loja</h3>
+        <h3>Ranking financeiro por loja</h3>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Empresa</th>
+                <th>Ranking</th>
                 <th>Loja</th>
                 <th>Pedidos</th>
-                <th>Receita Total</th>
-                <th>Itens</th>
-                <th>Ticket Médio</th>
+                <th>Valor Itens</th>
+                <th>Taxa Entrega</th>
                 <th>Descontos</th>
-                <th>Acréscimos</th>
-                <th>Entrega</th>
-                <th>Taxa Serviço</th>
-                <th>Cancelados</th>
-                <th>Valor Cancelado</th>
-                <th>Última linha / último dia</th>
+                <th>Faturamento Total</th>
+                <th>Ticket Médio</th>
+                <th>Participação</th>
               </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -230,6 +226,7 @@ const fmtMoney = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}
 const fmtInt = new Intl.NumberFormat('pt-BR');
 const COMPANY_ORDER = ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi'];
 const COMPANY_EMPTY = COMPANY_ORDER.map(name => ({empresa:name}));
+const COMPANY_COLORS = {'Burger Matriz':'#3b82f6','Burger ABC':'#4cbf72','Burger GRU':'#f29b49','Gourmet':'#8d71e8','Aham Forneria':'#e66a61','Aham Sushi':'#3ec5c0'};
 
 function parseDateFlex(value){
   if(value==null || value==='') return null;
@@ -259,12 +256,11 @@ function moneyNumber(v){
 }
 function normalizeStr(v){ return String(v||'').trim(); }
 function normalizeTurnoFinance(v=''){
-  const s = String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
-  if(!s) return 'Não informado';
+  const s = String(v||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+  if(!s) return 'Dia';
   if(s.includes('madrugada') || s.includes('noite') || s.includes('night') || s.includes('noturn')) return 'Noite';
-  if(s.includes('tarde') || s.includes('afternoon')) return 'Tarde';
-  if(s.includes('dia') || s.includes('manha') || s.includes('morning') || s.includes('day')) return 'Dia';
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  if(s.includes('tarde') || s.includes('afternoon') || s.includes('dia') || s.includes('manha') || s.includes('morning') || s.includes('day')) return 'Dia';
+  return 'Dia';
 }
 function normalizePayment(p=''){
   const s = String(p).trim();
@@ -432,16 +428,13 @@ async function carregarBase(forceAll=false){
   fillSelect('fEmpresa', COMPANY_ORDER.concat(rowsBase.map(r=>r.empresa)).filter(v => v !== 'Sem loja informada'), 'Todas');
   fillSelect('fLoja', rowsBase.map(r=>r.loja).filter(v => v !== 'Sem loja informada'), 'Todas');
   fillSelect('fCanal', rowsBase.map(r=>r.canal), 'Todos');
-  fillSelect('fTurno', rowsBase.map(r=>r.turno), 'Todos');
+  fillSelect('fTurno', ['Dia','Noite'], 'Todos');
   const last = allReports[0];
-  const suffix = excludedNoStore ? ` • ${excludedNoStore} linhas sem loja ignoradas` : '';
-  const mode = fullBaseLoaded ? 'base completa' : `últimos ${BASE_MONTHS_FAST} meses`;
-  document.getElementById('lastUpdate').textContent = last ? `✅ Base lida em ${new Date(last.timestamp_upload).toLocaleString('pt-BR')} • ${mode}${suffix}` : '⚠️ Sem uploads';
+
 }
 async function ensureRangeLoaded(range){
   if(fullBaseLoaded) return;
   if(range?.from && baseWindowStart && range.from < baseWindowStart){
-    document.getElementById('lastUpdate').textContent = '⏳ Ampliando leitura da base para o período solicitado...';
     await carregarBase(true);
   }
 }
@@ -494,7 +487,7 @@ function currentFilterState(){
 }
 function shouldShowCompanyCards(){
   const state = currentFilterState();
-  return state.loja === 'todos' && state.turno === 'todos';
+  return state.loja === 'todos';
 }
 function getSummaryBaseRows(range){
   const state = currentFilterState();
@@ -502,6 +495,7 @@ function getSummaryBaseRows(range){
     if(range.from && r.data < range.from) return false;
     if(range.to && r.data > range.to) return false;
     if(state.canal !== 'todos' && r.canal !== state.canal) return false;
+    if(state.turno !== 'todos' && r.turno !== state.turno) return false;
     if(state.status === 'ativos' && r.cancelado) return false;
     if(state.status === 'cancelados' && !r.cancelado) return false;
     return true;
@@ -510,7 +504,6 @@ function getSummaryBaseRows(range){
 function renderResultLine(rows, range){ const box = document.getElementById('resultLine'); if(box) box.innerHTML = ''; }
 function renderSummaryCards(allRows){
   const section = document.getElementById('summarySection');
-  const title = document.getElementById('summarySectionTitle');
   const wrap = document.getElementById('summaryCompanies');
   if(!section || !wrap) return;
   if(!shouldShowCompanyCards()){
@@ -519,28 +512,20 @@ function renderSummaryCards(allRows){
     return;
   }
   section.classList.remove('hidden');
-  if(title) title.textContent = 'Empresas no recorte';
   const summaries = COMPANY_EMPTY.map(c => {
     const rows = allRows.filter(r => r.empresa === c.empresa);
-    return {empresa:c.empresa, ...computeSummary(rows)};
-  }).filter(item => item.rows.length || COMPANY_ORDER.includes(item.empresa));
+    return {empresa:c.empresa, rows, registros:rows.length};
+  });
   wrap.innerHTML = summaries.map(item => {
-    const active = selectedCompanyCard === item.empresa ? ' active' : '';
-    return `<div class="panel summary-card${active}" data-company="${sanitizeHtml(item.empresa)}">
+    const color = COMPANY_COLORS[item.empresa] || '#334155';
+    return `<div class="panel summary-card" data-company="${sanitizeHtml(item.empresa)}">
       <div class="summary-top">
-        <div>
-          <div class="summary-name">${sanitizeHtml(item.empresa)}</div>
-          <div class="summary-space">${item.rows.length ? 'com dados no recorte' : 'sem dados no recorte'}</div>
-        </div>
-        <div class="tag">${fmtInt.format(item.validos.length)} válidos</div>
+        <div class="summary-name" style="color:${color}">${sanitizeHtml(item.empresa)}</div>
       </div>
-      <div class="summary-value">${fmtMoney.format(item.receitaTotal)}</div>
-      <div class="summary-line"><span>Última linha</span><strong>${item.lastRow ? item.lastRow.data.toLocaleDateString('pt-BR') : '—'}</strong></div>
-      <div class="summary-line"><span>Valor cancelado</span><strong>${fmtMoney.format(item.valorCancelado)}</strong></div>
-      <div class="summary-line"><span>Ticket médio</span><strong>${fmtMoney.format(item.ticket)}</strong></div>
+      <div class="summary-value">${fmtInt.format(item.registros)}</div>
+      <div style="text-align:center;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.6px">registros</div>
     </div>`;
   }).join('');
-  [...wrap.querySelectorAll('.summary-card')].forEach(card => card.addEventListener('click', () => applyCompanyCard(card.dataset.company)));
 }
 function groupByDay(rows, field){
   const map = new Map();
@@ -556,30 +541,30 @@ function renderTable(rows){
   const body = document.getElementById('tableBody');
   const agg = new Map();
   rows.forEach(r => {
-    const key = `${r.empresa}||${r.loja}`;
-    if(!agg.has(key)) agg.set(key,{empresa:r.empresa,loja:r.loja,pedidos:0,receita:0,itens:0,descontos:0,acrescimos:0,entrega:0,taxaServico:0,cancelados:0,valorCancelado:0,validos:0,lastDate:null});
+    const key = `${r.loja}`;
+    if(!agg.has(key)) agg.set(key,{loja:r.loja,pedidos:0,receita:0,itens:0,descontos:0,entrega:0,validos:0,valorCancelado:0});
     const o = agg.get(key);
     o.pedidos++;
-    if(!o.lastDate || r.data > o.lastDate) o.lastDate = r.data;
-    if(r.cancelado){ o.cancelados++; o.valorCancelado += r.total; }
-    else { o.validos++; o.receita += r.total; o.itens += r.itens; o.descontos += r.desconto; o.acrescimos += r.acrescimo; o.entrega += r.entrega; o.taxaServico += r.taxaServico; }
+    if(r.cancelado){ o.valorCancelado += r.total; return; }
+    o.validos++;
+    o.receita += r.total;
+    o.itens += r.itens;
+    o.descontos += r.desconto;
+    o.entrega += r.entrega;
   });
   const list = [...agg.values()].sort((a,b)=>b.receita-a.receita);
-  body.innerHTML = list.length ? list.map(r => `<tr>
-    <td><span class="tag">${sanitizeHtml(r.empresa)}</span></td>
-    <td>${sanitizeHtml(r.loja)}</td>
+  const totalReceita = list.reduce((s,r)=>s+r.receita,0);
+  body.innerHTML = list.length ? list.map((r,idx) => `<tr>
+    <td><span class="rank-badge">${idx+1}º</span></td>
+    <td class="cell-loja">${sanitizeHtml(r.loja)}</td>
     <td>${fmtInt.format(r.pedidos)}</td>
-    <td class="money">${fmtMoney.format(r.receita)}</td>
-    <td>${fmtMoney.format(r.itens)}</td>
+    <td class="money-itens">${fmtMoney.format(r.itens)}</td>
+    <td class="money-entrega">${fmtMoney.format(r.entrega)}</td>
+    <td class="money-desconto">${fmtMoney.format(r.descontos)}</td>
+    <td class="money-total">${fmtMoney.format(r.receita)}</td>
     <td>${fmtMoney.format(r.validos ? r.receita/r.validos : 0)}</td>
-    <td>${fmtMoney.format(r.descontos)}</td>
-    <td>${fmtMoney.format(r.acrescimos)}</td>
-    <td>${fmtMoney.format(r.entrega)}</td>
-    <td>${fmtMoney.format(r.taxaServico)}</td>
-    <td>${fmtInt.format(r.cancelados)}</td>
-    <td>${fmtMoney.format(r.valorCancelado)}</td>
-    <td>${r.lastDate ? r.lastDate.toLocaleDateString('pt-BR') : '—'}</td>
-  </tr>`).join('') : '<tr><td colspan="13" class="empty">Nenhum dado encontrado para os filtros selecionados.</td></tr>';
+    <td class="pct-share">${totalReceita ? ((r.receita/totalReceita)*100).toFixed(1).replace('.', ',') : '0,0'}%</td>
+  </tr>`).join('') : '<tr><td colspan="9" class="empty">Nenhum dado encontrado para os filtros selecionados.</td></tr>';
 }
 function renderDetails(rows, range){
   const detailWrap = document.getElementById('detailWrap');
@@ -653,12 +638,12 @@ async function aplicarFiltros(){
   renderDetails(rows, range);
 }
 function limparVisualizacao(){
-  document.getElementById('presetPeriodo').value = 'mes_completo';
+  document.getElementById('presetPeriodo').value = 'mes_atual';
   document.getElementById('fEmpresa').value = 'todas';
   document.getElementById('fLoja').value = 'todos';
   document.getElementById('fCanal').value = 'todos';
   document.getElementById('fTurno').value = 'todos';
-  document.getElementById('fStatusLinha').value = 'ativos';
+  document.getElementById('fStatusLinha').value = 'todos';
   selectedCompanyCard = 'todas';
   syncDateInputsFromPreset();
   aplicarFiltros();
