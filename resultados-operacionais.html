@@ -35,18 +35,13 @@
     .status-pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 20px rgba(15,23,42,.06);font-weight:800;font-size:12px;color:#334155}
     .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
     .toolbar{padding:14px 16px;margin-bottom:16px}
-    .toolbar-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .period-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:14px}
+    .toolbar-row{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:14px;align-items:start}
+    .period-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:6px;padding-top:2px;border-top:1px solid #edf3fb}
     .period-field{display:flex;flex-direction:column;gap:6px}
     .period-input,.period-select{height:42px;border:1px solid var(--line);border-radius:12px;background:#fbfdff;color:#0f172a;padding:0 12px;font:700 13px 'Montserrat',system-ui,sans-serif;outline:none;min-width:170px}
     .custom-range{display:none;gap:10px;align-items:end;flex-wrap:wrap}
     .custom-range.show{display:flex}
-    .period-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:14px}
-    .period-field{display:flex;flex-direction:column;gap:6px}
-    .period-input,.period-select{height:42px;border:1px solid var(--line);border-radius:12px;background:#fbfdff;color:#0f172a;padding:0 12px;font:700 13px 'Montserrat',system-ui,sans-serif;outline:none;min-width:170px}
-    .custom-range{display:none;gap:10px;align-items:end;flex-wrap:wrap}
-    .custom-range.show{display:flex}
-    .toolbar-label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#64748b}
+    .toolbar-label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#64748b;margin-bottom:6px}
     .metric-buttons,.turno-buttons,.feed-buttons{display:flex;gap:10px;flex-wrap:wrap}
     .btn-chip{border:1px solid var(--line);background:#fff;color:#334155;border-radius:14px;padding:11px 14px;font:800 12px 'Montserrat',system-ui,sans-serif;cursor:pointer;transition:.18s ease;white-space:nowrap}
     .btn-chip:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(15,23,42,.08)}
@@ -110,7 +105,8 @@
     .modal-body{padding:18px 20px;overflow:auto;max-height:calc(88vh - 82px)}
     .mt16{margin-top:16px}
     @media(max-width:1320px){.summary-grid{grid-template-columns:repeat(3,1fr)}.content-grid{grid-template-columns:1fr}.chart-wrap{height:300px}}
-    @media(max-width:760px){.summary-grid{grid-template-columns:1fr}.page{padding:14px 12px 28px}.header h1{font-size:25px}.toolbar-row{align-items:flex-start}.chart-wrap{height:260px}.modal-body{padding:14px}.modal-header{padding:14px 16px}.store-card{min-width:164px;max-width:164px}}
+    @media(max-width:980px){.toolbar-row{grid-template-columns:1fr}}
+    @media(max-width:760px){.summary-grid{grid-template-columns:1fr}.page{padding:14px 12px 28px}.header h1{font-size:25px}.chart-wrap{height:260px}.modal-body{padding:14px}.modal-header{padding:14px 16px}.store-card{min-width:164px;max-width:164px}.period-input,.period-select{min-width:150px}}
   </style>
 </head>
 <body>
@@ -118,7 +114,7 @@
     <div class="header">
       <div>
         <h1>Análise completa</h1>
-        <p>Botões reorganizados para Negociações, Cancelamentos, Qualidade e Cardápio. O filtro de turno segue Manhã, Dia 11:00–17:59 e Noite 18:00+. Os cards usam cores mais fortes e comparação com o mesmo período do mês anterior.</p>
+        <p>Filtros organizados por bloco: tipo de resultado, turno, frequência e período. O painel mantém mês atual, mês anterior e personalizado para todos os resultados operacionais.</p>
       </div>
       <div class="status-pill" id="statusPill">⏳ Carregando base operacional...</div>
     </div>
@@ -148,26 +144,6 @@
           <div class="feed-buttons" id="feedButtons">
             <button class="btn-chip feed active" data-feed="diario">Diário</button>
             <button class="btn-chip feed" data-feed="semanal">Semanal</button>
-          </div>
-        </div>
-      </div>
-      <div class="period-controls">
-        <div class="period-field">
-          <div class="toolbar-label">Período</div>
-          <select class="period-select" id="periodPreset">
-            <option value="mes_atual" selected>Mês atual</option>
-            <option value="mes_anterior">Mês anterior</option>
-            <option value="personalizado">Personalizado</option>
-          </select>
-        </div>
-        <div class="custom-range" id="customRange">
-          <div class="period-field">
-            <div class="toolbar-label">De</div>
-            <input class="period-input" id="startDate" type="date" />
-          </div>
-          <div class="period-field">
-            <div class="toolbar-label">Até</div>
-            <input class="period-input" id="endDate" type="date" />
           </div>
         </div>
       </div>
@@ -883,19 +859,6 @@ document.getElementById('turnoButtons').addEventListener('click', event => {
   document.querySelectorAll('#turnoButtons .btn-chip').forEach(node => node.classList.remove('active'));
   btn.classList.add('active');
   render();
-});
-document.getElementById('periodPreset').addEventListener('change', event => {
-  state.periodPreset = event.target.value;
-  syncPeriodControls();
-  render();
-});
-document.getElementById('startDate').addEventListener('change', event => {
-  state.startDate = event.target.value;
-  if(state.periodPreset === 'personalizado') render();
-});
-document.getElementById('endDate').addEventListener('change', event => {
-  state.endDate = event.target.value;
-  if(state.periodPreset === 'personalizado') render();
 });
 document.getElementById('periodPreset').addEventListener('change', event => {
   state.periodPreset = event.target.value;

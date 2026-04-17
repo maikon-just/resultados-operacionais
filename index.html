@@ -82,11 +82,11 @@
         </div>
       </div>
       <nav class="nav">
-        <button class="nav-btn active" data-page="resultados" data-title="Resultados Operacionais" data-description="Análise completa com Negociações, Cancelamentos, Qualidade e Cardápio.">
+        <button class="nav-btn" data-page="resultados" data-title="Resultados Operacionais" data-description="Análise completa com Negociações, Cancelamentos, Qualidade e Cardápio.">
           <span class="nav-icon">📊</span>
           <span class="nav-copy"><strong>Resultados</strong><span>Análise completa</span></span>
         </button>
-        <button class="nav-btn" data-page="faturamento" data-title="Faturamento" data-description="Visão financeira com mês atual por padrão e comparação com o mesmo período do mês anterior.">
+        <button class="nav-btn active" data-page="faturamento" data-title="Faturamento" data-description="Visão financeira com mês atual por padrão e comparação com o mesmo período do mês anterior.">
           <span class="nav-icon">💰</span>
           <span class="nav-copy"><strong>Faturamento</strong><span>Resumo executivo</span></span>
         </button>
@@ -101,23 +101,23 @@
         <div class="topbar-left">
           <button class="toggle" id="toggleSidebar" aria-label="Alternar menu lateral">☰</button>
           <div>
-            <h1 id="pageTitle">Resultados Operacionais</h1>
-            <p id="pageDescription">Análise completa com Negociações, Cancelamentos, Qualidade e Cardápio.</p>
+            <h1 id="pageTitle">Faturamento</h1>
+            <p id="pageDescription">Visão financeira com mês atual por padrão e comparação com o mesmo período do mês anterior.</p>
           </div>
         </div>
         <div class="top-actions">
-          <a class="top-link" id="openCurrentPage" href="resultdos-operacionais.html" target="_blank" rel="noopener">Abrir página atual</a>
+          <a class="top-link" id="openCurrentPage" href="faturamento.html" target="_blank" rel="noopener">Abrir página atual</a>
         </div>
       </header>
       <section class="frame-wrap">
-        <iframe id="contentFrame" src="resultdos-operacionais.html" title="Resultados Operacionais"></iframe>
+        <iframe id="contentFrame" src="faturamento.html" title="Resultados Operacionais"></iframe>
       </section>
     </main>
   </div>
 
   <script>
     const pages = {
-      resultados: { src: 'resultdos-operacionais.html', href: 'resultdos-operacionais.html' },
+      resultados: { src: 'resultados-operacionais.html', href: 'resultados-operacionais.html' },
       faturamento: { src: 'faturamento.html', href: 'faturamento.html' },
       uploads: { src: 'uploads.html', href: 'uploads.html' }
     };
@@ -133,7 +133,7 @@
     }
 
     function loadPage(key){
-      const page = pages[key] || pages.resultados;
+      const page = pages[key] || pages.faturamento;
       frame.src = page.src;
       openCurrentPage.href = page.href;
     }
@@ -154,6 +154,8 @@
     document.getElementById('toggleSidebar').addEventListener('click', () => {
       sidebar.classList.toggle('collapsed');
       syncLayout();
+    const defaultBtn = document.querySelector('.nav-btn[data-page="faturamento"]');
+    if(defaultBtn) setActive(defaultBtn);
     });
 
     syncLayout();
