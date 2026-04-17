@@ -154,11 +154,11 @@
     document.getElementById('toggleSidebar').addEventListener('click', () => {
       sidebar.classList.toggle('collapsed');
       syncLayout();
-    const defaultBtn = document.querySelector('.nav-btn[data-page="faturamento"]');
-    if(defaultBtn) setActive(defaultBtn);
     });
 
     syncLayout();
+    const defaultBtn = document.querySelector('.nav-btn[data-page="faturamento"]');
+    if(defaultBtn) setActive(defaultBtn);
   </script>
 </body>
 </html>
