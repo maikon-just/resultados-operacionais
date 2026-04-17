@@ -338,7 +338,7 @@ async function fetchReports(){
     .sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
   renderList();
 }
-function chunkRows(rows, size = 500){
+function chunkRows(rows, size = 200){
   const chunks = [];
   for(let i=0;i<rows.length;i+=size) chunks.push(rows.slice(i, i + size));
   return chunks;
@@ -391,6 +391,172 @@ async function saveChunks(reportId, rows){
   }
   return { basePath, totalChunks: chunks.length };
 }
+function storeLabelFromKey(key){
+  const map = {
+    'burger matriz':'Just Matriz',
+    'burger abc':'Just ABC',
+    'burger gru':'Just GRU',
+    'gourmet':'Just Gourmet',
+    'aham forneria':'Aham Forneria',
+    'aham sushi':'Aham Sushi'
+  };
+  return map[key] || '';
+}
+function detectStoreKey(value){
+  const text = normalize(value || '');
+  if(!text) return '';
+  if(text.includes('matriz')) return 'burger matriz';
+  if(text.includes(' abc') || text.startsWith('abc')) return 'burger abc';
+  if(text.includes('gru') || text.includes('guarulhos')) return 'burger gru';
+  if(text.includes('gourmet')) return 'gourmet';
+  if(text.includes('forneria')) return 'aham forneria';
+  if(text.includes('sushi')) return 'aham sushi';
+  if(text.includes('burger')) return 'burger matriz';
+  return text;
+}
+function inferTypeFromName(name){
+  const text = normalize(name || '');
+  if(text.includes('cancel')) return 'cancelamentos';
+  if(text.includes('chamado') || text.includes('negoci')) return 'negociacoes';
+  if(text.includes('qualidad')) return 'qualidade';
+  if(text.includes('cardap')) return 'cardapio';
+  if(text.includes('motoboy')) return 'motoboys';
+  if(text.includes('financeir') || text.includes('fatur')) return 'financeiro';
+  return '';
+}
+function safeIsoDate(year, month, day){
+  const y = Number(year), m = Number(month), d = Number(day);
+  if(!y || !m || !d) return '';
+  return `${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+function parsePeriodRange(text){
+  const value = String(text || '').trim();
+  let m = value.match(/(\d{2})\/(\d{2})\/(\d{4})\s*[-aà]\s*(\d{2})\/(\d{2})\/(\d{4})/i);
+  if(m) return { start:safeIsoDate(m[3], m[2], m[1]), end:safeIsoDate(m[6], m[5], m[4]) };
+  m = value.match(/(\d{2})\/(\d{2})\s*a\s*(\d{2})\/(\d{2})/i);
+  if(m){
+    const y = new Date().getFullYear();
+    return { start:safeIsoDate(y, m[2], m[1]), end:safeIsoDate(y, m[4], m[3]) };
+  }
+  return { start:'', end:'' };
+}
+function sanitizeForStorage(value){
+  if(value == null) return '';
+  if(value instanceof Date) return Number.isNaN(value.getTime()) ? '' : value.toISOString();
+  if(Array.isArray(value)) return value.map(sanitizeForStorage);
+  if(typeof value === 'object'){
+    const out = {};
+    Object.keys(value).forEach(key => { out[key] = sanitizeForStorage(value[key]); });
+    return out;
+  }
+  if(typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  return String(value);
+}
+function sanitizeRows(rows){ return rows.map(row => sanitizeForStorage(row)); }
+function pickBestSheetName(sheetNames, desiredType){
+  const names = sheetNames || [];
+  const normalized = names.map(name => ({ original:name, key:normalize(name) }));
+  if(desiredType === 'cardapio'){
+    const preferred = normalized.find(item => item.key.includes('itens')) || normalized.find(item => item.key.includes('funil')) || normalized[0];
+    return preferred ? preferred.original : '';
+  }
+  if(desiredType === 'qualidade'){
+    const preferred = normalized.find(item => !item.key.includes('gloss')) || normalized[0];
+    return preferred ? preferred.original : '';
+  }
+  return names[0] || '';
+}
+function enrichRows(rows, file, tipo, extra = {}){
+  const storeKey = detectStoreKey(file.name);
+  const storeLabel = storeLabelFromKey(storeKey);
+  const periodStart = extra.periodStart || '';
+  const periodEnd = extra.periodEnd || '';
+  return sanitizeRows(rows).map((row, index) => ({
+    ...row,
+    'Loja arquivo': row['Loja arquivo'] || row['Nome da loja'] || row['Nome da Loja'] || storeLabel || '',
+    'Chave loja arquivo': row['Chave loja arquivo'] || storeKey || '',
+    'Tipo importacao': tipo,
+    'Arquivo origem': file.name,
+    'Data inicial período': row['Data inicial período'] || periodStart || '',
+    'Data fim período': row['Data fim período'] || periodEnd || '',
+    'Linha índice': index + 1
+  }));
+}
+function readSheetObjects(workbook, sheetName, options = {}){
+  const sheet = workbook.Sheets[sheetName];
+  return XLSX.utils.sheet_to_json(sheet, { defval:'', raw:false, range:options.range || 0 });
+}
+function readSheetArrays(workbook, sheetName){
+  const sheet = workbook.Sheets[sheetName];
+  return XLSX.utils.sheet_to_json(sheet, { header:1, defval:'', raw:false });
+}
+function extractQualityRows(workbook, file){
+  const sheetName = pickBestSheetName(workbook.SheetNames, 'qualidade');
+  const rows = readSheetArrays(workbook, sheetName);
+  const meta = {};
+  rows.forEach(row => {
+    const key = normalize(row[0] || '');
+    if(key) meta[key] = row[1] || '';
+  });
+  const range = parsePeriodRange(meta['periodo:'] || meta['periodo'] || '');
+  const metricValue = (label) => {
+    const hit = rows.find(row => normalize(row[0] || '') === normalize(label));
+    return hit ? hit[2] : '';
+  };
+  const storeFallback = meta['nome da loja:'] || meta['nome da loja'] || storeLabelFromKey(detectStoreKey(file.name));
+  const consolidated = [{
+    'Data': range.end || '',
+    'Data inicial período': range.start || '',
+    'Data fim período': range.end || '',
+    'Loja': storeFallback || '',
+    'Tipo registro': 'qualidade_consolidada',
+    'Indicador': 'Qualidade consolidada',
+    'Pedidos totais': metricValue('Pedidos totais'),
+    'Pedidos com chamados': metricValue('Pedidos com chamados'),
+    'Chamados com impacto no super': metricValue('Pedidos com chamados com impacto no Super'),
+    'Cancelamentos com impacto no super': metricValue('Pedidos cancelados com impacto no Super'),
+    'Quantidade avaliações': metricValue('Quantidade de avaliações'),
+    'Nota': metricValue('Média das avaliações'),
+    'Tempo online real vs planejado (%)': metricValue('Tempo online real vs planejado (%)')
+  }];
+  return { sheetName, rows: enrichRows(consolidated, file, 'qualidade', range) };
+}
+function extractCardapioRows(workbook, file){
+  const funilSheet = workbook.SheetNames.find(name => normalize(name).includes('funil')) || workbook.SheetNames[0];
+  const itensSheet = workbook.SheetNames.find(name => normalize(name).includes('itens')) || funilSheet;
+  const funilRows = readSheetObjects(workbook, funilSheet);
+  const itemRows = readSheetObjects(workbook, itensSheet);
+  const baseRange = parsePeriodRange((funilRows[0] && (funilRows[0]['Período'] || funilRows[0]['Periodo'])) || (itemRows[0] && (itemRows[0]['Período'] || itemRows[0]['Periodo'])) || '');
+  const rows = itemRows.map(row => ({
+    ...row,
+    'Data': baseRange.end || '',
+    'Loja': row['Nome da Loja'] || row['Nome da loja'] || '',
+    'Quantidade': row['Vendas total (quantidade)'] || row['Pedidos'] || row['Sacola'] || '',
+    'Item': row['Nome do item'] || '',
+    'Valor': row['Valor Total'] || '',
+    'Turno': 'Dia'
+  }));
+  return { sheetName:itensSheet, rows: enrichRows(rows, file, 'cardapio', baseRange) };
+}
+function extractDefaultRows(workbook, file, tipo){
+  const sheetName = pickBestSheetName(workbook.SheetNames, tipo);
+  const rows = readSheetObjects(workbook, sheetName);
+  const enriched = rows.map(row => ({
+    ...row,
+    'Loja': row['Loja'] || row['Nome da loja'] || row['Nome da Loja'] || '',
+    'Data': row['Data'] || row['Data e hora do pedido'] || row['Data/Hora'] || row['Dia'] || '',
+    'Turno': row['Turno'] || ''
+  }));
+  return { sheetName, rows: enrichRows(enriched, file, tipo) };
+}
+function parseWorkbookForUpload(file, workbook, forcedType){
+  const inferred = inferTypeFromName(file.name);
+  const tipo = canonicalType(forcedType || inferred || '');
+  if(inferred && tipoInput.value !== inferred && ['financeiro','motoboys','cancelamentos','negociacoes','qualidade','cardapio'].includes(inferred)) tipoInput.value = inferred;
+  if(tipo === 'qualidade') return { tipo, ...extractQualityRows(workbook, file) };
+  if(tipo === 'cardapio') return { tipo, ...extractCardapioRows(workbook, file) };
+  return { tipo, ...extractDefaultRows(workbook, file, tipo || tipoInput.value) };
+}
 async function processFile(file){
   const ext = (file.name.split('.').pop() || '').toLowerCase();
   if(!['xlsx','xls','csv'].includes(ext)){
@@ -399,15 +565,16 @@ async function processFile(file){
   }
   selectedFile = file;
   fileNameInput.value = file.name;
+  const inferredType = inferTypeFromName(file.name);
+  if(inferredType) tipoInput.value = inferredType;
   const buffer = await file.arrayBuffer();
-  const wb = XLSX.read(buffer, {type:'array'});
-  const firstSheet = wb.SheetNames[0];
-  const sheet = wb.Sheets[firstSheet];
-  parsedRows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+  const wb = XLSX.read(buffer, {type:'array', cellDates:true});
+  const parsed = parseWorkbookForUpload(file, wb, tipoInput.value);
+  parsedRows = parsed.rows || [];
   parsedCols = parsedRows.length ? Object.keys(parsedRows[0]) : [];
   renderPreview();
   submitBtn.disabled = !parsedRows.length;
-  showToast(`${parsedRows.length} linha(s) carregadas para prévia.`);
+  showToast(`${parsedRows.length} linha(s) preparadas para ${canonicalType(tipoInput.value) || tipoInput.value}.`);
 }
 async function sendReport(){
   if(!selectedFile || !parsedRows.length){ showToast('Selecione um arquivo válido antes de enviar.'); return; }
@@ -443,12 +610,16 @@ async function sendReport(){
       timestamp_upload:Date.now(),
       upload_identity:inferUploadIdentity(parsedRows, tipo, selectedFile.name),
       capture_mode:'full_replace',
+      loja_arquivo: storeLabelFromKey(detectStoreKey(selectedFile.name)) || '',
+      chave_loja_arquivo: detectStoreKey(selectedFile.name) || '',
+      period_start: parsedRows[0] ? (parsedRows[0]['Data inicial período'] || '') : '',
+      period_end: parsedRows[0] ? (parsedRows[0]['Data fim período'] || '') : '',
       chunked:true,
-      preview_json:JSON.stringify({columns:parsedCols, rows:parsedRows.slice(0,20)})
+      preview_json:JSON.stringify({columns:parsedCols, rows:sanitizeRows(parsedRows.slice(0,20))})
     };
     const created = await apiRequest(`${REPORTS_PATH}.json`, {method:'POST', body:JSON.stringify(reportPayload)});
     updateProgress(64, 'Enviando blocos do arquivo...');
-    const chunkInfo = await saveChunks(created.name, parsedRows);
+    const chunkInfo = await saveChunks(created.name, sanitizeRows(parsedRows));
     updateProgress(86, 'Finalizando metadados...');
     await apiRequest(`${REPORTS_PATH}/${created.name}.json`, {method:'PATCH', body:JSON.stringify({chunks_path:`${CHUNKS_PATH}/${created.name}`, total_chunks:chunkInfo.totalChunks})});
     updateProgress(100, 'Upload concluído com sucesso.');
