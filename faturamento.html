@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -9,456 +8,696 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     :root{
-      --bg:#f8fbff;--card:#ffffff;--line:#dfe8f5;--text:#1b2840;--muted:#71839d;
-      --blue:#5f91ee;--green:#4cbf72;--orange:#f29b49;--red:#e66a61;--purple:#8d71e8;--teal:#3ec5c0;--indigo:#6f86ff;--shadow:0 14px 32px rgba(148,163,184,.18)
+      --bg:#f5f7fa; --bg2:#eef3fb; --card:#ffffff; --line:#dbe5f1;
+      --text:#1f2937; --muted:#64748b; --brand:#667eea; --brand2:#764ba2;
+      --green:#10b981; --yellow:#f59e0b; --red:#ef4444; --blue:#3b82f6; --cyan:#06b6d4;
+      --shadow:0 12px 32px rgba(15,23,42,.08);
     }
     *{box-sizing:border-box} html,body{margin:0;padding:0}
-    body{font-family:'Montserrat',system-ui,sans-serif;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);color:var(--text);min-height:100vh}
-    .page{max-width:1560px;margin:0 auto;padding:18px 16px 32px}
+    body{font-family:'Montserrat',system-ui,sans-serif;background:linear-gradient(180deg,#f5f7fa 0%, #ffffff 100%);color:var(--text);min-height:100vh;-webkit-font-smoothing:subpixel-antialiased;-moz-osx-font-smoothing:auto;text-rendering:geometricPrecision;font-feature-settings:'kern' 1,'liga' 1}
+    .bg{position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 12% 16%, rgba(102,126,234,.08), transparent 24%),radial-gradient(circle at 88% 10%, rgba(118,75,162,.06), transparent 22%),radial-gradient(circle at 76% 76%, rgba(59,130,246,.05), transparent 18%)}
+    .page{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:18px 16px 32px}
     .header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:14px}
-    .header h1{margin:0;font-size:31px;font-weight:800;letter-spacing:-.03em}
-    .header p{margin:8px 0 0;color:var(--muted);font-size:13px;font-weight:600;line-height:1.6}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 20px rgba(15,23,42,.06);font-weight:800;font-size:12px;color:#334155}
-    .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
-    .filters{padding:14px 16px;margin-bottom:16px}
-    .filter-grid{display:grid;grid-template-columns:1fr 1fr .9fr .9fr .9fr .92fr auto;gap:10px;align-items:end}
-    .field{display:flex;flex-direction:column;gap:6px}
-    .field label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#64748b}
-    .field select,.field input{height:42px;border:1px solid var(--line);border-radius:12px;background:#fbfdff;color:#0f172a;padding:0 12px;font:700 13px 'Montserrat',system-ui,sans-serif;outline:none}
-    .actions{display:flex;gap:8px}
-    .btn{height:42px;border:0;border-radius:12px;padding:0 16px;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font:800 13px 'Montserrat',system-ui,sans-serif;cursor:pointer;white-space:nowrap}
-    .btn.secondary{background:#fff;color:#334155;border:1px solid var(--line)}
-    .store-strip-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:4px;margin-bottom:16px}
-    .store-strip{display:flex;gap:12px;min-width:max-content}
-    .store-card{min-width:190px;max-width:190px;padding:16px;border-radius:18px;color:#fff;border:0;cursor:pointer;text-align:left;box-shadow:0 16px 28px rgba(15,23,42,.14);transition:.18s ease}
-    .store-card:hover{transform:translateY(-2px)}
-    .store-card.active{outline:3px solid rgba(255,255,255,.9);outline-offset:-3px}
-    .store-card small{display:block;font-size:11px;font-weight:700;opacity:.9;text-transform:uppercase;letter-spacing:.7px}
-    .store-card strong{display:block;margin-top:8px;font-size:15px;font-weight:800}
-    .store-card span{display:block;margin-top:10px;font-size:12px;font-weight:700;opacity:.94}
-    .store-card.all{background:linear-gradient(135deg,#7e93b4,#a9bbd3)}
-    .store-card.matriz{background:linear-gradient(135deg,var(--blue),#7db2ff)}
-    .store-card.abc{background:linear-gradient(135deg,var(--green),#7bd899)}
-    .store-card.gru{background:linear-gradient(135deg,var(--orange),#f7bc7a)}
-    .store-card.gourmet{background:linear-gradient(135deg,var(--purple),#b79cff)}
-    .store-card.forneria{background:linear-gradient(135deg,var(--red),#f29a93)}
-    .store-card.sushi{background:linear-gradient(135deg,var(--teal),#6edbd7)}
-    .section-title{font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#334155;margin:0 0 12px}
-    .summary-wrap{margin-bottom:16px}
-    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
-    .kpi{padding:18px;border-radius:18px;color:#fff;min-height:140px}
-    .kpi .label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;opacity:.92}
-    .kpi .value{font-size:28px;font-weight:800;line-height:1.05;letter-spacing:-.03em;margin-top:12px}
-    .kpi .sub{margin-top:12px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;gap:10px;opacity:.94}
-    .kpi .hint{margin-top:12px;font-size:11px;font-weight:700;opacity:.86}
-    .kpi.blue{background:linear-gradient(135deg,var(--blue),#7db2ff)}
-    .kpi.green{background:linear-gradient(135deg,var(--green),#7bd899)}
-    .kpi.orange{background:linear-gradient(135deg,var(--orange),#f7bc7a)}
-    .kpi.red{background:linear-gradient(135deg,var(--red),#f29a93)}
-    .kpi.purple{background:linear-gradient(135deg,var(--purple),#b79cff)}
-    .kpi.teal{background:linear-gradient(135deg,var(--teal),#6edbd7)}
-    .hero-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:4px;margin-bottom:16px}
-    .hero-strip{display:grid;grid-template-columns:repeat(6,minmax(180px,1fr));gap:14px;min-width:1140px}
-    .hero{padding:18px;border-radius:18px;color:#fff;box-shadow:0 14px 30px rgba(15,23,42,.12)}
-    .hero strong{display:block;font-size:17px;font-weight:800;line-height:1.15}
-    .hero span{display:block;margin-top:9px;font-size:12px;font-weight:700;opacity:.94}
-    .grid{display:grid;grid-template-columns:1.35fr .95fr;gap:16px;margin-bottom:16px}
+    .header h1{margin:0;font-size:32px;line-height:1.02;font-weight:800;letter-spacing:-.03em;color:#1e293b}
+    .header p{margin:8px 0 0;color:var(--muted);font-size:14px;font-weight:600}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#ffffff;border:1px solid var(--line);font-weight:700;font-size:12px;color:#334155;box-shadow:0 8px 22px rgba(15,23,42,.06)}
+    .panel{background:#ffffff;border:1px solid var(--line);border-radius:18px;backdrop-filter:none;box-shadow:var(--shadow)}
+    .filters-sticky{position:sticky;top:0;z-index:40;margin-bottom:18px;padding-top:4px;background:linear-gradient(180deg, rgba(245,247,250,.96) 0%, rgba(245,247,250,.82) 72%, rgba(245,247,250,0) 100%)}
+    .filters{padding:14px 16px 12px;border-radius:18px 18px 14px 14px;background:#ffffff;backdrop-filter:blur(10px);border:1px solid var(--line);overflow-x:auto;overflow-y:hidden}
+    .filter-toolbar{display:grid;grid-template-columns:1.15fr 1fr .95fr .82fr .95fr .72fr .72fr auto;align-items:end;gap:10px;min-width:1110px}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+    .field.period{min-width:0}
+    .field.store{min-width:0}
+    .field.date-compact{min-width:112px}
+    .field.actions{min-width:214px}
+    .field label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#475569;text-shadow:none}
+    .field select,.field input{height:42px;border:1px solid #d7e3f0;background:#fbfdff;color:#0f172a;border-radius:12px;padding:0 12px;font:700 13px 'Montserrat',system-ui,sans-serif;outline:none;width:100%;box-shadow:0 1px 0 rgba(255,255,255,.95) inset}
+    .field select:focus,.field input:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+    .field select option{background:#ffffff;color:#0f172a}
+    .field input[type="date"]{padding-right:10px;cursor:pointer}
+    .date-row{display:contents}
+    .btn{height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#667eea 0%, #764ba2 100%);color:#fff;font:800 13px Montserrat,system-ui,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 6px 16px rgba(102,126,234,.22)}
+    .btn.secondary{border:1px solid #d7e3f0;background:#ffffff;color:#334155;box-shadow:none}
+    .helper{display:none}
+    .notice{display:none}
+    .result-line{display:none!important}
+    .result-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#f8fbff;border:1px solid #dbe5f1;font-size:12px;font-weight:700;color:#334155}
+    .result-chip strong{color:#1f2937}
+    .result-chip.accent{background:#eef2ff;border-color:#c7d2fe}
+    .summary-section{margin-bottom:18px}
+    .summary-section .section-title{margin-bottom:12px}
+    .summary-list{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+    .summary-card{padding:18px;transition:.18s transform,.18s border-color,.18s background;box-shadow:0 6px 20px rgba(15,23,42,.04)}
+    .summary-card:hover{transform:translateY(-2px);border-color:#c7d8ee}
+    .summary-card.active{border-color:rgba(255,122,26,.66);box-shadow:0 0 0 1px rgba(255,122,26,.40) inset;background:rgba(255,122,26,.08)}
+    .summary-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .summary-name{font-size:15px;font-weight:800;color:#1e293b}
+    .summary-space{font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+    .summary-value{font-size:24px;font-weight:800;letter-spacing:-.03em;margin:10px 0 8px;color:#0f172a}
+    .summary-line{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#475569;margin-top:6px;font-weight:700}
+    .summary-line strong{color:#0f172a;font-weight:800}
+    .section-title{font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#334155;margin:0 0 10px}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+    .kpi{padding:18px;background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%)}
+    .kpi .label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#64748b;margin-bottom:10px}
+    .kpi .value{font-size:28px;font-weight:800;line-height:1.04;letter-spacing:-.03em;text-shadow:none;color:#0f172a}
+    .kpi .sub{margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#64748b;font-weight:700}
+    .kpi.orange .value{color:#4f46e5}.kpi.green .value{color:#0f766e}.kpi.blue .value{color:#2563eb}.kpi.cyan .value{color:#7c3aed}.kpi.yellow .value{color:#d97706}
+    .grid-2{display:grid;grid-template-columns:1.7fr 1.1fr;gap:18px;margin-bottom:18px}
+    .grid-3{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:18px;margin-bottom:18px}
     .card{padding:16px}
-    .card h3{margin:0 0 14px;font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#334155}
-    .chart-wrap{height:320px}
-    .table-wrap{overflow:auto;border-radius:16px;border:1px solid rgba(148,163,184,.24)}
-    table{width:100%;border-collapse:collapse;min-width:980px}
-    th,td{padding:12px;border-bottom:1px solid #e5edf6;text-align:left}
-    th{position:sticky;top:0;background:#f8fbff;color:#334155;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
-    td{font-size:12px;font-weight:700;color:#1e293b}
-    tr:hover td{background:#f8fbff}
-    .foot{font-size:12px;color:#64748b;font-weight:700;margin-top:10px}
-    .hidden{display:none!important}
+    .card h3{margin:0 0 14px;font-size:13px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#334155}
+    .chart{height:330px}.chart.sm{height:290px}
+    .table-wrap{overflow:auto;border-radius:18px;border:1px solid rgba(148,163,184,.22)}
+    table{width:100%;border-collapse:collapse;min-width:1180px}
+    th,td{padding:12px 14px;border-bottom:1px solid #e5edf6;font-size:13px}
+    th{position:sticky;top:0;background:#f8fbff;color:#334155;text-align:left;font-size:11px;letter-spacing:.6px;text-transform:uppercase;font-weight:800}
+    td{color:#1f2937;font-weight:600} tr:hover td{background:#f8fbff}
+    .money{font-weight:900}.tag{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:#eef4ff;color:#16325c;font-size:11px;font-weight:900;border:1px solid #d7e2f0}
     .empty{padding:36px;text-align:center;color:var(--muted);font-weight:800}
-    @media(max-width:1220px){.filter-grid{grid-template-columns:1fr 1fr 1fr 1fr}.actions{grid-column:1/-1}.grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:760px){.page{padding:14px 12px 28px}.header h1{font-size:25px}.filter-grid,.kpis{grid-template-columns:1fr}.chart-wrap{height:260px}.panel{padding:0}.filters{padding:14px}.card{padding:14px}}
+    .hidden{display:none!important}
+    .foot{margin-top:12px;font-size:12px;color:#475569;font-weight:700}
+    @media(max-width:1360px){.summary-list{grid-template-columns:repeat(3,1fr)}.kpis{grid-template-columns:repeat(3,1fr)}.grid-2,.grid-3{grid-template-columns:1fr}}
+    @media(max-width:940px){.summary-list{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}.filters{padding-bottom:10px}}
+    @media(max-width:760px){.summary-list,.kpis{grid-template-columns:1fr}.header h1{font-size:26px}.chart,.chart.sm{height:260px}}
   </style>
 </head>
 <body>
+  <div class="bg"></div>
   <div class="page">
     <div class="header">
       <div>
         <h1>Faturamento</h1>
-        <p>Mês atual carregado por padrão, comparação com o mesmo período do mês anterior, cards em uma única linha por loja e tabela executiva simplificada para exibir apenas Loja.</p>
+        <p>Dashboard financeiro ligado diretamente à base de uploads. A primeira tela abre com o resumo consolidado das empresas e deixa espaço pronto para novas operações.</p>
       </div>
       <div class="pill" id="lastUpdate">⏳ Carregando base financeira...</div>
     </div>
 
-    <div class="panel filters">
-      <div class="filter-grid">
-        <div class="field">
-          <label>Período</label>
-          <select id="presetPeriodo">
-            <option value="mes_atual" selected>Mês atual</option>
-            <option value="mes_anterior">Mês anterior</option>
-            <option value="ultima_semana">Última semana</option>
-            <option value="ontem">Ontem</option>
-            <option value="personalizado">Personalizado</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Loja</label>
-          <select id="fLoja"><option value="todas">Todas</option></select>
-        </div>
-        <div class="field">
-          <label>Canal</label>
-          <select id="fCanal"><option value="todos">Todos</option></select>
-        </div>
-        <div class="field">
-          <label>Turno</label>
-          <select id="fTurno"><option value="todos">Todos</option></select>
-        </div>
-        <div class="field">
-          <label>Status</label>
-          <select id="fStatusLinha">
-            <option value="ativos" selected>Somente válidos</option>
-            <option value="cancelados">Somente cancelados</option>
-            <option value="todos">Todos</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>De / Até</label>
-          <div class="actions">
-            <input id="dataInicio" type="date" />
-            <input id="dataFim" type="date" />
+    <div class="filters-sticky">
+      <div class="panel filters">
+        <div class="filter-toolbar">
+          <div class="field period">
+            <label>Período</label>
+            <select id="presetPeriodo">
+              <option value="mes_completo" selected>Mês completo</option>
+              <option value="ontem">Ontem</option>
+              <option value="ultima_semana">Última semana</option>
+              <option value="mes_atual">Mês atual</option>
+              <option value="mes_anterior">Mês anterior</option>
+              <option value="personalizado">Personalizado</option>
+            </select>
+          </div>
+          <div class="field hidden" id="fieldEmpresa">
+            <label>Empresa</label>
+            <select id="fEmpresa"><option value="todas">Todas</option></select>
+          </div>
+          <div class="field store">
+            <label>Loja</label>
+            <select id="fLoja"><option value="todas">Todas</option></select>
+          </div>
+          <div class="field">
+            <label>Canal</label>
+            <select id="fCanal"><option value="todos">Todos</option></select>
+          </div>
+          <div class="field">
+            <label>Turno</label>
+            <select id="fTurno"><option value="todos">Todos</option></select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="fStatusLinha">
+              <option value="todos">Todos</option>
+              <option value="ativos" selected>Somente válidos</option>
+              <option value="cancelados">Somente cancelados</option>
+            </select>
+          </div>
+          <div class="date-row" id="customRange">
+            <div class="field date-compact"><label>De</label><input type="date" id="dataInicio"></div>
+            <div class="field date-compact"><label>Até</label><input type="date" id="dataFim"></div>
+            <div class="field actions"><label>Ações</label><div style="display:flex;gap:8px;flex-wrap:nowrap"><button id="btnAplicarFiltros" class="btn">Aplicar filtros</button><button id="btnLimparFiltroView" class="btn secondary">Limpar visualização</button></div></div>
           </div>
         </div>
-        <div class="actions">
-          <button class="btn" id="btnAplicar">Aplicar</button>
-          <button class="btn secondary" id="btnLimpar">Limpar</button>
+        <div class="helper"></div>
+      </div>
+      <div class="panel result-line" id="resultLine"></div>
+    </div>
+
+    <div id="detailWrap" class="hidden">
+
+      <div class="summary-section" id="summarySection">
+        <div class="section-title" id="summarySectionTitle">Empresas no recorte</div>
+        <div class="summary-list" id="summaryCompanies"></div>
+      </div>
+
+      <div class="kpis" id="kpiGrid"></div>
+      <div class="panel card" style="margin-bottom:18px">
+        <h3>Tabela executiva financeira por loja</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>Loja</th>
+                <th>Pedidos</th>
+                <th>Receita Total</th>
+                <th>Itens</th>
+                <th>Ticket Médio</th>
+                <th>Descontos</th>
+                <th>Acréscimos</th>
+                <th>Entrega</th>
+                <th>Taxa Serviço</th>
+                <th>Cancelados</th>
+                <th>Valor Cancelado</th>
+                <th>Última linha / último dia</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
         </div>
       </div>
-      <div class="foot" id="periodLabel">Período selecionado: mês atual.</div>
-    </div>
 
-    <div class="summary-wrap">
-      <div class="section-title">Lojas com dados</div>
-      <div class="store-strip-wrap"><div class="store-strip" id="storeStrip"></div></div>
-    </div>
-
-    <div class="kpis" id="kpiGrid"></div>
-
-    <div class="hero-wrap" id="heroWrap"><div class="hero-strip" id="heroStrip"></div></div>
-
-    <div class="panel card" style="margin-bottom:16px">
-      <h3>Tabela executiva por loja</h3>
-      <div class="table-wrap"><table><thead><tr><th>Loja</th><th>Pedidos</th><th>Receita total</th><th>Itens</th><th>TKM</th><th>Descontos</th><th>Acréscimos</th><th>Entrega</th><th>Taxa serviço</th><th>Cancelados</th><th>Valor cancelado</th><th>Última linha / último dia</th></tr></thead><tbody id="tableBody"></tbody></table></div>
-      <div class="foot" id="tableFoot"></div>
-    </div>
-
-    <div class="grid" id="chartGrid">
-      <div class="panel card">
-        <h3 id="chartMainTitle">Receita por dia</h3>
-        <div class="chart-wrap"><canvas id="chartDia"></canvas></div>
+      <div class="grid-2">
+        <div class="panel card">
+          <h3>Receita total por dia</h3>
+          <div class="chart"><canvas id="chartReceitaDia"></canvas></div>
+        </div>
+        <div class="panel card">
+          <h3>Receita por empresa</h3>
+          <div class="chart"><canvas id="chartEmpresa"></canvas></div>
+        </div>
       </div>
-      <div class="panel card">
-        <h3 id="chartSideTitle">Receita por loja</h3>
-        <div class="chart-wrap"><canvas id="chartLoja"></canvas></div>
+
+      <div class="grid-3">
+        <div class="panel card">
+          <h3>Receita por loja</h3>
+          <div class="chart sm"><canvas id="chartLoja"></canvas></div>
+        </div>
+        <div class="panel card">
+          <h3>Receita por turno</h3>
+          <div class="chart sm"><canvas id="chartTurno"></canvas></div>
+        </div>
+        <div class="panel card">
+          <h3>Receita por canal</h3>
+          <div class="chart sm"><canvas id="chartCanal"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel card">
+          <h3>Composição financeira</h3>
+          <div class="chart sm"><canvas id="chartComposicao"></canvas></div>
+        </div>
+        <div class="panel card">
+          <h3>Receita por forma de pagamento</h3>
+          <div class="chart sm"><canvas id="chartPagamento"></canvas></div>
+        </div>
       </div>
     </div>
   </div>
 
 <script>
 const FIREBASE_URL = 'https://justburger-producao-e9b27-default-rtdb.firebaseio.com';
-const REPORTS_URL = `${FIREBASE_URL}/relatorios_diarios.json`;
+const REPORTS_URL = FIREBASE_URL + '/relatorios_diarios.json';
 let rowsBase = [];
-let detectedEnd = new Date();
-let storeSelection = 'todas';
-let charts = { dia:null, loja:null };
-const STORE_META = [
-  {key:'todas',label:'Todas as lojas',className:'all'},
-  {key:'burger matriz',label:'Just Matriz',className:'matriz'},
-  {key:'burger abc',label:'Just ABC',className:'abc'},
-  {key:'burger gru',label:'Just GRU',className:'gru'},
-  {key:'gourmet',label:'Just Gourmet',className:'gourmet'},
-  {key:'aham forneria',label:'Aham Forneria',className:'forneria'},
-  {key:'aham sushi',label:'Aham Sushi',className:'sushi'}
-];
+let reportsMeta = [];
+let charts = {};
+let selectedCompanyCard = 'todas';
+let detectedMonth = null;
+let fullBaseLoaded = false;
+let baseWindowStart = null;
+const BASE_MONTHS_FAST = 3;
+const fmtMoney = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const fmtInt = new Intl.NumberFormat('pt-BR');
+const COMPANY_ORDER = ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi'];
+const COMPANY_EMPTY = COMPANY_ORDER.map(name => ({empresa:name}));
 
-function normalize(value){ return String(value == null ? '' : value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
-function toNumber(value){
-  if(value == null || value === '') return 0;
-  if(typeof value === 'number') return Number.isFinite(value) ? value : 0;
-  let s = String(value).trim().replace(/R\$/gi,'').replace(/\s/g,'');
-  if(s.includes(',') && s.includes('.')){ if(s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g,'').replace(',', '.'); else s = s.replace(/,/g,''); }
-  else if(s.includes(',')) s = s.replace(',', '.');
-  const n = Number(s); return Number.isFinite(n) ? n : 0;
-}
 function parseDateFlex(value){
-  if(value == null || value === '') return null;
-  if(value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if(value==null || value==='') return null;
+  if(value instanceof Date) return isNaN(value) ? null : value;
   if(typeof value === 'number'){
-    const d = new Date(Math.round((value - 25569) * 86400 * 1000));
-    return Number.isNaN(d.getTime()) ? null : d;
+    const epoch = new Date(Math.round((value - 25569) * 86400 * 1000));
+    return isNaN(epoch) ? null : epoch;
   }
   const s = String(value).trim();
   let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-  if(m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+  if(m) return new Date(Number(m[3]), Number(m[2])-1, Number(m[1]));
   m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  const d = new Date(s); return Number.isNaN(d.getTime()) ? null : d;
+  if(m) return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  m = s.match(/^(\d{2})-(\d{2})-(\d{4})/);
+  if(m) return new Date(Number(m[3]), Number(m[2])-1, Number(m[1]));
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
 }
-function fmtMoney(value){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value || 0); }
-function fmtInt(value){ return new Intl.NumberFormat('pt-BR').format(value || 0); }
-function pctText(current, previous){ if(!previous) return '—'; const pct = ((current - previous) / previous) * 100; const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '■'; return `${arrow} ${Math.abs(pct).toFixed(1).replace('.', ',')}%`; }
-function fieldValue(row, aliases){
-  const keys = Object.keys(row || {});
-  for(const alias of aliases){
-    const found = keys.find(key => normalize(key) === normalize(alias));
-    if(found && row[found] != null && row[found] !== '') return row[found];
+function ymd(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function brDay(d){return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`}
+function moneyNumber(v){
+  if(v==null || v==='') return 0;
+  if(typeof v === 'number') return isFinite(v) ? v : 0;
+  const s = String(v).replace(/\./g,'').replace(',', '.').replace(/[^0-9.-]/g,'');
+  const n = Number(s);
+  return isFinite(n) ? n : 0;
+}
+function normalizeStr(v){ return String(v||'').trim(); }
+function normalizeTurnoFinance(v=''){
+  const s = String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  if(!s) return 'Não informado';
+  if(s.includes('madrugada') || s.includes('noite') || s.includes('night') || s.includes('noturn')) return 'Noite';
+  if(s.includes('tarde') || s.includes('afternoon')) return 'Tarde';
+  if(s.includes('dia') || s.includes('manha') || s.includes('morning') || s.includes('day')) return 'Dia';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function normalizePayment(p=''){
+  const s = String(p).trim();
+  if(!s) return 'Não informado';
+  if(/voucher/i.test(s)) return 'Voucher';
+  if(/pago\s*online/i.test(s)) return 'Pago Online';
+  if(/dinheiro/i.test(s)) return 'Dinheiro';
+  if(/cart[aã]o/i.test(s)) return 'Cartão';
+  if(/pix/i.test(s)) return 'PIX';
+  return s;
+}
+const LOJA_CODIGO_MAP = {
+  '21870':'Burger Matriz'
+};
+function mapCompany(store='', code=''){
+  const cod = String(code||'').trim();
+  if(LOJA_CODIGO_MAP[cod]) return LOJA_CODIGO_MAP[cod];
+  const s = String(store||'').toLowerCase().trim();
+  if(!s) return 'Sem empresa';
+  if(s.includes('zona leste') || s.includes('matriz')) return 'Burger Matriz';
+  if(/(^|\s)abc(\s|$)/.test(s) || s.includes('santo andré') || s.includes('sao bernardo') || s.includes('são bernardo') || s.includes('são caetano')) return 'Burger ABC';
+  if(s.includes('gru') || s.includes('guarulhos')) return 'Burger GRU';
+  if(s.includes('gourmet')) return 'Gourmet';
+  if(s.includes('forneria') || s.includes('esfiha')) return 'Aham Forneria';
+  if(s.includes('sushi')) return 'Aham Sushi';
+  if(s.includes('burger')) return 'Burger Matriz';
+  return store.trim() || 'Sem empresa';
+}
+function normalizeStore(store='', code=''){
+  const cod = String(code||'').trim();
+  if(LOJA_CODIGO_MAP[cod]) return LOJA_CODIGO_MAP[cod];
+  const s = String(store||'').toLowerCase().trim();
+  if(!s) return 'Sem loja informada';
+  if(s.includes('zona leste') || s.includes('matriz') || s.includes('just burger') || s === 'burger') return 'Burger Matriz';
+  if(/(^|\s)abc(\s|$)/.test(s) || s.includes('santo andré') || s.includes('sao bernardo') || s.includes('são bernardo') || s.includes('são caetano')) return 'Burger ABC';
+  if(s.includes('gru') || s.includes('guarulhos')) return 'Burger GRU';
+  if(s.includes('gourmet')) return 'Gourmet';
+  if(s.includes('forneria') || s.includes('esfiha')) return 'Aham Forneria';
+  if(s.includes('sushi')) return 'Aham Sushi';
+  if(s.includes('burger')) return 'Burger Matriz';
+  return String(store||'').trim() || 'Sem loja informada';
+}
+function rangeFromPreset(preset){
+  const today = new Date();
+  const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if(preset === 'ontem'){
+    const d = new Date(t0); d.setDate(d.getDate()-1); return {from:d,to:new Date(d)};
   }
-  for(const alias of aliases){
-    const target = normalize(alias);
-    const found = keys.find(key => normalize(key).includes(target));
-    if(found && row[found] != null && row[found] !== '') return row[found];
+  if(preset === 'ultima_semana'){
+    const from = new Date(t0); from.setDate(from.getDate()-6); return {from,to:t0};
   }
-  return '';
-}
-function getHour(value){
-  if(value == null || value === '') return null;
-  if(typeof value === 'number') return Math.max(0, Math.min(23, Math.round(value * 24)));
-  const m = String(value).match(/(\d{1,2}):(\d{2})/);
-  return m ? Number(m[1]) : null;
-}
-function getTurno(hour){ if(hour == null || Number.isNaN(hour)) return 'Dia'; if(hour < 11) return 'Manhã'; if(hour < 18) return 'Dia'; return 'Noite'; }
-function normalizeStore(value){
-  const text = normalize(value || '');
-  if(!text) return 'sem loja';
-  if(text.includes('matriz')) return 'burger matriz';
-  if(text.includes('abc')) return 'burger abc';
-  if(text.includes('gru')) return 'burger gru';
-  if(text.includes('gourmet')) return 'gourmet';
-  if(text.includes('forneria')) return 'aham forneria';
-  if(text.includes('sushi')) return 'aham sushi';
-  return text;
-}
-function labelStore(key){ return (STORE_META.find(item => item.key === key) || {label:key}).label; }
-function isoDay(date){ return date ? date.toISOString().slice(0,10) : ''; }
-function formatDay(iso){ if(!iso) return '—'; const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; }
-function rangeByPreset(){
-  const preset = document.getElementById('presetPeriodo').value;
-  const ref = detectedEnd || new Date();
-  if(preset === 'mes_anterior') return {start:new Date(ref.getFullYear(), ref.getMonth()-1, 1), end:new Date(ref.getFullYear(), ref.getMonth(), 0)};
-  if(preset === 'ultima_semana') return {start:new Date(ref.getFullYear(), ref.getMonth(), ref.getDate()-6), end:ref};
-  if(preset === 'ontem') return {start:new Date(ref.getFullYear(), ref.getMonth(), ref.getDate()-1), end:new Date(ref.getFullYear(), ref.getMonth(), ref.getDate()-1)};
+  if(preset === 'mes_atual') return {from:new Date(t0.getFullYear(), t0.getMonth(), 1), to:t0};
+  if(preset === 'mes_anterior') return {from:new Date(t0.getFullYear(), t0.getMonth()-1, 1), to:new Date(t0.getFullYear(), t0.getMonth(), 0)};
+  if(preset === 'mes_completo' && detectedMonth){
+    return {from:new Date(detectedMonth.year, detectedMonth.month-1, 1), to:new Date(detectedMonth.year, detectedMonth.month, 0)};
+  }
   if(preset === 'personalizado'){
-    const start = parseDateFlex(document.getElementById('dataInicio').value);
-    const end = parseDateFlex(document.getElementById('dataFim').value);
-    return {start:start || new Date(ref.getFullYear(), ref.getMonth(), 1), end:end || ref};
+    const from = document.getElementById('dataInicio').value ? new Date(document.getElementById('dataInicio').value+'T00:00:00') : null;
+    const to = document.getElementById('dataFim').value ? new Date(document.getElementById('dataFim').value+'T23:59:59') : null;
+    return {from,to};
   }
-  return {start:new Date(ref.getFullYear(), ref.getMonth(), 1), end:ref};
+  return {from:null,to:null};
 }
-function prevEquivalentRange(range){ return {start:new Date(range.start.getFullYear(), range.start.getMonth()-1, 1), end:new Date(range.end.getFullYear(), range.end.getMonth()-1, range.end.getDate())}; }
-function currentFilters(){ return { loja:storeSelection === 'todas' ? document.getElementById('fLoja').value : storeSelection, canal:document.getElementById('fCanal').value, turno:document.getElementById('fTurno').value, status:document.getElementById('fStatusLinha').value, range:rangeByPreset() }; }
-function filterRows(baseRows, filters){
-  return baseRows.filter(row => {
-    if(!(row.date instanceof Date) || Number.isNaN(row.date.getTime())) return false;
-    if(row.date < filters.range.start || row.date > filters.range.end) return false;
-    if(filters.loja !== 'todas' && row.store !== filters.loja) return false;
-    if(filters.canal !== 'todos' && row.canal !== filters.canal) return false;
-    if(filters.turno !== 'todos' && row.turno !== filters.turno) return false;
-    if(filters.status === 'ativos' && row.cancelado) return false;
-    if(filters.status === 'cancelados' && !row.cancelado) return false;
+function rangeLabel(from,to){
+  if(!from && !to) return 'Todos';
+  const a = from ? from.toLocaleDateString('pt-BR') : '—';
+  const b = to ? to.toLocaleDateString('pt-BR') : '—';
+  return `${a} até ${b}`;
+}
+function topLabel(arr){ return arr.length ? arr[0].label : '—'; }
+function shorten(s,n){ s=String(s||''); return s.length>n ? s.slice(0,n-1)+'…' : s; }
+function sanitizeHtml(s){return String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+function destroyCharts(){ Object.values(charts).forEach(ch=>{try{ch.destroy()}catch(e){}}); charts={}; }
+function draw(id, type, data, options){
+  const canvas = document.getElementById(id); if(!canvas) return;
+  if(charts[id]) charts[id].destroy();
+  charts[id] = new Chart(canvas, {type, data, options: Object.assign({responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#334155'}}}}, options || {})});
+}
+function fillSelect(id, values, labelAll='Todos'){
+  const el = document.getElementById(id);
+  const curr = el.value || (id==='fEmpresa'?'todas':'todos');
+  const firstValue = id==='fEmpresa' ? 'todas' : 'todos';
+  el.innerHTML = `<option value="${firstValue}">${labelAll}</option>` + [...new Set(values)].filter(Boolean).sort().map(v => `<option value="${sanitizeHtml(v)}">${sanitizeHtml(v)}</option>`).join('');
+  if([...el.options].some(o => o.value === curr)) el.value = curr;
+}
+async function fetchJson(url){ const res = await fetch(url, {cache:'no-store'}); if(!res.ok) throw new Error('Falha ao ler '+url); return await res.json(); }
+async function fetchReportRows(rep){
+  let parsed = {};
+  try{ parsed = JSON.parse(rep.dados_json || '{}'); }catch(e){ parsed = {}; }
+  let rows = Array.isArray(parsed.linhas) ? parsed.linhas.slice() : [];
+  let totalOriginal = Number(parsed.total_original || rows.length || rep.total_linhas || 0);
+  let chunkCount = 0;
+  if(rep.chunked && rep.chunks_path){
+    try{
+      const chunksObj = await fetchJson(`${FIREBASE_URL}/${rep.chunks_path}.json`);
+      const chunkList = Object.values(chunksObj || {}).sort((a,b)=>(a.chunk_index||0)-(b.chunk_index||0));
+      chunkCount = chunkList.length;
+      rows = chunkList.flatMap(c => Array.isArray(c.rows) ? c.rows : []);
+      if(!totalOriginal) totalOriginal = rows.length;
+    }catch(err){ console.error('Erro nos chunks', rep.nome_arquivo, err); }
+  }
+  return {rows, totalOriginal, chunkCount};
+}
+async function carregarBase(forceAll=false){
+  const obj = await fetchJson(REPORTS_URL) || {};
+  const allReports = Object.entries(obj).map(([id,v]) => ({id,...v})).filter(r => r.status !== 'deletado').sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
+  const cutoff = new Date();
+  cutoff.setHours(0,0,0,0);
+  cutoff.setDate(1);
+  cutoff.setMonth(cutoff.getMonth() - (BASE_MONTHS_FAST - 1));
+  baseWindowStart = new Date(cutoff);
+  reportsMeta = forceAll ? allReports : allReports.filter(rep => {
+    const ref = parseDateFlex(rep.data_referencia) || (rep.timestamp_upload ? new Date(rep.timestamp_upload) : null);
+    return !ref || ref >= cutoff;
+  });
+  fullBaseLoaded = forceAll || reportsMeta.length === allReports.length;
+  const dedupe = new Map();
+  let excludedNoStore = 0;
+  for(const rep of reportsMeta){
+    const {rows} = await fetchReportRows(rep);
+    rows.forEach((row, idx) => {
+      const data = parseDateFlex(row['Data da venda'] || row['Data'] || row['Data da Venda']);
+      if(!data) return;
+      const code = row['Código da loja'] || row['Codigo da loja'] || row['Cód. loja'] || '';
+      const lojaOriginal = normalizeStr(row['Nome da loja'] || row['Loja'] || '');
+      const loja = normalizeStore(lojaOriginal, code);
+      const empresa = mapCompany(loja, code);
+      if(!lojaOriginal || loja === 'Sem loja informada' || empresa === 'Sem loja informada'){
+        excludedNoStore++;
+        return;
+      }
+      const pedidoKey = row['Id do pedido no parceiro'] || row['Número do pedido no parceiro'] || row['Pedido'] || `${rep.id}_${idx}`;
+      const key = `${pedidoKey}||${loja}||${ymd(data)}`;
+      dedupe.set(key, {
+        pedido: pedidoKey,
+        data,
+        loja,
+        empresa,
+        codigoLoja: code,
+        canal: normalizeStr(row['Canal de venda']) || 'Não informado',
+        turno: normalizeTurnoFinance(row['Turno']),
+        pagamento: normalizePayment(row['Pagamento']),
+        cancelado: /^S$/i.test(normalizeStr(row['Está cancelado'] || row['Esta cancelado'] || row['Cancelado'])),
+        motivoCancelamento: normalizeStr(row['Motivo do cancelamento']),
+        itens: moneyNumber(row['Itens']),
+        entrega: moneyNumber(row['Entrega']),
+        desconto: moneyNumber(row['Desconto']),
+        acrescimo: moneyNumber(row['Acréscimo'] || row['Acrescimo']),
+        total: moneyNumber(row['Total']),
+        taxaServico: moneyNumber(row['Total taxa de serviço'] || row['Total taxa de servico']),
+        temCupom: /^S$/i.test(normalizeStr(row['Tem cupom'] || row['Cupom'] || row['Usou cupom'])),
+        nomeArquivo: rep.nome_arquivo || '',
+        reportId: rep.id,
+        dataReferencia: rep.data_referencia || null
+      });
+    });
+  }
+  rowsBase = [...dedupe.values()].sort((a,b)=>a.data-b.data);
+  if(rowsBase.length){
+    const lastRow = rowsBase[rowsBase.length-1];
+    detectedMonth = {year:lastRow.data.getFullYear(), month:lastRow.data.getMonth()+1};
+    document.getElementById('dataInicio').value = `${detectedMonth.year}-${String(detectedMonth.month).padStart(2,'0')}-01`;
+    document.getElementById('dataFim').value = ymd(new Date(detectedMonth.year, detectedMonth.month, 0));
+  }
+  fillSelect('fEmpresa', COMPANY_ORDER.concat(rowsBase.map(r=>r.empresa)).filter(v => v !== 'Sem loja informada'), 'Todas');
+  fillSelect('fLoja', rowsBase.map(r=>r.loja).filter(v => v !== 'Sem loja informada'), 'Todas');
+  fillSelect('fCanal', rowsBase.map(r=>r.canal), 'Todos');
+  fillSelect('fTurno', rowsBase.map(r=>r.turno), 'Todos');
+  const last = allReports[0];
+  const suffix = excludedNoStore ? ` • ${excludedNoStore} linhas sem loja ignoradas` : '';
+  const mode = fullBaseLoaded ? 'base completa' : `últimos ${BASE_MONTHS_FAST} meses`;
+  document.getElementById('lastUpdate').textContent = last ? `✅ Base lida em ${new Date(last.timestamp_upload).toLocaleString('pt-BR')} • ${mode}${suffix}` : '⚠️ Sem uploads';
+}
+async function ensureRangeLoaded(range){
+  if(fullBaseLoaded) return;
+  if(range?.from && baseWindowStart && range.from < baseWindowStart){
+    document.getElementById('lastUpdate').textContent = '⏳ Ampliando leitura da base para o período solicitado...';
+    await carregarBase(true);
+  }
+}
+function getFilteredRows(){
+  const preset = document.getElementById('presetPeriodo').value;
+  const {from,to} = rangeFromPreset(preset);
+  const fEmpresa = 'todas';
+  const fLoja = document.getElementById('fLoja').value;
+  const fCanal = document.getElementById('fCanal').value;
+  const fTurno = document.getElementById('fTurno').value;
+  const fStatus = document.getElementById('fStatusLinha').value;
+  return rowsBase.filter(r => {
+    if(from && r.data < from) return false;
+    if(to && r.data > to) return false;
+    if(fEmpresa !== 'todas' && r.empresa !== fEmpresa) return false;
+    if(fLoja !== 'todos' && r.loja !== fLoja) return false;
+    if(fCanal !== 'todos' && r.canal !== fCanal) return false;
+    if(fTurno !== 'todos' && r.turno !== fTurno) return false;
+    if(fStatus === 'ativos' && r.cancelado) return false;
+    if(fStatus === 'cancelados' && !r.cancelado) return false;
     return true;
   });
 }
+function applyCompanyCard(company){
+  selectedCompanyCard = company;
+  renderSummaryCards(getSummaryBaseRows(rangeFromPreset(document.getElementById('presetPeriodo').value)));
+}
 function computeSummary(rows){
-  const validos = rows.filter(row => !row.cancelado);
-  const cancelados = rows.filter(row => row.cancelado);
-  const baseTicket = (validos.length ? validos : rows);
-  const receita = validos.reduce((acc,row)=>acc + row.total,0);
+  const validos = rows.filter(r => !r.cancelado);
+  const cancelados = rows.filter(r => r.cancelado);
+  const receitaTotal = validos.reduce((s,r)=>s+r.total,0);
+  const receitaItens = validos.reduce((s,r)=>s+r.itens,0);
+  const descontos = validos.reduce((s,r)=>s+r.desconto,0);
+  const acrescimos = validos.reduce((s,r)=>s+r.acrescimo,0);
+  const entrega = validos.reduce((s,r)=>s+r.entrega,0);
+  const taxaServico = validos.reduce((s,r)=>s+r.taxaServico,0);
+  const valorCancelado = cancelados.reduce((s,r)=>s+r.total,0);
+  const ticket = validos.length ? receitaTotal / validos.length : 0;
+  const lastRow = rows.length ? rows.slice().sort((a,b)=>b.data-a.data)[0] : null;
+  return {rows,validos,cancelados,receitaTotal,receitaItens,descontos,acrescimos,entrega,taxaServico,valorCancelado,ticket,lastRow};
+}
+function currentFilterState(){
   return {
-    pedidos: rows.length,
-    receita,
-    itens: validos.reduce((acc,row)=>acc + row.itens,0),
-    descontos: validos.reduce((acc,row)=>acc + row.desconto,0),
-    acrescimos: validos.reduce((acc,row)=>acc + row.acrescimo,0),
-    entrega: validos.reduce((acc,row)=>acc + row.entrega,0),
-    taxaServico: validos.reduce((acc,row)=>acc + row.taxaServico,0),
-    canceladosQtd: cancelados.length,
-    valorCancelado: cancelados.reduce((acc,row)=>acc + row.total,0),
-    tkm: baseTicket.length ? baseTicket.reduce((acc,row)=>acc + row.total,0) / baseTicket.length : 0
+    loja: document.getElementById('fLoja').value,
+    canal: document.getElementById('fCanal').value,
+    turno: document.getElementById('fTurno').value,
+    status: document.getElementById('fStatusLinha').value,
+    preset: document.getElementById('presetPeriodo').value
   };
+}
+function shouldShowCompanyCards(){
+  const state = currentFilterState();
+  return state.loja === 'todos' && state.turno === 'todos';
+}
+function getSummaryBaseRows(range){
+  const state = currentFilterState();
+  return rowsBase.filter(r => {
+    if(range.from && r.data < range.from) return false;
+    if(range.to && r.data > range.to) return false;
+    if(state.canal !== 'todos' && r.canal !== state.canal) return false;
+    if(state.status === 'ativos' && r.cancelado) return false;
+    if(state.status === 'cancelados' && !r.cancelado) return false;
+    return true;
+  });
+}
+function renderResultLine(rows, range){ const box = document.getElementById('resultLine'); if(box) box.innerHTML = ''; }
+function renderSummaryCards(allRows){
+  const section = document.getElementById('summarySection');
+  const title = document.getElementById('summarySectionTitle');
+  const wrap = document.getElementById('summaryCompanies');
+  if(!section || !wrap) return;
+  if(!shouldShowCompanyCards()){
+    section.classList.add('hidden');
+    wrap.innerHTML = '';
+    return;
+  }
+  section.classList.remove('hidden');
+  if(title) title.textContent = 'Empresas no recorte';
+  const summaries = COMPANY_EMPTY.map(c => {
+    const rows = allRows.filter(r => r.empresa === c.empresa);
+    return {empresa:c.empresa, ...computeSummary(rows)};
+  }).filter(item => item.rows.length || COMPANY_ORDER.includes(item.empresa));
+  wrap.innerHTML = summaries.map(item => {
+    const active = selectedCompanyCard === item.empresa ? ' active' : '';
+    return `<div class="panel summary-card${active}" data-company="${sanitizeHtml(item.empresa)}">
+      <div class="summary-top">
+        <div>
+          <div class="summary-name">${sanitizeHtml(item.empresa)}</div>
+          <div class="summary-space">${item.rows.length ? 'com dados no recorte' : 'sem dados no recorte'}</div>
+        </div>
+        <div class="tag">${fmtInt.format(item.validos.length)} válidos</div>
+      </div>
+      <div class="summary-value">${fmtMoney.format(item.receitaTotal)}</div>
+      <div class="summary-line"><span>Última linha</span><strong>${item.lastRow ? item.lastRow.data.toLocaleDateString('pt-BR') : '—'}</strong></div>
+      <div class="summary-line"><span>Valor cancelado</span><strong>${fmtMoney.format(item.valorCancelado)}</strong></div>
+      <div class="summary-line"><span>Ticket médio</span><strong>${fmtMoney.format(item.ticket)}</strong></div>
+    </div>`;
+  }).join('');
+  [...wrap.querySelectorAll('.summary-card')].forEach(card => card.addEventListener('click', () => applyCompanyCard(card.dataset.company)));
+}
+function groupByDay(rows, field){
+  const map = new Map();
+  rows.forEach(r => map.set(ymd(r.data), (map.get(ymd(r.data))||0) + (r[field]||0)));
+  return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,v]) => ({label: brDay(new Date(k+'T00:00:00')), value:v}));
 }
 function groupAndSum(rows, field, valueField){
   const map = new Map();
-  rows.forEach(row => map.set(row[field], (map.get(row[field]) || 0) + (row[valueField] || 0)));
-  return [...map.entries()].map(([label,value]) => ({label, value})).sort((a,b)=>b.value-a.value);
-}
-function groupByDay(rows, valueField){
-  const map = new Map();
-  rows.forEach(row => {
-    const key = isoDay(row.date);
-    map.set(key, (map.get(key) || 0) + (row[valueField] || 0));
-  });
-  return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([iso, value]) => ({label:formatDay(iso), value}));
-}
-function drawChart(id, type, data, options){
-  if(charts[id]) charts[id].destroy();
-  charts[id] = new Chart(document.getElementById(id), {type, data, options});
-}
-async function fetchJson(url){ const res = await fetch(url, {cache:'no-store'}); if(!res.ok) throw new Error(`Erro ao ler ${url}`); return res.json(); }
-async function readReportRows(report){
-  if(report.chunked && report.chunks_path){
-    const chunks = await fetchJson(`${FIREBASE_URL}${report.chunks_path}.json`);
-    return Object.values(chunks || {}).sort((a,b)=>(a.chunk_index||0)-(b.chunk_index||0)).flatMap(chunk => Array.isArray(chunk.rows) ? chunk.rows : []);
-  }
-  if(report.preview_json){
-    try{ const preview = typeof report.preview_json === 'string' ? JSON.parse(report.preview_json) : report.preview_json; return preview.rows || []; }catch(err){ return []; }
-  }
-  return [];
-}
-function parseFinanceRows(rawRows){
-  return rawRows.map(row => {
-    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data do pedido','Data/Hora']));
-    const hour = getHour(fieldValue(row,['Hora','Hora do pedido','Horário','Horario']));
-    return {
-      date,
-      store:normalizeStore(fieldValue(row,['Loja','Nome da loja','Store','Unidade','Merchant'])),
-      canal:String(fieldValue(row,['Canal','Canal de venda','Origem','Marketplace']) || 'Não informado').trim(),
-      turno:getTurno(hour),
-      cancelado:/^(s|sim|true|1)$/i.test(String(fieldValue(row,['Está cancelado','Esta cancelado','Cancelado','Status cancelado'])).trim()),
-      itens:toNumber(fieldValue(row,['Itens','Qtd itens','Quantidade itens','Quantidade'])),
-      desconto:toNumber(fieldValue(row,['Descontos','Desconto'])),
-      acrescimo:toNumber(fieldValue(row,['Acréscimos','Acrescimos','Acréscimo','Acrescimo'])),
-      entrega:toNumber(fieldValue(row,['Entrega','Valor entrega','Taxa entrega'])),
-      taxaServico:toNumber(fieldValue(row,['Taxa serviço','Taxa servico','Serviço','Servico'])),
-      total:toNumber(fieldValue(row,['Receita total','Total','Valor total','Total do pedido','Receita'])),
-      pedidoId:String(fieldValue(row,['Pedido','Pedido ID','ID pedido','Nº pedido','Numero pedido']) || '').trim()
-    };
-  }).filter(row => row.date && row.store);
-}
-function populateFilters(){
-  const lojas = [...new Set(rowsBase.map(row => row.store))].sort();
-  const canais = [...new Set(rowsBase.map(row => row.canal).filter(Boolean))].sort();
-  const turnos = ['Manhã','Dia','Noite'];
-  const lojaSelect = document.getElementById('fLoja');
-  const canalSelect = document.getElementById('fCanal');
-  const turnoSelect = document.getElementById('fTurno');
-  lojaSelect.innerHTML = '<option value="todas">Todas</option>' + lojas.map(loja => `<option value="${loja}">${labelStore(loja)}</option>`).join('');
-  canalSelect.innerHTML = '<option value="todos">Todos</option>' + canais.map(canal => `<option value="${canal}">${canal}</option>`).join('');
-  turnoSelect.innerHTML = '<option value="todos">Todos</option>' + turnos.map(turno => `<option value="${turno}">${turno}</option>`).join('');
-  const monthStart = new Date(detectedEnd.getFullYear(), detectedEnd.getMonth(), 1).toISOString().slice(0,10);
-  const end = detectedEnd.toISOString().slice(0,10);
-  document.getElementById('dataInicio').value = monthStart;
-  document.getElementById('dataFim').value = end;
-}
-function renderStoreCards(rows){
-  const counts = new Map();
-  rows.forEach(row => counts.set(row.store, (counts.get(row.store) || 0) + 1));
-  const html = STORE_META.map(meta => {
-    const count = meta.key === 'todas' ? rows.length : (counts.get(meta.key) || 0);
-    return `<button class="store-card ${meta.className}${(storeSelection === meta.key || (storeSelection === 'todas' && meta.key === 'todas')) ? ' active' : ''}" data-store="${meta.key}"><small>${fmtInt(count)} registros</small><strong>${meta.label}</strong><span>${meta.key === 'todas' ? 'Consolidado' : 'Filtrar loja'}</span></button>`;
-  }).join('');
-  document.getElementById('storeStrip').innerHTML = html;
-  document.querySelectorAll('.store-card').forEach(btn => btn.addEventListener('click', () => { storeSelection = btn.dataset.store; renderDashboard(); }));
-}
-function renderKPIs(rows, prevRows, filters){
-  const current = computeSummary(rows);
-  const previous = computeSummary(prevRows);
-  const cancelOnly = filters.status === 'cancelados';
-  const cards = cancelOnly ? [
-    {label:'Total de pedidos', value:fmtInt(current.pedidos), subA:'Mês anterior', subB:pctText(current.pedidos, previous.pedidos), hint:'Filtro cancelados ativo', color:'blue'},
-    {label:'Qtd cancelada', value:fmtInt(current.canceladosQtd), subA:'Mês anterior', subB:pctText(current.canceladosQtd, previous.canceladosQtd), hint:'Pedidos com está cancelado = S', color:'red'},
-    {label:'Valor cancelado', value:fmtMoney(current.valorCancelado), subA:'Mês anterior', subB:pctText(current.valorCancelado, previous.valorCancelado), hint:'Somente pedidos cancelados', color:'orange'},
-    {label:'TKM', value:fmtMoney(current.tkm), subA:'Mês anterior', subB:pctText(current.tkm, previous.tkm), hint:'Ticket médio do filtro atual', color:'purple'}
-  ] : [
-    {label:'Pedidos', value:fmtInt(current.pedidos), subA:'Mês anterior', subB:pctText(current.pedidos, previous.pedidos), hint:'Base filtrada no período atual', color:'blue'},
-    {label:'Receita total', value:fmtMoney(current.receita), subA:'Mês anterior', subB:pctText(current.receita, previous.receita), hint:'Somente linhas válidas', color:'green'},
-    {label:'Itens', value:fmtInt(current.itens), subA:'Mês anterior', subB:pctText(current.itens, previous.itens), hint:'Itens vendidos no filtro atual', color:'teal'},
-    {label:'TKM', value:fmtMoney(current.tkm), subA:'Mês anterior', subB:pctText(current.tkm, previous.tkm), hint:'Ticket médio do mesmo período', color:'purple'}
-  ];
-  document.getElementById('kpiGrid').innerHTML = cards.map(card => `<div class="kpi ${card.color}"><div class="label">${card.label}</div><div class="value">${card.value}</div><div class="sub"><span>${card.subA}</span><span>${card.subB}</span></div><div class="hint">${card.hint}</div></div>`).join('');
-  document.getElementById('heroWrap').classList.toggle('hidden', cancelOnly);
-  document.getElementById('chartGrid').classList.toggle('hidden', cancelOnly);
-}
-function renderHero(rows){
-  const summary = computeSummary(rows);
-  const cards = [
-    ['Valor itens', fmtMoney(summary.receita - summary.entrega - summary.taxaServico + summary.desconto - summary.acrescimo), 'Linhas válidas', 'linear-gradient(135deg,var(--green),#7bd899)'],
-    ['Descontos', fmtMoney(summary.descontos), 'Redução aplicada', 'linear-gradient(135deg,var(--orange),#f7bc7a)'],
-    ['Acréscimos', fmtMoney(summary.acrescimos), 'Complementos', 'linear-gradient(135deg,var(--purple),#b79cff)'],
-    ['Entrega', fmtMoney(summary.entrega), 'Receita de entrega', 'linear-gradient(135deg,var(--blue),#7db2ff)'],
-    ['Taxa serviço', fmtMoney(summary.taxaServico), 'Serviço agregado', 'linear-gradient(135deg,var(--teal),#6edbd7)'],
-    ['Cancelados', fmtMoney(summary.valorCancelado), `${fmtInt(summary.canceladosQtd)} pedidos`, 'linear-gradient(135deg,var(--red),#f29a93)']
-  ];
-  document.getElementById('heroStrip').innerHTML = cards.map(([title,value,sub,bg]) => `<div class="hero" style="background:${bg}"><strong>${value}</strong><span>${title}</span><span>${sub}</span></div>`).join('');
+  rows.forEach(r => map.set(r[field] || 'Não informado', (map.get(r[field] || 'Não informado')||0) + (r[valueField]||0)));
+  return [...map.entries()].map(([label,value]) => ({label,value})).sort((a,b)=>b.value-a.value);
 }
 function renderTable(rows){
-  const map = new Map();
-  rows.forEach(row => {
-    const key = row.store;
-    if(!map.has(key)) map.set(key,{store:key,pedidos:0,receita:0,itens:0,descontos:0,acrescimos:0,entrega:0,taxaServico:0,cancelados:0,valorCancelado:0,last:null});
-    const ref = map.get(key);
-    ref.pedidos += 1;
-    if(row.cancelado){ ref.cancelados += 1; ref.valorCancelado += row.total; }
-    else { ref.receita += row.total; ref.itens += row.itens; ref.descontos += row.desconto; ref.acrescimos += row.acrescimo; ref.entrega += row.entrega; ref.taxaServico += row.taxaServico; }
-    if(!ref.last || row.date > ref.last) ref.last = row.date;
+  const body = document.getElementById('tableBody');
+  const agg = new Map();
+  rows.forEach(r => {
+    const key = `${r.empresa}||${r.loja}`;
+    if(!agg.has(key)) agg.set(key,{empresa:r.empresa,loja:r.loja,pedidos:0,receita:0,itens:0,descontos:0,acrescimos:0,entrega:0,taxaServico:0,cancelados:0,valorCancelado:0,validos:0,lastDate:null});
+    const o = agg.get(key);
+    o.pedidos++;
+    if(!o.lastDate || r.data > o.lastDate) o.lastDate = r.data;
+    if(r.cancelado){ o.cancelados++; o.valorCancelado += r.total; }
+    else { o.validos++; o.receita += r.total; o.itens += r.itens; o.descontos += r.desconto; o.acrescimos += r.acrescimo; o.entrega += r.entrega; o.taxaServico += r.taxaServico; }
   });
-  const list = [...map.values()].sort((a,b)=>a.store.localeCompare(b.store));
-  document.getElementById('tableBody').innerHTML = list.length ? list.map(item => `<tr><td>${labelStore(item.store)}</td><td>${fmtInt(item.pedidos)}</td><td>${fmtMoney(item.receita)}</td><td>${fmtInt(item.itens)}</td><td>${fmtMoney(item.pedidos ? (item.receita + item.valorCancelado) / item.pedidos : 0)}</td><td>${fmtMoney(item.descontos)}</td><td>${fmtMoney(item.acrescimos)}</td><td>${fmtMoney(item.entrega)}</td><td>${fmtMoney(item.taxaServico)}</td><td>${fmtInt(item.cancelados)}</td><td>${fmtMoney(item.valorCancelado)}</td><td>${item.last ? item.last.toLocaleDateString('pt-BR') : '—'}</td></tr>`).join('') : '<tr><td colspan="12" class="empty">Sem linhas para o filtro atual.</td></tr>';
-  document.getElementById('tableFoot').textContent = `${fmtInt(rows.length)} linha(s) no período selecionado.`;
+  const list = [...agg.values()].sort((a,b)=>b.receita-a.receita);
+  body.innerHTML = list.length ? list.map(r => `<tr>
+    <td><span class="tag">${sanitizeHtml(r.empresa)}</span></td>
+    <td>${sanitizeHtml(r.loja)}</td>
+    <td>${fmtInt.format(r.pedidos)}</td>
+    <td class="money">${fmtMoney.format(r.receita)}</td>
+    <td>${fmtMoney.format(r.itens)}</td>
+    <td>${fmtMoney.format(r.validos ? r.receita/r.validos : 0)}</td>
+    <td>${fmtMoney.format(r.descontos)}</td>
+    <td>${fmtMoney.format(r.acrescimos)}</td>
+    <td>${fmtMoney.format(r.entrega)}</td>
+    <td>${fmtMoney.format(r.taxaServico)}</td>
+    <td>${fmtInt.format(r.cancelados)}</td>
+    <td>${fmtMoney.format(r.valorCancelado)}</td>
+    <td>${r.lastDate ? r.lastDate.toLocaleDateString('pt-BR') : '—'}</td>
+  </tr>`).join('') : '<tr><td colspan="13" class="empty">Nenhum dado encontrado para os filtros selecionados.</td></tr>';
 }
-function renderCharts(rows, filters){
-  const valueField = filters.status === 'cancelados' ? 'total' : 'total';
-  const dia = groupByDay(rows, valueField);
-  const loja = groupAndSum(rows, 'store', 'total');
-  document.getElementById('chartMainTitle').textContent = filters.status === 'cancelados' ? 'Valor cancelado por dia' : 'Receita por dia';
-  document.getElementById('chartSideTitle').textContent = filters.status === 'cancelados' ? 'Valor cancelado por loja' : 'Receita por loja';
-  drawChart('dia', 'line', {labels:dia.map(item => item.label), datasets:[{label:'Valor', data:dia.map(item => item.value), borderColor:'#3e8edb', backgroundColor:'rgba(62,142,219,.18)', fill:true, tension:.28, borderWidth:3}]}, {maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'#64748b'},grid:{color:'rgba(148,163,184,.18)'}},y:{ticks:{color:'#64748b'},grid:{color:'rgba(148,163,184,.18)'}}}});
-  drawChart('loja', 'bar', {labels:loja.map(item => labelStore(item.label)), datasets:[{label:'Valor', data:loja.map(item => item.value), backgroundColor:['#3e8edb','#43b06c','#f07f1f','#7a56d1','#dd3a33','#37b0ae']}]} , {maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'#64748b'},grid:{display:false}},y:{ticks:{color:'#64748b'},grid:{color:'rgba(148,163,184,.18)'}}}});
-}
-function renderDashboard(){
-  const filters = currentFilters();
-  document.getElementById('fLoja').value = storeSelection === 'todas' ? document.getElementById('fLoja').value : storeSelection;
-  const rows = filterRows(rowsBase, filters);
-  const prevRows = filterRows(rowsBase, {...filters, range:prevEquivalentRange(filters.range)});
-  renderStoreCards(rowsBase);
-  renderKPIs(rows, prevRows, filters);
-  if(filters.status !== 'cancelados') renderHero(rows);
+function renderDetails(rows, range){
+  const detailWrap = document.getElementById('detailWrap');
+  if(!rows.length){
+    detailWrap.classList.add('hidden');
+    destroyCharts();
+    return;
+  }
+  detailWrap.classList.remove('hidden');
+  const validos = rows.filter(r => !r.cancelado);
+  const cancelados = rows.filter(r => r.cancelado);
+  const baseFinanceira = validos.length ? validos : cancelados;
+  const receitaTotal = baseFinanceira.reduce((s,r)=>s+r.total,0);
+  const receitaItens = baseFinanceira.reduce((s,r)=>s+r.itens,0);
+  const descontos = baseFinanceira.reduce((s,r)=>s+r.desconto,0);
+  const acrescimos = baseFinanceira.reduce((s,r)=>s+r.acrescimo,0);
+  const entrega = baseFinanceira.reduce((s,r)=>s+r.entrega,0);
+  const valorCancelado = cancelados.reduce((s,r)=>s+r.total,0);
+  const ticket = baseFinanceira.length ? receitaTotal / baseFinanceira.length : 0;
+  const cupomQtd = rows.filter(r => r.temCupom).length;
+  const canceladosQtd = cancelados.length;
+  const pedidosComDesconto = baseFinanceira.filter(r => Number(r.desconto || 0) > 0).length;
+  const kpis = [
+    ['Pedidos totais', fmtInt.format(rows.length), 'Pedidos válidos', fmtInt.format(validos.length), 'orange'],
+    ['Receita total', fmtMoney.format(receitaTotal), 'Receita de itens', fmtMoney.format(receitaItens), 'blue'],
+    ['Descontos', fmtMoney.format(descontos), 'Pedidos com desconto', fmtInt.format(pedidosComDesconto), 'yellow'],
+    ['Tx de entrega', fmtMoney.format(entrega), 'Acréscimos', fmtMoney.format(acrescimos), 'green'],
+    ['Ticket médio', fmtMoney.format(ticket), validos.length ? 'Base válida' : 'Base cancelada', fmtInt.format(baseFinanceira.length), 'cyan'],
+    ['Cancelamentos', fmtInt.format(canceladosQtd), 'Base: Está cancelado = S', fmtInt.format(canceladosQtd), 'blue'],
+    ['Valor cancelado', fmtMoney.format(valorCancelado), 'Pedidos cancelados', fmtInt.format(canceladosQtd), 'orange'],
+    ['Pedidos com cupom', fmtInt.format(cupomQtd), 'Tem cupom = S', fmtInt.format(cupomQtd), 'cyan']
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k => `<div class="panel kpi ${k[4]}"><div class="label">${k[0]}</div><div class="value">${k[1]}</div><div class="sub"><span>${k[2]}</span><strong>${k[3]}</strong></div></div>`).join('');
+  const receitaDia = groupByDay(baseFinanceira,'total');
+  const empresa = groupAndSum(baseFinanceira,'empresa','total');
+  const loja = groupAndSum(baseFinanceira,'loja','total').slice(0,10);
+  const turno = groupAndSum(baseFinanceira,'turno','total');
+  const canal = groupAndSum(baseFinanceira,'canal','total');
+  const pagamento = groupAndSum(baseFinanceira,'pagamento','total').slice(0,8);
+  const axisColor = '#475569';
+  const legendColor = '#334155';
+  draw('chartReceitaDia','line',{labels:receitaDia.map(i=>i.label),datasets:[{label: validos.length ? 'Receita total' : 'Valor total cancelado',data:receitaDia.map(i=>i.value),borderColor:'#667eea',backgroundColor:'rgba(102,126,234,.12)',fill:true,tension:.28}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:axisColor},grid:{color:'rgba(148,163,184,.18)'}},y:{ticks:{color:axisColor},grid:{color:'rgba(148,163,184,.18)'}}}});
+  draw('chartEmpresa','doughnut',{labels:empresa.map(i=>i.label),datasets:[{data:empresa.map(i=>i.value),backgroundColor:['#667eea','#764ba2','#60a5fa','#34d399','#f59e0b','#fb7185']}]},{plugins:{legend:{labels:{color:legendColor}}}});
+  draw('chartLoja','bar',{labels:loja.map(i=>shorten(i.label,24)),datasets:[{label: validos.length ? 'Receita' : 'Cancelado',data:loja.map(i=>i.value),backgroundColor:'rgba(102,126,234,.82)',borderRadius:10}]},{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:axisColor},grid:{color:'rgba(148,163,184,.18)'}},y:{ticks:{color:axisColor},grid:{display:false}}}});
+  draw('chartTurno','bar',{labels:turno.map(i=>i.label),datasets:[{label: validos.length ? 'Receita' : 'Cancelado',data:turno.map(i=>i.value),backgroundColor:['#34d399','#f59e0b','#60a5fa']}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:axisColor},grid:{color:'rgba(148,163,184,.18)'}},y:{ticks:{color:axisColor},grid:{color:'rgba(148,163,184,.18)'}}}});
+  draw('chartCanal','bar',{labels:canal.map(i=>shorten(i.label,18)),datasets:[{label: validos.length ? 'Receita' : 'Cancelado',data:canal.map(i=>i.value),backgroundColor:['#06b6d4','#818cf8','#60a5fa','#34d399','#f59e0b']}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:axisColor},grid:{display:false}},y:{ticks:{color:axisColor},grid:{color:'rgba(148,163,184,.18)'}}}});
+  draw('chartComposicao','doughnut',{labels:['Receita Total','Descontos','Acréscimos','Entrega','Valor Cancelado'],datasets:[{data:[receitaTotal,descontos,acrescimos,entrega,valorCancelado],backgroundColor:['#667eea','#fb7185','#34d399','#60a5fa','#f59e0b']}]},{plugins:{legend:{labels:{color:legendColor}}}});
+  draw('chartPagamento','bar',{labels:pagamento.map(i=>shorten(i.label,16)),datasets:[{label: validos.length ? 'Receita' : 'Cancelado',data:pagamento.map(i=>i.value),backgroundColor:'rgba(16,185,129,.82)',borderRadius:10}]},{plugins:{legend:{display:false}},scales:{x:{ticks:{color:axisColor},grid:{display:false}},y:{ticks:{color:axisColor},grid:{color:'rgba(148,163,184,.18)'}}}});
   renderTable(rows);
-  renderCharts(rows, filters);
-  document.getElementById('periodLabel').textContent = `Período selecionado: ${formatDay(isoDay(filters.range.start))} até ${formatDay(isoDay(filters.range.end))}. Comparação com ${formatDay(isoDay(prevEquivalentRange(filters.range).start))} até ${formatDay(isoDay(prevEquivalentRange(filters.range).end))}.`;
 }
-async function loadBase(){
-  document.getElementById('lastUpdate').textContent = '⏳ Carregando base financeira...';
-  const obj = await fetchJson(REPORTS_URL);
-  const reports = Object.entries(obj || {}).map(([id, value]) => ({id, ...value}))
-    .filter(report => report.status !== 'deletado' && report.status !== 'substituido')
-    .filter(report => normalize(report.tipo) === 'financeiro')
-    .sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
-  rowsBase = [];
-  for(const report of reports){ rowsBase.push(...parseFinanceRows(await readReportRows(report))); }
-  rowsBase.sort((a,b)=>a.date-b.date);
-  detectedEnd = rowsBase.length ? rowsBase[rowsBase.length - 1].date : new Date();
-  populateFilters();
-  document.getElementById('lastUpdate').textContent = reports.length ? `✅ Base lida em ${new Date(reports[0].timestamp_upload || Date.now()).toLocaleString('pt-BR')}` : '⚠️ Nenhum upload financeiro ativo';
-  renderDashboard();
+function syncDateInputsFromPreset(){
+  const preset = document.getElementById('presetPeriodo').value;
+  const range = rangeFromPreset(preset);
+  if(preset !== 'personalizado'){
+    document.getElementById('dataInicio').value = range.from ? ymd(range.from) : '';
+    document.getElementById('dataFim').value = range.to ? ymd(range.to) : '';
+  }
 }
-
-document.getElementById('btnAplicar').addEventListener('click', renderDashboard);
-document.getElementById('btnLimpar').addEventListener('click', () => {
-  document.getElementById('presetPeriodo').value = 'mes_atual';
-  document.getElementById('fLoja').value = 'todas';
+function openPickerDirect(el){
+  if(!el) return;
+  const open = () => { if(typeof el.showPicker === 'function'){ try{ el.showPicker(); }catch(e){} } };
+  el.addEventListener('focus', open);
+  el.addEventListener('click', open);
+}
+async function aplicarFiltros(){
+  const range = rangeFromPreset(document.getElementById('presetPeriodo').value);
+  await ensureRangeLoaded(range);
+  const rows = getFilteredRows();
+  renderResultLine(rows, range);
+  renderSummaryCards(getSummaryBaseRows(range));
+  renderDetails(rows, range);
+}
+function limparVisualizacao(){
+  document.getElementById('presetPeriodo').value = 'mes_completo';
+  document.getElementById('fEmpresa').value = 'todas';
+  document.getElementById('fLoja').value = 'todos';
   document.getElementById('fCanal').value = 'todos';
   document.getElementById('fTurno').value = 'todos';
   document.getElementById('fStatusLinha').value = 'ativos';
-  storeSelection = 'todas';
-  populateFilters();
-  renderDashboard();
-});
-['presetPeriodo','fLoja','fCanal','fTurno','fStatusLinha','dataInicio','dataFim'].forEach(id => document.getElementById(id).addEventListener('change', () => { if(id === 'fLoja') storeSelection = document.getElementById('fLoja').value; renderDashboard(); }));
-
-loadBase().catch(error => {
-  console.error(error);
-  document.getElementById('lastUpdate').textContent = '❌ Erro ao carregar a base financeira';
-  document.getElementById('tableBody').innerHTML = '<tr><td colspan="12" class="empty">Não foi possível ler a base financeira. Reenvie o relatório em Uploads.</td></tr>';
+  selectedCompanyCard = 'todas';
+  syncDateInputsFromPreset();
+  aplicarFiltros();
+}
+function bindAutoApply(){
+  ['presetPeriodo','fEmpresa','fLoja','fCanal','fTurno','fStatusLinha'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('change', () => {
+      if(id === 'presetPeriodo') syncDateInputsFromPreset();
+      aplicarFiltros();
+    });
+  });
+  ['dataInicio','dataFim'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el){
+      el.addEventListener('change', () => {
+        document.getElementById('presetPeriodo').value = 'personalizado';
+        aplicarFiltros();
+      });
+    }
+  });
+  const btnAplicar = document.getElementById('btnAplicarFiltros');
+  const btnLimpar = document.getElementById('btnLimparFiltroView');
+  if(btnAplicar) btnAplicar.addEventListener('click', aplicarFiltros);
+  if(btnLimpar) btnLimpar.addEventListener('click', limparVisualizacao);
+  openPickerDirect(document.getElementById('dataInicio'));
+  openPickerDirect(document.getElementById('dataFim'));
+}
+document.getElementById('fEmpresa').value = 'todas';
+bindAutoApply();
+carregarBase(false).then(() => {
+  syncDateInputsFromPreset();
+  aplicarFiltros();
+}).catch(err => {
+  console.error(err);
+  const box = document.getElementById('resultLine');
+  if(box) box.innerHTML = '<span class="result-chip accent"><strong>Falha ao carregar os dados</strong></span>';
 });
 </script>
+
 </body>
 </html>
