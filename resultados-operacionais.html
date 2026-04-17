@@ -1,1442 +1,771 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Just Burger - Análise de Cancelamentos</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background: #F5F7FA;
-            color: #2C3E50;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* Header com botões de empresas */
-        .companies-header {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .company-btn {
-            padding: 15px 20px;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: white;
-            text-transform: uppercase;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .company-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        }
-
-        .company-btn.active {
-            box-shadow: 0 0 0 3px rgba(255,255,255,0.5), 0 6px 12px rgba(0,0,0,0.2);
-        }
-
-        .company-btn.just-matriz { background: linear-gradient(135deg, #FF6B6B 0%, #EE5A6F 100%); }
-        .company-btn.just-abc { background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); }
-        .company-btn.just-gru { background: linear-gradient(135deg, #FFE66D 0%, #FFBE0B 100%); color: #2C3E50; }
-        .company-btn.just-gourmet { background: linear-gradient(135deg, #A8E6CF 0%, #56C596 100%); }
-        .company-btn.aham-forneria { background: linear-gradient(135deg, #FFB7B2 0%, #FF8787 100%); }
-        .company-btn.aham-sushi { background: linear-gradient(135deg, #95E1D3 0%, #38B6AB 100%); }
-
-        /* Título com botão de upload */
-        .title-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 15px 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .title-bar h1 {
-            font-size: 24px;
-            color: #2C3E50;
-        }
-
-        .upload-btn {
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
-        }
-
-        .upload-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        /* Botões de métricas e seletor de período */
-        .metrics-bar {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .metric-btn {
-            padding: 12px 24px;
-            border: 2px solid #E0E0E0;
-            background: white;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #2C3E50;
-        }
-
-        .metric-btn:hover {
-            border-color: #667eea;
-            color: #667eea;
-            transform: translateY(-1px);
-        }
-
-        .metric-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: transparent;
-        }
-
-        .period-selector {
-            margin-left: auto;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .period-selector label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #2C3E50;
-        }
-
-        .period-selector select {
-            padding: 10px 15px;
-            border: 2px solid #E0E0E0;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            background: white;
-            cursor: pointer;
-            min-width: 180px;
-        }
-
-        /* Filtro de turno */
-        .filter-bar {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding: 15px 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            align-items: center;
-        }
-
-        .filter-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #2C3E50;
-        }
-
-        .turno-btn {
-            padding: 8px 16px;
-            border: 2px solid #E0E0E0;
-            background: white;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .turno-btn:hover {
-            border-color: #667eea;
-            color: #667eea;
-        }
-
-        .turno-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        /* Cards de KPI */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .kpi-card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-        }
-
-        .kpi-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-        }
-
-        .kpi-title {
-            font-size: 13px;
-            color: #7F8C8D;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .kpi-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: #2C3E50;
-            margin-bottom: 10px;
-        }
-
-        .kpi-breakdown {
-            padding-top: 10px;
-            border-top: 1px solid #E0E0E0;
-            font-size: 12px;
-            color: #7F8C8D;
-        }
-
-        .kpi-breakdown-item {
-            display: flex;
-            justify-content: space-between;
-            margin: 5px 0;
-        }
-
-        .kpi-breakdown-label {
-            font-weight: 500;
-        }
-
-        .kpi-breakdown-value {
-            font-weight: 600;
-            color: #2C3E50;
-        }
-
-        /* Gráficos */
-        .charts-section {
-            margin-bottom: 30px;
-        }
-
-        .charts-row {
-            display: grid;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .charts-row.two-col {
-            grid-template-columns: 35% 65%;
-        }
-
-        .charts-row.three-col {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-        .chart-card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .chart-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #2C3E50;
-            margin-bottom: 15px;
-        }
-
-        .chart-wrapper {
-            position: relative;
-            height: 300px;
-        }
-
-        .chart-wrapper.clickable {
-            cursor: pointer;
-        }
-
-        .chart-wrapper.clickable:hover {
-            opacity: 0.9;
-        }
-
-        /* Modal para drill-down */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 1000;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            max-width: 1000px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #2C3E50;
-        }
-
-        .modal-close {
-            font-size: 32px;
-            cursor: pointer;
-            color: #7F8C8D;
-            border: none;
-            background: none;
-            padding: 0;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-
-        .modal-close:hover {
-            background: #F5F7FA;
-            color: #2C3E50;
-        }
-
-        /* Tabela */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .data-table th {
-            background: #F5F7FA;
-            padding: 12px;
-            text-align: left;
-            font-size: 13px;
-            font-weight: 700;
-            color: #2C3E50;
-            border-bottom: 2px solid #E0E0E0;
-        }
-
-        .data-table td {
-            padding: 12px;
-            font-size: 13px;
-            border-bottom: 1px solid #E0E0E0;
-        }
-
-        .data-table tbody tr:hover {
-            background: #F5F7FA;
-        }
-
-        /* Rodapé com notificação */
-        .footer {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-            font-size: 14px;
-            font-weight: 600;
-            display: none;
-            z-index: 999;
-        }
-
-        .footer.show {
-            display: block;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        /* Upload area */
-        .upload-area {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 999;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .upload-area.active {
-            display: flex;
-        }
-
-        .upload-box {
-            background: white;
-            padding: 40px;
-            border-radius: 16px;
-            max-width: 600px;
-            width: 90%;
-        }
-
-        .upload-zone {
-            border: 3px dashed #667eea;
-            border-radius: 12px;
-            padding: 60px 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .upload-zone:hover {
-            border-color: #764ba2;
-            background: #f8f9ff;
-        }
-
-        .upload-zone.drag-over {
-            border-color: #764ba2;
-            background: #f0f2ff;
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
-
-        .upload-text {
-            font-size: 16px;
-            color: #2C3E50;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .upload-hint {
-            font-size: 13px;
-            color: #7F8C8D;
-        }
-
-        .upload-close {
-            margin-top: 20px;
-            padding: 12px 24px;
-            background: #E0E0E0;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .upload-close:hover {
-            background: #D0D0D0;
-        }
-
-        /* Status badge */
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .status-badge.manha {
-            background: #FFE5B4;
-            color: #D97706;
-        }
-
-        .status-badge.dia {
-            background: #FCD34D;
-            color: #92400E;
-        }
-
-        .status-badge.noite {
-            background: #93C5FD;
-            color: #1E40AF;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resultados Operacionais</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#f7faff;
+      --card:#ffffff;
+      --line:#dfe8f5;
+      --text:#1b2840;
+      --muted:#71839d;
+      --blue:#5f91ee;
+      --green:#4cbf72;
+      --orange:#f29b49;
+      --red:#e66a61;
+      --purple:#8d71e8;
+      --teal:#3ec5c0;
+      --indigo:#6f86ff;
+      --rose:#e6789b;
+      --shadow:0 14px 32px rgba(148,163,184,.18);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{font-family:'Montserrat',system-ui,sans-serif;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);color:var(--text);min-height:100vh}
+    .page{max-width:1560px;margin:0 auto;padding:18px 16px 34px}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+    .header h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.03em}
+    .header p{margin:8px 0 0;color:var(--muted);font-size:13px;font-weight:600;line-height:1.6}
+    .status-pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 20px rgba(15,23,42,.06);font-weight:800;font-size:12px;color:#334155}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+    .toolbar{padding:14px 16px;margin-bottom:16px}
+    .toolbar-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .toolbar-label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#64748b}
+    .metric-buttons,.turno-buttons,.feed-buttons{display:flex;gap:10px;flex-wrap:wrap}
+    .btn-chip{border:1px solid var(--line);background:#fff;color:#334155;border-radius:14px;padding:11px 14px;font:800 12px 'Montserrat',system-ui,sans-serif;cursor:pointer;transition:.18s ease;white-space:nowrap}
+    .btn-chip:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(15,23,42,.08)}
+    .btn-chip.active{border-color:transparent;color:#fff;box-shadow:0 10px 24px rgba(15,23,42,.14)}
+    .btn-chip.metric-negociacoes.active{background:linear-gradient(135deg,var(--blue),#4d7cfe)}
+    .btn-chip.metric-cancelamentos.active{background:linear-gradient(135deg,var(--red),#f0645a)}
+    .btn-chip.metric-qualidade.active{background:linear-gradient(135deg,var(--green),#10b981)}
+    .btn-chip.metric-cardapio.active{background:linear-gradient(135deg,var(--purple),#8b5cf6)}
+    .btn-chip.feed.active{background:linear-gradient(135deg,var(--teal),#06b6d4);color:#fff;border-color:transparent}
+    .store-strip-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:4px;margin-bottom:16px}
+    .store-strip{display:flex;gap:12px;min-width:max-content}
+    .store-card{min-width:190px;max-width:190px;padding:16px;border-radius:18px;color:#fff;cursor:pointer;border:0;text-align:left;box-shadow:0 16px 28px rgba(15,23,42,.14);transition:.18s ease}
+    .store-card:hover{transform:translateY(-2px)}
+    .store-card.active{outline:3px solid rgba(255,255,255,.88);outline-offset:-3px}
+    .store-card small{display:block;opacity:.9;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px}
+    .store-card strong{display:block;margin-top:8px;font-size:15px;font-weight:800}
+    .store-card span{display:block;margin-top:10px;font-size:12px;font-weight:700;opacity:.94}
+    .store-card.all{background:linear-gradient(135deg,#7e93b4,#a9bbd3)}
+    .store-card.matriz{background:linear-gradient(135deg,var(--blue),#7db2ff)}
+    .store-card.abc{background:linear-gradient(135deg,var(--green),#7bd899)}
+    .store-card.gru{background:linear-gradient(135deg,var(--orange),#f7bc7a)}
+    .store-card.gourmet{background:linear-gradient(135deg,var(--purple),#b79cff)}
+    .store-card.forneria{background:linear-gradient(135deg,var(--red),#f29a93)}
+    .store-card.sushi{background:linear-gradient(135deg,var(--teal),#6edbd7)}
+    .summary-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:16px}
+    .summary-card{padding:18px;border-radius:18px;color:#fff;cursor:pointer;transition:.18s ease;position:relative;overflow:hidden}
+    .summary-card:hover{transform:translateY(-2px)}
+    .summary-card .label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.75px;opacity:.94;margin-bottom:12px}
+    .summary-card .value{font-size:26px;font-weight:800;line-height:1.05;letter-spacing:-.03em}
+    .summary-card .sub{margin-top:12px;font-size:12px;font-weight:700;opacity:.94;display:flex;justify-content:space-between;gap:12px}
+    .summary-card .hint{margin-top:12px;font-size:11px;font-weight:700;opacity:.84}
+    .summary-card.blue{background:linear-gradient(135deg,var(--blue),#7db2ff)}
+    .summary-card.green{background:linear-gradient(135deg,var(--green),#7bd899)}
+    .summary-card.orange{background:linear-gradient(135deg,var(--orange),#f7bc7a)}
+    .summary-card.red{background:linear-gradient(135deg,var(--red),#f29a93)}
+    .summary-card.purple{background:linear-gradient(135deg,var(--purple),#b79cff)}
+    .summary-card.teal{background:linear-gradient(135deg,var(--teal),#6edbd7)}
+    .summary-card.indigo{background:linear-gradient(135deg,var(--indigo),#9cabff)}
+    .summary-card.rose{background:linear-gradient(135deg,var(--rose),#f3a0bb)}
+    .content-grid{display:grid;grid-template-columns:1.3fr .9fr;gap:16px;margin-bottom:16px}
+    .card{padding:16px}
+    .card h3{margin:0 0 14px;font-size:12px;font-weight:800;letter-spacing:.75px;text-transform:uppercase;color:#334155}
+    .chart-wrap{height:330px}
+    .feed-table-wrap,.detail-table-wrap{overflow:auto;border-radius:16px;border:1px solid rgba(148,163,184,.24)}
+    table{width:100%;border-collapse:collapse;min-width:640px}
+    th,td{padding:11px 12px;border-bottom:1px solid #e5edf6;font-size:12px;text-align:left}
+    th{background:#f8fbff;color:#334155;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;position:sticky;top:0}
+    td{font-weight:700;color:#1e293b}
+    tr:hover td{background:#f8fbff}
+    .empty{padding:36px;text-align:center;color:var(--muted);font-weight:800}
+    .feed-foot{margin-top:10px;font-size:12px;color:#64748b;font-weight:700}
+    .legend-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    .legend-item{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:12px;font-weight:800;color:#334155}
+    .legend-dot{width:10px;height:10px;border-radius:999px}
+    .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.68);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+    .modal-bg.open{display:flex}
+    .modal{width:min(1100px,100%);max-height:88vh;overflow:hidden;background:#fff;border-radius:24px;border:1px solid var(--line);box-shadow:0 24px 60px rgba(15,23,42,.24)}
+    .modal-header{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
+    .modal-header h2{margin:0;font-size:18px}
+    .modal-close{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:16px}
+    .modal-body{padding:18px 20px;overflow:auto;max-height:calc(88vh - 82px)}
+    .mt16{margin-top:16px}
+    @media(max-width:1320px){.summary-grid{grid-template-columns:repeat(3,1fr)}.content-grid{grid-template-columns:1fr}.chart-wrap{height:300px}}
+    @media(max-width:760px){.summary-grid{grid-template-columns:1fr}.page{padding:14px 12px 28px}.header h1{font-size:25px}.toolbar-row{align-items:flex-start}.chart-wrap{height:260px}.modal-body{padding:14px}.modal-header{padding:14px 16px}.store-card{min-width:164px;max-width:164px}}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header com botões de empresas -->
-        <div class="companies-header">
-            <button class="company-btn just-matriz active" data-company="just-matriz">
-                <div>JUST MATRIZ</div>
-            </button>
-            <button class="company-btn just-abc" data-company="just-abc">
-                <div>JUST ABC</div>
-            </button>
-            <button class="company-btn just-gru" data-company="just-gru">
-                <div>JUST GRU</div>
-            </button>
-            <button class="company-btn just-gourmet" data-company="just-gourmet">
-                <div>JUST GOURMET</div>
-            </button>
-            <button class="company-btn aham-forneria" data-company="aham-forneria">
-                <div>AHAM FORNERIA</div>
-            </button>
-            <button class="company-btn aham-sushi" data-company="aham-sushi">
-                <div>AHAM SUSHI</div>
-            </button>
-        </div>
-
-        <!-- Título com botão de upload -->
-        <div class="title-bar">
-            <h1>📊 Análise Completa</h1>
-            <button class="upload-btn" onclick="openUpload()">📤 Upload de Dados</button>
-        </div>
-
-        <!-- Botões de métricas e seletor de período -->
-        <div class="metrics-bar">
-            <button class="metric-btn" data-metric="vendas">VENDAS</button>
-            <button class="metric-btn active" data-metric="cancelamentos">CANCELAMENTOS</button>
-            <button class="metric-btn" data-metric="negociacoes">NEGOCIAÇÕES</button>
-            <button class="metric-btn" data-metric="qualidade">QUALIDADE</button>
-            <button class="metric-btn" data-metric="cardapio">CARDÁPIO</button>
-
-            <div class="period-selector">
-                <label>Período:</label>
-                <select id="periodSelect">
-                    <option value="ultima-semana">Última Semana (Dom-Dom)</option>
-                    <option value="30-dias">Últimos 30 Dias</option>
-                    <option value="90-dias">Últimos 90 Dias</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Filtro de turno -->
-        <div class="filter-bar">
-            <span class="filter-label">Filtrar por Turno:</span>
-            <button class="turno-btn active" data-turno="todos">Todos</button>
-            <button class="turno-btn" data-turno="manha">☀️ Manhã (até 11:59)</button>
-            <button class="turno-btn" data-turno="dia">🌤️ Dia (12:00-17:59)</button>
-            <button class="turno-btn" data-turno="noite">🌙 Noite (18:00+)</button>
-        </div>
-
-        <!-- Cards de KPI -->
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-title">Valor Total Cancelado</div>
-                <div class="kpi-value" id="valorTotal">R$ 24.203,26</div>
-                <div class="kpi-breakdown">
-                    <div class="kpi-breakdown-item">
-                        <span class="kpi-breakdown-label">☀️ Manhã:</span>
-                        <span class="kpi-breakdown-value" id="valorManha">R$ 8.067,75</span>
-                    </div>
-                    <div class="kpi-breakdown-item">
-                        <span class="kpi-breakdown-label">🌤️ Dia:</span>
-                        <span class="kpi-breakdown-value" id="valorDia">R$ 9.681,31</span>
-                    </div>
-                    <div class="kpi-breakdown-item">
-                        <span class="kpi-breakdown-label">🌙 Noite:</span>
-                        <span class="kpi-breakdown-value" id="valorNoite">R$ 6.454,20</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-title">Total de Cancelamentos</div>
-                <div class="kpi-value" id="totalCancelamentos">490</div>
-                <div class="kpi-breakdown">
-                    <div class="kpi-breakdown-item">
-                        <span class="kpi-breakdown-label">☀️ Manhã:</span>
-                        <span class="kpi-breakdown-value" id="qtdManha">163</span>
-                    </div>
-                    <div class="kpi-breakdown-item">
-                        <span class="kpi-breakdown-label">🌤️ Dia:</span>
-                        <span class="kpi-breakdown-value" id="qtdDia">196</span>
-                    </div>
-                    <div class="kpi-breakdown-item">
-                        <span class="kpi-breakdown-label">🌙 Noite:</span>
-                        <span class="kpi-breakdown-value" id="qtdNoite">131</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-title">Valor Médio Cancelado</div>
-                <div class="kpi-value" id="valorMedio">R$ 49,39</div>
-                <div class="kpi-breakdown">
-                    <div class="kpi-breakdown-item">
-                        <span class="kpi-breakdown-label">☀️ Manhã:</span>
-                        <span class="kpi-breakdown-value" id="medioManha">R$ 49,49</span>
-                    </div>
-                    <div class="kpi-breakdown-item">
-                        <span class="kpi-breakdown-label">🌤️ Dia:</span>
-                        <span class="kpi-breakdown-value" id="medioDia">R$ 49,39</span>
-                    </div>
-                    <div class="kpi-breakdown-item">
-                        <span class="kpi-breakdown-label">🌙 Noite:</span>
-                        <span class="kpi-breakdown-value" id="medioNoite">R$ 49,27</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-title">Taxa Cancelamento Parcial</div>
-                <div class="kpi-value" id="taxaParcial">52,2%</div>
-                <div class="kpi-breakdown">
-                    <div class="kpi-breakdown-item">
-                        <span class="kpi-breakdown-label">☀️ Manhã:</span>
-                        <span class="kpi-breakdown-value" id="parcialManha">51,5%</span>
-                    </div>
-                    <div class="kpi-breakdown-item">
-                        <span class="kpi-breakdown-label">🌤️ Dia:</span>
-                        <span class="kpi-breakdown-value" id="parcialDia">53,1%</span>
-                    </div>
-                    <div class="kpi-breakdown-item">
-                        <span class="kpi-breakdown-label">🌙 Noite:</span>
-                        <span class="kpi-breakdown-value" id="parcialNoite">51,9%</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Gráficos -->
-        <div class="charts-section">
-            <!-- Linha 1: Pizza + Motivos -->
-            <div class="charts-row two-col">
-                <div class="chart-card">
-                    <div class="chart-title">Total vs Parcial</div>
-                    <div class="chart-wrapper clickable" onclick="showDrillDown('status')">
-                        <canvas id="chartStatus"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-title">Motivos de Cancelamento</div>
-                    <div class="chart-wrapper" style="height: 400px;">
-                        <canvas id="chartMotivos"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Linha 2: Chamados da Semana -->
-            <div class="charts-row">
-                <div class="chart-card">
-                    <div class="chart-title">Chamados da Última Semana</div>
-                    <div class="chart-wrapper clickable" onclick="showDrillDown('semana')">
-                        <canvas id="chartSemana"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Linha 3: Três gráficos -->
-            <div class="charts-row three-col">
-                <div class="chart-card">
-                    <div class="chart-title">Impacto no Super</div>
-                    <div class="chart-wrapper">
-                        <canvas id="chartSuper"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-title">Origem do Cancelamento</div>
-                    <div class="chart-wrapper">
-                        <canvas id="chartOrigem"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-title">Contestações</div>
-                    <div class="chart-wrapper">
-                        <canvas id="chartContestaveis"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Linha 4: Motivos não-contestáveis -->
-            <div class="charts-row">
-                <div class="chart-card">
-                    <div class="chart-title">Motivos Não-Contestáveis</div>
-                    <div class="chart-wrapper" style="height: 350px;">
-                        <canvas id="chartNaoContestaveis"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>Análise completa</h1>
+        <p>Botões reorganizados para Negociações, Cancelamentos, Qualidade e Cardápio. O filtro de turno segue Manhã, Dia 11:00–17:59 e Noite 18:00+. Os cards usam cores mais fortes e comparação com o mesmo período do mês anterior.</p>
+      </div>
+      <div class="status-pill" id="statusPill">⏳ Carregando base operacional...</div>
     </div>
 
-    <!-- Modal para drill-down -->
-    <div class="modal" id="drillDownModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="modalTitle">Detalhes</h2>
-                <button class="modal-close" onclick="closeDrillDown()">×</button>
-            </div>
-            <div id="modalBody"></div>
+    <div class="panel toolbar">
+      <div class="toolbar-row" style="margin-bottom:12px">
+        <div>
+          <div class="toolbar-label">Matriz</div>
+          <div class="metric-buttons" id="metricButtons">
+            <button class="btn-chip metric-negociacoes" data-metric="negociacoes">Negociações</button>
+            <button class="btn-chip metric-cancelamentos active" data-metric="cancelamentos">Cancelamentos</button>
+            <button class="btn-chip metric-qualidade" data-metric="qualidade">Qualidade</button>
+            <button class="btn-chip metric-cardapio" data-metric="cardapio">Cardápio</button>
+          </div>
         </div>
-    </div>
-
-    <!-- Upload area -->
-    <div class="upload-area" id="uploadArea">
-        <div class="upload-box">
-            <div class="upload-zone" id="uploadZone">
-                <div class="upload-icon">📁</div>
-                <div class="upload-text">Arraste o arquivo Excel aqui</div>
-                <div class="upload-hint">ou clique para selecionar (cancelamentosmatriz.xlsx)</div>
-            </div>
-            <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
-            <center><button class="upload-close" onclick="closeUpload()">Fechar</button></center>
+        <div>
+          <div class="toolbar-label">Turno</div>
+          <div class="turno-buttons" id="turnoButtons">
+            <button class="btn-chip active" data-turno="todos">Todos</button>
+            <button class="btn-chip" data-turno="manha">Manhã</button>
+            <button class="btn-chip" data-turno="dia">Dia (11:00–17:59)</button>
+            <button class="btn-chip" data-turno="noite">Noite (18:00+)</button>
+          </div>
         </div>
+        <div>
+          <div class="toolbar-label">Feed</div>
+          <div class="feed-buttons" id="feedButtons">
+            <button class="btn-chip feed active" data-feed="diario">Diário</button>
+            <button class="btn-chip feed" data-feed="semanal">Semanal</button>
+          </div>
+        </div>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>Cancelamentos</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span>Negociações</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>Qualidade</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--purple)"></span>Cardápio</div>
+      </div>
+      <div class="feed-foot" id="periodFoot">Período selecionado: mês atual.</div>
     </div>
 
-    <!-- Rodapé com notificação -->
-    <div class="footer" id="footerNotification">
-        <span id="footerText">0 registros carregados</span>
+    <div class="store-strip-wrap">
+      <div class="store-strip" id="storeStrip"></div>
     </div>
 
-    <script>
-        // Dados globais
-        let allData = [];
-        let filteredData = [];
-        let currentCompany = 'just-matriz';
-        let currentMetric = 'cancelamentos';
-        let currentPeriod = 'ultima-semana';
-        let currentTurno = 'todos';
-
-        // Dados de exemplo (serão substituídos pelos dados reais após upload)
-        const sampleData = [
-            {
-                id: 1919,
-                status: 'CANCELADO',
-                motivo: 'PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO',
-                valor: 35.89,
-                impactoSuper: 'SIM',
-                origem: 'CLIENTE',
-                contestavel: 'SIM',
-                data: '2024-07-15',
-                hora: '08:30:00',
-                turno: 'Manhã'
-            },
-            // Mais dados serão adicionados pelo upload
-        ];
-
-        // Função para obter turno
-        function getTurno(hora) {
-            if (!hora) return 'Não informado';
-            const h = parseInt(hora.split(':')[0]);
-            if (h < 12) return 'Manhã';
-            if (h < 18) return 'Dia';
-            return 'Noite';
-        }
-
-        // Botões de empresas
-        document.querySelectorAll('.company-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.company-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                currentCompany = this.dataset.company;
-                updateDashboard();
-            });
-        });
-
-        // Botões de métricas
-        document.querySelectorAll('.metric-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.metric-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                currentMetric = this.dataset.metric;
-                updateDashboard();
-            });
-        });
-
-        // Seletor de período
-        document.getElementById('periodSelect').addEventListener('change', function() {
-            currentPeriod = this.value;
-            updateDashboard();
-        });
-
-        // Botões de turno
-        document.querySelectorAll('.turno-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.turno-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                currentTurno = this.dataset.turno;
-                updateDashboard();
-            });
-        });
-
-        // Upload
-        function openUpload() {
-            document.getElementById('uploadArea').classList.add('active');
-        }
-
-        function closeUpload() {
-            document.getElementById('uploadArea').classList.remove('active');
-        }
-
-        const uploadZone = document.getElementById('uploadZone');
-        const fileInput = document.getElementById('fileInput');
-
-        uploadZone.addEventListener('click', () => fileInput.click());
-
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadZone.classList.add('drag-over');
-        });
-
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('drag-over');
-        });
-
-        uploadZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadZone.classList.remove('drag-over');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                processFile(files[0]);
-            }
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                processFile(e.target.files[0]);
-            }
-        });
-
-        function processFile(file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const sheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[sheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-                    // Processar dados
-                    allData = jsonData.map((row, index) => ({
-                        id: row['Id do pedido'] || index,
-                        status: row['Status do pedido'] || '',
-                        motivo: row['Motivo do cancelamento'] || '',
-                        valor: parseFloat(row['Valor total do cancelamento com entrega (R$)'] || 0),
-                        impactoSuper: row['Impactou o super?'] || 'NÃO',
-                        origem: row['Origem do cancelamento'] || '',
-                        contestavel: row['Cancelamento é contestável?'] || 'NÃO',
-                        data: row['Data do pedido'] || '',
-                        hora: row['Hora do pedido'] || '',
-                        turno: getTurno(row['Hora do pedido'])
-                    }));
-
-                    // Salvar no LocalStorage
-                    localStorage.setItem('cancelamentosData', JSON.stringify(allData));
-                    localStorage.setItem('lastUploadDate', new Date().toISOString());
-
-                    // Atualizar dashboard
-                    updateDashboard();
-
-                    // Mostrar notificação
-                    showFooterNotification(allData.length);
-
-                    closeUpload();
-
-                    alert(`✅ ${allData.length} registros carregados com sucesso!`);
-                } catch (error) {
-                    alert('❌ Erro ao processar arquivo: ' + error.message);
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        function showFooterNotification(count) {
-            const footer = document.getElementById('footerNotification');
-            document.getElementById('footerText').textContent = `${count} registros carregados`;
-            footer.classList.add('show');
-        }
-
-        // Atualizar dashboard
-        function updateDashboard() {
-            // Carregar dados do LocalStorage se existirem
-            const storedData = localStorage.getItem('cancelamentosData');
-            if (storedData) {
-                allData = JSON.parse(storedData);
-            } else {
-                allData = generateSampleData();
-            }
-
-            // Filtrar dados
-            filteredData = filterData(allData);
-
-            // Atualizar KPIs
-            updateKPIs(filteredData);
-
-            // Atualizar gráficos
-            updateCharts(filteredData);
-
-            // Mostrar notificação
-            if (allData.length > 0) {
-                showFooterNotification(allData.length);
-            }
-        }
-
-        function generateSampleData() {
-            const statuses = ['CANCELADO', 'CANCELAMENTO PARCIAL'];
-            const motivos = [
-                'PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO',
-                'PEDIDO CANCELADO POR ATRASO COM ALERTA PARA LOJA',
-                'O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE',
-                'PEDIDO OU ITEM VEIO ERRADO',
-                'NINGUÉM PODERÁ RECEBER O PEDIDO'
-            ];
-            const origens = ['CLIENTE', 'MERCHANT', 'LOJA'];
-            const turnos = ['Manhã', 'Dia', 'Noite'];
-
-            const data = [];
-            for (let i = 0; i < 490; i++) {
-                const turno = turnos[Math.floor(Math.random() * turnos.length)];
-                let hora;
-                if (turno === 'Manhã') hora = `0${Math.floor(Math.random() * 12)}:${Math.floor(Math.random() * 60)}:00`;
-                else if (turno === 'Dia') hora = `${12 + Math.floor(Math.random() * 6)}:${Math.floor(Math.random() * 60)}:00`;
-                else hora = `${18 + Math.floor(Math.random() * 6)}:${Math.floor(Math.random() * 60)}:00`;
-
-                data.push({
-                    id: 1000 + i,
-                    status: statuses[Math.floor(Math.random() * statuses.length)],
-                    motivo: motivos[Math.floor(Math.random() * motivos.length)],
-                    valor: Math.random() * 100 + 20,
-                    impactoSuper: Math.random() > 0.6 ? 'SIM' : 'NÃO',
-                    origem: origens[Math.floor(Math.random() * origens.length)],
-                    contestavel: Math.random() > 0.7 ? 'SIM' : 'NÃO',
-                    data: `2024-${String(Math.floor(Math.random() * 3) + 7).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
-                    hora: hora,
-                    turno: turno
-                });
-            }
-            return data;
-        }
-
-        function filterData(data) {
-            return data.filter(item => {
-                // Filtro de turno
-                if (currentTurno !== 'todos' && item.turno.toLowerCase() !== currentTurno) {
-                    return false;
-                }
-                return true;
-            });
-        }
-
-        function updateKPIs(data) {
-            // Calcular totais
-            const total = data.reduce((sum, item) => sum + item.valor, 0);
-            const count = data.length;
-            const medio = count > 0 ? total / count : 0;
-            const parciais = data.filter(d => d.status === 'CANCELAMENTO PARCIAL').length;
-            const taxaParcial = count > 0 ? (parciais / count * 100) : 0;
-
-            // Por turno
-            const manha = data.filter(d => d.turno === 'Manhã');
-            const dia = data.filter(d => d.turno === 'Dia');
-            const noite = data.filter(d => d.turno === 'Noite');
-
-            // Atualizar valores
-            document.getElementById('valorTotal').textContent = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('totalCancelamentos').textContent = count;
-            document.getElementById('valorMedio').textContent = `R$ ${medio.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('taxaParcial').textContent = `${taxaParcial.toFixed(1)}%`;
-
-            // Breakdown por turno
-            const valorManha = manha.reduce((sum, item) => sum + item.valor, 0);
-            const valorDia = dia.reduce((sum, item) => sum + item.valor, 0);
-            const valorNoite = noite.reduce((sum, item) => sum + item.valor, 0);
-
-            document.getElementById('valorManha').textContent = `R$ ${valorManha.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('valorDia').textContent = `R$ ${valorDia.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('valorNoite').textContent = `R$ ${valorNoite.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-
-            document.getElementById('qtdManha').textContent = manha.length;
-            document.getElementById('qtdDia').textContent = dia.length;
-            document.getElementById('qtdNoite').textContent = noite.length;
-
-            const medioManha = manha.length > 0 ? valorManha / manha.length : 0;
-            const medioDia = dia.length > 0 ? valorDia / dia.length : 0;
-            const medioNoite = noite.length > 0 ? valorNoite / noite.length : 0;
-
-            document.getElementById('medioManha').textContent = `R$ ${medioManha.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('medioDia').textContent = `R$ ${medioDia.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('medioNoite').textContent = `R$ ${medioNoite.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-
-            const parciaisManha = manha.filter(d => d.status === 'CANCELAMENTO PARCIAL').length;
-            const parciaisDia = dia.filter(d => d.status === 'CANCELAMENTO PARCIAL').length;
-            const parciaisNoite = noite.filter(d => d.status === 'CANCELAMENTO PARCIAL').length;
-
-            document.getElementById('parcialManha').textContent = `${manha.length > 0 ? (parciaisManha / manha.length * 100).toFixed(1) : 0}%`;
-            document.getElementById('parcialDia').textContent = `${dia.length > 0 ? (parciaisDia / dia.length * 100).toFixed(1) : 0}%`;
-            document.getElementById('parcialNoite').textContent = `${noite.length > 0 ? (parciaisNoite / noite.length * 100).toFixed(1) : 0}%`;
-        }
-
-        // Variáveis dos gráficos
-        let chartStatus, chartMotivos, chartSuper, chartOrigem, chartContestaveis, chartSemana, chartNaoContestaveis;
-
-        function updateCharts(data) {
-            // Status (Total vs Parcial)
-            const statusCounts = {};
-            data.forEach(item => {
-                statusCounts[item.status] = (statusCounts[item.status] || 0) + 1;
-            });
-
-            createPieChart('chartStatus', statusCounts);
-
-            // Motivos
-            const motivoCounts = {};
-            data.forEach(item => {
-                motivoCounts[item.motivo] = (motivoCounts[item.motivo] || 0) + 1;
-            });
-            const topMotivos = Object.entries(motivoCounts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10);
-
-            createHorizontalBarChart('chartMotivos', topMotivos);
-
-            // Impacto Super
-            const superCounts = {};
-            data.forEach(item => {
-                superCounts[item.impactoSuper] = (superCounts[item.impactoSuper] || 0) + 1;
-            });
-
-            createPieChart('chartSuper', superCounts);
-
-            // Origem
-            const origemCounts = {};
-            data.forEach(item => {
-                origemCounts[item.origem] = (origemCounts[item.origem] || 0) + 1;
-            });
-
-            createDoughnutChart('chartOrigem', origemCounts);
-
-            // Contestáveis
-            const contestCounts = {};
-            data.forEach(item => {
-                contestCounts[item.contestavel === 'SIM' ? 'Contestável' : 'Não Contestável'] = 
-                    (contestCounts[item.contestavel === 'SIM' ? 'Contestável' : 'Não Contestável'] || 0) + 1;
-            });
-
-            createBarChart('chartContestaveis', contestCounts);
-
-            // Chamados da semana (por dia)
-            const weekData = getWeekData(data);
-            createWeekChart('chartSemana', weekData);
-
-            // Motivos não-contestáveis
-            const naoContestaveis = data.filter(d => d.contestavel === 'NÃO');
-            const motivosNC = {};
-            naoContestaveis.forEach(item => {
-                motivosNC[item.motivo] = (motivosNC[item.motivo] || 0) + 1;
-            });
-            const topNC = Object.entries(motivosNC)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 8);
-
-            createHorizontalBarChart('chartNaoContestaveis', topNC, '#FF6B6B');
-        }
-
-        function getWeekData(data) {
-            // Agrupar por dia e contar impacto super
-            const dayGroups = {};
-            data.forEach(item => {
-                if (!dayGroups[item.data]) {
-                    dayGroups[item.data] = { total: 0, impactouSim: 0, impactouNao: 0 };
-                }
-                dayGroups[item.data].total++;
-                if (item.impactoSuper === 'SIM') {
-                    dayGroups[item.data].impactouSim++;
-                } else {
-                    dayGroups[item.data].impactouNao++;
-                }
-            });
-
-            return dayGroups;
-        }
-
-        function createPieChart(canvasId, data) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-
-            if (window[canvasId + '_chart']) {
-                window[canvasId + '_chart'].destroy();
-            }
-
-            const labels = Object.keys(data);
-            const values = Object.values(data);
-
-            window[canvasId + '_chart'] = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3'],
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                        },
-                        datalabels: {
-                            color: '#fff',
-                            font: {
-                                weight: 'bold',
-                                size: 16
-                            },
-                            formatter: (value, ctx) => {
-                                return value;
-                            }
-                        }
-                    }
-                },
-                plugins: [ChartDataLabels]
-            });
-        }
-
-        function createDoughnutChart(canvasId, data) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-
-            if (window[canvasId + '_chart']) {
-                window[canvasId + '_chart'].destroy();
-            }
-
-            const labels = Object.keys(data);
-            const values = Object.values(data);
-
-            window[canvasId + '_chart'] = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: ['#667eea', '#764ba2', '#FF6B6B', '#4ECDC4', '#FFE66D'],
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                        },
-                        datalabels: {
-                            color: '#fff',
-                            font: {
-                                weight: 'bold',
-                                size: 14
-                            },
-                            formatter: (value, ctx) => {
-                                return value;
-                            }
-                        }
-                    }
-                },
-                plugins: [ChartDataLabels]
-            });
-        }
-
-        function createBarChart(canvasId, data) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-
-            if (window[canvasId + '_chart']) {
-                window[canvasId + '_chart'].destroy();
-            }
-
-            const labels = Object.keys(data);
-            const values = Object.values(data);
-
-            window[canvasId + '_chart'] = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: '#667eea',
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        datalabels: {
-                            color: '#fff',
-                            font: {
-                                weight: 'bold',
-                                size: 16
-                            },
-                            formatter: (value, ctx) => {
-                                return value;
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                },
-                plugins: [ChartDataLabels]
-            });
-        }
-
-        function createHorizontalBarChart(canvasId, dataArray, color = '#667eea') {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-
-            if (window[canvasId + '_chart']) {
-                window[canvasId + '_chart'].destroy();
-            }
-
-            const labels = dataArray.map(d => d[0]);
-            const values = dataArray.map(d => d[1]);
-
-            window[canvasId + '_chart'] = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: color,
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        datalabels: {
-                            color: '#fff',
-                            font: {
-                                weight: 'bold',
-                                size: 14
-                            },
-                            anchor: 'end',
-                            align: 'start',
-                            formatter: (value, ctx) => {
-                                return value;
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true
-                        }
-                    }
-                },
-                plugins: [ChartDataLabels]
-            });
-        }
-
-        function createWeekChart(canvasId, data) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-
-            if (window[canvasId + '_chart']) {
-                window[canvasId + '_chart'].destroy();
-            }
-
-            const labels = Object.keys(data).sort();
-            const impactouSim = labels.map(day => data[day].impactouSim);
-            const impactouNao = labels.map(day => data[day].impactouNao);
-
-            window[canvasId + '_chart'] = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Impactou SUPER',
-                            data: impactouSim,
-                            backgroundColor: '#FF6B6B',
-                        },
-                        {
-                            label: 'Não Impactou',
-                            data: impactouNao,
-                            backgroundColor: '#4ECDC4',
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        datalabels: {
-                            color: '#fff',
-                            font: {
-                                weight: 'bold',
-                                size: 12
-                            },
-                            formatter: (value, ctx) => {
-                                return value > 0 ? value : '';
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            stacked: true,
-                        },
-                        y: {
-                            stacked: true,
-                            beginAtZero: true
-                        }
-                    }
-                },
-                plugins: [ChartDataLabels]
-            });
-        }
-
-        // Drill-down
-        function showDrillDown(type) {
-            const modal = document.getElementById('drillDownModal');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalBody = document.getElementById('modalBody');
-
-            let html = '';
-
-            if (type === 'status') {
-                modalTitle.textContent = 'Detalhes: Total vs Parcial';
-
-                const totais = filteredData.filter(d => d.status === 'CANCELADO')
-                    .sort((a, b) => new Date(a.data + ' ' + a.hora) - new Date(b.data + ' ' + b.hora));
-                const parciais = filteredData.filter(d => d.status === 'CANCELAMENTO PARCIAL')
-                    .sort((a, b) => new Date(a.data + ' ' + a.hora) - new Date(b.data + ' ' + b.hora));
-
-                html = '<h3 style="margin-bottom: 15px; color: #FF6B6B;">Cancelamentos Totais (' + totais.length + ')</h3>';
-                html += createDataTable(totais);
-
-                html += '<h3 style="margin-top: 30px; margin-bottom: 15px; color: #4ECDC4;">Cancelamentos Parciais (' + parciais.length + ')</h3>';
-                html += createDataTable(parciais);
-            } else if (type === 'semana') {
-                modalTitle.textContent = 'Detalhes: Chamados da Última Semana';
-
-                const sorted = [...filteredData].sort((a, b) => {
-                    const dateA = new Date(a.data + ' ' + a.hora);
-                    const dateB = new Date(b.data + ' ' + b.hora);
-                    return dateA - dateB;
-                });
-
-                html = createDataTable(sorted);
-            }
-
-            modalBody.innerHTML = html;
-            modal.classList.add('active');
-        }
-
-        function closeDrillDown() {
-            document.getElementById('drillDownModal').classList.remove('active');
-        }
-
-        function createDataTable(data) {
-            let html = '<table class="data-table"><thead><tr>';
-            html += '<th>Nº Pedido</th>';
-            html += '<th>Data</th>';
-            html += '<th>Hora</th>';
-            html += '<th>Turno</th>';
-            html += '<th>Motivo</th>';
-            html += '<th>Valor</th>';
-            html += '<th>Impacto SUPER</th>';
-            html += '</tr></thead><tbody>';
-
-            data.forEach(item => {
-                html += '<tr>';
-                html += '<td>' + item.id + '</td>';
-                html += '<td>' + item.data + '</td>';
-                html += '<td>' + item.hora + '</td>';
-                html += '<td><span class="status-badge ' + item.turno.toLowerCase() + '">' + item.turno + '</span></td>';
-                html += '<td>' + item.motivo + '</td>';
-                html += '<td>R$ ' + item.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2}) + '</td>';
-                html += '<td>' + item.impactoSuper + '</td>';
-                html += '</tr>';
-            });
-
-            html += '</tbody></table>';
-            return html;
-        }
-
-        // Fechar modal ao clicar fora
-        document.getElementById('drillDownModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeDrillDown();
-            }
-        });
-
-        // Inicializar
-        updateDashboard();
-    </script>
+    <div class="summary-grid" id="summaryGrid"></div>
+
+    <div class="content-grid">
+      <div class="panel card">
+        <h3 id="trendTitle">Tendência diária</h3>
+        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+      </div>
+      <div class="panel card">
+        <h3 id="feedTitle">Feed diário</h3>
+        <div class="feed-table-wrap" id="feedWrap"></div>
+        <div class="feed-foot" id="feedFoot"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modalBg">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Detalhamento</h2>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+<script>
+const FIREBASE_URL = 'https://justburger-producao-e9b27-default-rtdb.firebaseio.com';
+const REPORTS_URL = `${FIREBASE_URL}/relatorios_diarios.json`;
+const OP_TYPES = ['cancelamentos','negociacoes','qualidade','cardapio','chamados'];
+const STORE_META = [
+  {key:'todas',label:'Todas as lojas',className:'all'},
+  {key:'burger matriz',label:'Just Matriz',className:'matriz'},
+  {key:'burger abc',label:'Just ABC',className:'abc'},
+  {key:'burger gru',label:'Just GRU',className:'gru'},
+  {key:'gourmet',label:'Just Gourmet',className:'gourmet'},
+  {key:'aham forneria',label:'Aham Forneria',className:'forneria'},
+  {key:'aham sushi',label:'Aham Sushi',className:'sushi'}
+];
+const state = { metric:'cancelamentos', turno:'todos', feed:'diario', store:'todas' };
+const parsed = { cancelamentos:[], negociacoes:[], qualidade:[], cardapio:[] };
+let trendChart = null;
+let latestBatchId = '';
+let latestStamp = 0;
+
+function normalize(value){
+  return String(value == null ? '' : value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+}
+function sanitize(text){
+  return String(text == null ? '' : text).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function toNumber(value){
+  if(value == null || value === '') return 0;
+  if(typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  let s = String(value).trim();
+  if(!s) return 0;
+  s = s.replace(/R\$/gi,'').replace(/\s/g,'');
+  if(s.includes(',') && s.includes('.')){
+    if(s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g,'').replace(',', '.');
+    else s = s.replace(/,/g,'');
+  } else if(s.includes(',')) {
+    s = s.replace(',', '.');
+  }
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
+function parseDateFlex(value){
+  if(value == null || value === '') return null;
+  if(value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if(typeof value === 'number'){
+    const d = new Date(Math.round((value - 25569) * 86400 * 1000));
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const s = String(value).trim();
+  let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if(m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function fmtMoney(value){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value || 0); }
+function fmtInt(value){ return new Intl.NumberFormat('pt-BR').format(value || 0); }
+function pctText(current, previous){
+  if(!previous) return '—';
+  const pct = ((current - previous) / previous) * 100;
+  const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '■';
+  return `${arrow} ${Math.abs(pct).toFixed(1).replace('.', ',')}%`;
+}
+function startOfCurrentMonth(ref){ return new Date(ref.getFullYear(), ref.getMonth(), 1); }
+function addMonths(date, delta){ return new Date(date.getFullYear(), date.getMonth() + delta, date.getDate()); }
+function endOfEquivalentPreviousPeriod(endDate){ return new Date(endDate.getFullYear(), endDate.getMonth() - 1, endDate.getDate()); }
+function startOfPreviousMonthEquivalent(endDate){ return new Date(endDate.getFullYear(), endDate.getMonth() - 1, 1); }
+function getHour(value){
+  if(value == null || value === '') return null;
+  if(typeof value === 'number') return Math.max(0, Math.min(23, Math.round(value * 24)));
+  const m = String(value).match(/(\d{1,2}):(\d{2})/);
+  return m ? Number(m[1]) : null;
+}
+function getTurno(hour){
+  if(hour == null || Number.isNaN(hour)) return 'Dia';
+  if(hour < 11) return 'Manhã';
+  if(hour < 18) return 'Dia';
+  return 'Noite';
+}
+function fieldValue(row, aliases){
+  const keys = Object.keys(row || {});
+  for(const alias of aliases){
+    const found = keys.find(key => normalize(key) === normalize(alias));
+    if(found && row[found] != null && row[found] !== '') return row[found];
+  }
+  for(const alias of aliases){
+    const target = normalize(alias);
+    const found = keys.find(key => normalize(key).includes(target));
+    if(found && row[found] != null && row[found] !== '') return row[found];
+  }
+  return '';
+}
+function normalizeStore(value){
+  const text = normalize(value || '');
+  if(!text) return 'sem loja';
+  if(text.includes('matriz')) return 'burger matriz';
+  if(text.includes('abc')) return 'burger abc';
+  if(text.includes('gru')) return 'burger gru';
+  if(text.includes('gourmet')) return 'gourmet';
+  if(text.includes('forneria')) return 'aham forneria';
+  if(text.includes('sushi')) return 'aham sushi';
+  return text;
+}
+function labelStore(key){
+  return (STORE_META.find(item => item.key === key) || {label:key}).label;
+}
+function isoDay(date){ return date ? date.toISOString().slice(0,10) : ''; }
+function weekKey(date){
+  const d = new Date(date);
+  const day = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - day);
+  return d.toISOString().slice(0,10);
+}
+function currentPeriodRange(){
+  const ref = latestStamp ? new Date(latestStamp) : new Date();
+  return { start:startOfCurrentMonth(ref), end:ref };
+}
+function previousPeriodRange(){
+  const cur = currentPeriodRange();
+  return { start:startOfPreviousMonthEquivalent(cur.end), end:endOfEquivalentPreviousPeriod(cur.end) };
+}
+function filterRows(rows, extra = {}){
+  const { start, end } = extra.range || currentPeriodRange();
+  return rows.filter(row => {
+    if(!(row.date instanceof Date) || Number.isNaN(row.date.getTime())) return false;
+    if(row.date < start || row.date > end) return false;
+    if(state.store !== 'todas' && row.store !== state.store) return false;
+    if(state.turno === 'manha' && row.turno !== 'Manhã') return false;
+    if(state.turno === 'dia' && row.turno !== 'Dia') return false;
+    if(state.turno === 'noite' && row.turno !== 'Noite') return false;
+    if(extra.cancelType && row.cancelType !== extra.cancelType) return false;
+    return true;
+  });
+}
+function sumField(rows, field){ return rows.reduce((acc,row)=>acc + (Number(row[field]) || 0),0); }
+function countField(rows, field){ return rows.reduce((acc,row)=>acc + (Number(row[field]) || 0),0); }
+function bucketMetric(rows){
+  if(state.metric === 'cancelamentos') return { count: rows.length, amount: sumField(rows,'value') };
+  if(state.metric === 'negociacoes') return { count: countField(rows,'attempts') || rows.length, amount: sumField(rows,'value') };
+  if(state.metric === 'qualidade') return { count: rows.length, amount: sumField(rows,'score') || rows.length };
+  return { count: sumField(rows,'quantity') || rows.length, amount: sumField(rows,'value') };
+}
+function describeMoM(currentValue, previousValue, formatter){
+  return `${formatter(currentValue)} · ${pctText(currentValue, previousValue)} vs mês anterior`;
+}
+function renderStoreStrip(){
+  const countsByStore = new Map();
+  const current = parsed[state.metric] || [];
+  current.forEach(row => countsByStore.set(row.store, (countsByStore.get(row.store) || 0) + 1));
+  const html = STORE_META.map(meta => {
+    const count = meta.key === 'todas' ? current.length : (countsByStore.get(meta.key) || 0);
+    return `<button class="store-card ${meta.className}${state.store === meta.key ? ' active' : ''}" data-store="${meta.key}"><small>${count ? fmtInt(count) : '0'} registros</small><strong>${meta.label}</strong><span>${meta.key === 'todas' ? 'Consolidado' : 'Toque para filtrar'}</span></button>`;
+  }).join('');
+  document.getElementById('storeStrip').innerHTML = html;
+  document.querySelectorAll('.store-card').forEach(btn => btn.addEventListener('click', () => { state.store = btn.dataset.store; render(); }));
+}
+function renderSummary(){
+  const grid = document.getElementById('summaryGrid');
+  if(state.metric === 'cancelamentos') return renderCancelamentosSummary(grid);
+  return renderGenericSummary(grid);
+}
+function renderCancelamentosSummary(grid){
+  const currentRows = filterRows(parsed.cancelamentos);
+  const previousRows = filterRows(parsed.cancelamentos,{range:previousPeriodRange()});
+  const totalRows = currentRows.filter(row => row.cancelType === 'total');
+  const partialRows = currentRows.filter(row => row.cancelType === 'parcial');
+  const prevTotalRows = previousRows.filter(row => row.cancelType === 'total');
+  const prevPartialRows = previousRows.filter(row => row.cancelType === 'parcial');
+  const negociacaoAtual = filterRows(parsed.negociacoes);
+  const negociacaoPrev = filterRows(parsed.negociacoes,{range:previousPeriodRange()});
+  const contestAtual = summarizeContest(currentRows);
+  const contestPrev = summarizeContest(previousRows);
+  const origemAtual = summarizeOrigem(currentRows);
+  const itemAtual = summarizeItems(currentRows);
+  const cards = [
+    {
+      key:'cancelado-total', color:'red', clickable:true,
+      label:'Cancelado total',
+      value:fmtMoney(sumField(totalRows,'value')),
+      subLeft:`${fmtInt(totalRows.length)} pedidos`,
+      subRight:pctText(sumField(totalRows,'value'), sumField(prevTotalRows,'value')),
+      hint:'Clique para ver motivo, quantidade, valor e impacto no super.'
+    },
+    {
+      key:'cancelado-parcial', color:'orange', clickable:true,
+      label:'Cancelado parcial',
+      value:fmtMoney(sumField(partialRows,'value')),
+      subLeft:`${fmtInt(partialRows.length)} pedidos`,
+      subRight:pctText(sumField(partialRows,'value'), sumField(prevPartialRows,'value')),
+      hint:'Clique para ver motivo, quantidade, valor e impacto no super.'
+    },
+    {
+      key:'tipos-itens', color:'purple', clickable:true,
+      label:'Tipos de itens cancelados',
+      value:fmtInt(itemAtual.length),
+      subLeft:'Total + parcial',
+      subRight:`${fmtInt(itemAtual.reduce((acc,row)=>acc + row.quantity,0))} itens`,
+      hint:'Clique para abrir o consolidado por item.'
+    },
+    {
+      key:'tentativas', color:'blue', clickable:true,
+      label:'Tentativas de negociação',
+      value:fmtInt(countField(negociacaoAtual,'attempts') || negociacaoAtual.length),
+      subLeft:`Atual ${fmtInt(negociacaoAtual.length)} linhas`,
+      subRight:pctText(countField(negociacaoAtual,'attempts') || negociacaoAtual.length, countField(negociacaoPrev,'attempts') || negociacaoPrev.length),
+      hint:'Clique para ver o detalhamento por dia e loja.'
+    },
+    {
+      key:'origem', color:'teal', clickable:true,
+      label:'Origem do cancelamento',
+      value:`${fmtInt((origemAtual.cliente||0) + (origemAtual.loja||0))}`,
+      subLeft:`Cliente ${fmtInt(origemAtual.cliente||0)}`,
+      subRight:`Loja ${fmtInt(origemAtual.loja||0)}`,
+      hint:'Merchant é tratado como Loja.'
+    },
+    {
+      key:'contestavel', color:'green', clickable:true,
+      label:'Cancelamento contestável',
+      value:fmtInt(contestAtual.contestavel + contestAtual.solicitada + contestAtual.naoContestavel),
+      subLeft:`Contestável ${fmtInt(contestAtual.contestavel)}`,
+      subRight:`Solicitada ${fmtInt(contestAtual.solicitada)}`,
+      hint:`Não contestável ${fmtInt(contestAtual.naoContestavel)}`
+    }
+  ];
+  grid.innerHTML = cards.map(card => `
+    <div class="summary-card ${card.color}" data-card="${card.key}">
+      <div class="label">${card.label}</div>
+      <div class="value">${card.value}</div>
+      <div class="sub"><span>${card.subLeft}</span><span>${card.subRight}</span></div>
+      <div class="hint">${card.hint}</div>
+    </div>
+  `).join('');
+  grid.querySelectorAll('[data-card]').forEach(el => el.addEventListener('click', () => openCancelamentoModal(el.dataset.card, currentRows)));
+}
+function renderGenericSummary(grid){
+  const currentRows = filterRows(parsed[state.metric]);
+  const previousRows = filterRows(parsed[state.metric], {range: previousPeriodRange()});
+  const currentMetric = bucketMetric(currentRows);
+  const previousMetric = bucketMetric(previousRows);
+  const colorMap = { negociacoes:'blue', qualidade:'green', cardapio:'purple' };
+  const secondaryMetric = state.metric === 'qualidade' ? averageScore(currentRows) : sumField(currentRows,'value');
+  const secondaryPrev = state.metric === 'qualidade' ? averageScore(previousRows) : sumField(previousRows,'value');
+  const extraCards = [
+    { label:'Registros', value:fmtInt(currentMetric.count), subLeft:'Período atual', subRight:pctText(currentMetric.count, previousMetric.count), color:colorMap[state.metric] || 'indigo' },
+    { label: state.metric === 'qualidade' ? 'Nota média' : 'Valor movimentado', value: state.metric === 'qualidade' ? averageScore(currentRows).toFixed(1).replace('.', ',') : fmtMoney(secondaryMetric), subLeft:'Mesmo período anterior', subRight: state.metric === 'qualidade' ? pctText(secondaryMetric, secondaryPrev) : pctText(secondaryMetric, secondaryPrev), color:'teal' },
+    { label:'Lojas com dados', value:fmtInt(new Set(currentRows.map(row => row.store)).size), subLeft:'Período selecionado', subRight:'Mês atual', color:'orange' },
+    { label:'Turnos cobertos', value:fmtInt(new Set(currentRows.map(row => row.turno)).size), subLeft:'Filtro atual', subRight:state.turno === 'todos' ? 'Todos' : state.turno, color:'rose' }
+  ];
+  grid.innerHTML = extraCards.map(card => `
+    <div class="summary-card ${card.color}">
+      <div class="label">${card.label}</div>
+      <div class="value">${card.value}</div>
+      <div class="sub"><span>${card.subLeft}</span><span>${card.subRight}</span></div>
+      <div class="hint">${state.metric.charAt(0).toUpperCase() + state.metric.slice(1)} · ${labelStore(state.store)}</div>
+    </div>
+  `).join('');
+}
+function averageScore(rows){
+  const valid = rows.map(row => Number(row.score)).filter(value => Number.isFinite(value) && value > 0);
+  return valid.length ? valid.reduce((a,b)=>a+b,0)/valid.length : 0;
+}
+function summarizeOrigem(rows){
+  return rows.reduce((acc,row) => {
+    const origem = normalize(row.origin);
+    if(origem.includes('cliente')) acc.cliente = (acc.cliente || 0) + 1;
+    else acc.loja = (acc.loja || 0) + 1;
+    return acc;
+  }, {cliente:0, loja:0});
+}
+function summarizeContest(rows){
+  return rows.reduce((acc,row) => {
+    const flag = normalize(row.contestStatus);
+    if(flag.includes('solicit')) acc.solicitada += 1;
+    else if(flag.includes('nao') || flag.includes('não')) acc.naoContestavel += 1;
+    else acc.contestavel += 1;
+    return acc;
+  }, {contestavel:0, solicitada:0, naoContestavel:0});
+}
+function summarizeItems(rows){
+  const map = new Map();
+  rows.forEach(row => {
+    const key = row.item || 'Item não informado';
+    if(!map.has(key)) map.set(key,{item:key, quantity:0, records:0, total:0, parcial:0});
+    const ref = map.get(key);
+    ref.quantity += Number(row.quantity) || 1;
+    ref.records += 1;
+    if(row.cancelType === 'parcial') ref.parcial += Number(row.quantity) || 1;
+    else ref.total += Number(row.quantity) || 1;
+  });
+  return [...map.values()].sort((a,b)=>b.quantity-a.quantity);
+}
+function openCancelamentoModal(cardKey, rows){
+  const modalTitle = document.getElementById('modalTitle');
+  const modalBody = document.getElementById('modalBody');
+  if(cardKey === 'cancelado-total' || cardKey === 'cancelado-parcial'){
+    const type = cardKey === 'cancelado-total' ? 'total' : 'parcial';
+    const title = type === 'total' ? 'Cancelado total' : 'Cancelado parcial';
+    const data = aggregateReasons(rows.filter(row => row.cancelType === type));
+    modalTitle.textContent = `${title} · motivos`;
+    modalBody.innerHTML = renderTable(['Motivo','Quantidade','Valor','Impacto no super'], data.map(row => [row.reason, fmtInt(row.count), fmtMoney(row.value), row.impact]));
+  } else if(cardKey === 'tipos-itens'){
+    const items = summarizeItems(rows);
+    modalTitle.textContent = 'Tipos de itens cancelados';
+    modalBody.innerHTML = renderTable(['Item','Ocorrências','Qtd total','Qtd total cancelada integral','Qtd total cancelada parcial'], items.map(row => [row.item, fmtInt(row.records), fmtInt(row.quantity), fmtInt(row.total), fmtInt(row.parcial)]));
+  } else if(cardKey === 'tentativas'){
+    const data = aggregateNegotiations(filterRows(parsed.negociacoes));
+    modalTitle.textContent = 'Tentativas de negociação';
+    modalBody.innerHTML = renderTable(['Data','Loja','Tentativas','Valor associado'], data.map(row => [row.day, labelStore(row.store), fmtInt(row.attempts), fmtMoney(row.value)]));
+  } else if(cardKey === 'origem'){
+    const origem = summarizeOrigem(rows);
+    modalTitle.textContent = 'Origem do cancelamento';
+    modalBody.innerHTML = renderTable(['Origem','Quantidade'], [['Cliente', fmtInt(origem.cliente || 0)], ['Loja', fmtInt(origem.loja || 0)]]);
+  } else if(cardKey === 'contestavel'){
+    const contest = summarizeContest(rows);
+    modalTitle.textContent = 'Cancelamento contestável';
+    modalBody.innerHTML = renderTable(['Status','Quantidade'], [['Contestável', fmtInt(contest.contestavel)], ['Solicitada contestação', fmtInt(contest.solicitada)], ['Não contestável', fmtInt(contest.naoContestavel)]]);
+  }
+  document.getElementById('modalBg').classList.add('open');
+}
+function aggregateReasons(rows){
+  const map = new Map();
+  rows.forEach(row => {
+    const key = row.reason || 'Motivo não informado';
+    if(!map.has(key)) map.set(key,{reason:key,count:0,value:0,impact:'Não'});
+    const ref = map.get(key);
+    ref.count += 1;
+    ref.value += Number(row.value) || 0;
+    if(normalize(row.impactSuper).includes('sim')) ref.impact = 'Sim';
+  });
+  return [...map.values()].sort((a,b)=>b.value-a.value);
+}
+function aggregateNegotiations(rows){
+  const map = new Map();
+  rows.forEach(row => {
+    const day = isoDay(row.date);
+    const key = `${day}__${row.store}`;
+    if(!map.has(key)) map.set(key,{day: formatDay(day), store: row.store, attempts:0, value:0});
+    const ref = map.get(key);
+    ref.attempts += Number(row.attempts) || 1;
+    ref.value += Number(row.value) || 0;
+  });
+  return [...map.values()].sort((a,b)=>a.day.localeCompare(b.day));
+}
+function formatDay(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function renderTable(headers, rows){
+  if(!rows.length) return '<div class="empty">Nenhum dado encontrado para o filtro atual.</div>';
+  return `<div class="detail-table-wrap"><table><thead><tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${sanitize(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+function renderFeed(){
+  const rows = filterRows(parsed[state.metric]);
+  const titleBase = state.feed === 'diario' ? 'Feed diário' : 'Feed semanal';
+  document.getElementById('feedTitle').textContent = `${titleBase} · ${state.metric}`;
+  const grouped = groupRows(rows, state.feed);
+  const headers = state.feed === 'diario' ? ['Período','Registros','Valor','Turnos'] : ['Semana','Registros','Valor','Turnos'];
+  const body = grouped.map(item => [item.label, fmtInt(item.count), fmtMoney(item.value), fmtInt(item.turnos)]);
+  document.getElementById('feedWrap').innerHTML = renderTable(headers, body);
+  document.getElementById('feedFoot').textContent = `${fmtInt(grouped.length)} linha(s) no feed ${state.feed}.`;
+}
+function groupRows(rows, mode){
+  const map = new Map();
+  rows.forEach(row => {
+    const key = mode === 'diario' ? isoDay(row.date) : weekKey(row.date);
+    if(!map.has(key)) map.set(key,{label:mode === 'diario' ? formatDay(key) : `Semana de ${formatDay(key)}`,count:0,value:0,turnos:new Set()});
+    const ref = map.get(key);
+    ref.count += state.metric === 'negociacoes' ? (Number(row.attempts) || 1) : 1;
+    ref.value += Number(row.value) || 0;
+    ref.turnos.add(row.turno);
+  });
+  return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([,value]) => ({...value, turnos:value.turnos.size}));
+}
+function renderTrend(){
+  const rows = filterRows(parsed[state.metric]);
+  const grouped = groupRows(rows, 'diario');
+  document.getElementById('trendTitle').textContent = `Tendência diária · ${state.metric}`;
+  const colors = { cancelamentos:'#dd3a33', negociacoes:'#3e8edb', qualidade:'#43b06c', cardapio:'#7a56d1' };
+  if(trendChart) trendChart.destroy();
+  trendChart = new Chart(document.getElementById('trendChart'), {
+    type:'line',
+    data:{
+      labels:grouped.map(item => item.label),
+      datasets:[{
+        label:state.metric,
+        data:grouped.map(item => item.value || item.count),
+        borderColor:colors[state.metric] || '#3e8edb',
+        backgroundColor:(colors[state.metric] || '#3e8edb') + '22',
+        fill:true,
+        tension:.28,
+        borderWidth:3,
+        pointRadius:3,
+        pointHoverRadius:4
+      }]
+    },
+    options:{
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#64748b',maxRotation:0,minRotation:0},grid:{color:'rgba(148,163,184,.18)'}},
+        y:{ticks:{color:'#64748b'},grid:{color:'rgba(148,163,184,.18)'}}
+      }
+    }
+  });
+}
+function renderPeriodFoot(){
+  const range = currentPeriodRange();
+  const prev = previousPeriodRange();
+  document.getElementById('periodFoot').textContent = `Período selecionado: ${formatDay(isoDay(range.start))} até ${formatDay(isoDay(range.end))}. Comparação: ${formatDay(isoDay(prev.start))} até ${formatDay(isoDay(prev.end))}.`;
+}
+function render(){
+  renderStoreStrip();
+  renderSummary();
+  renderFeed();
+  renderTrend();
+  renderPeriodFoot();
+}
+function canonicalType(tipo){
+  const key = normalize(tipo);
+  if(key === 'chamados') return 'negociacoes';
+  return key;
+}
+async function fetchJson(url){
+  const res = await fetch(url, {cache:'no-store'});
+  if(!res.ok) throw new Error(`Falha ao ler ${url}`);
+  return res.json();
+}
+async function readReportRows(report){
+  if(report.chunked && report.chunks_path){
+    const chunks = await fetchJson(`${FIREBASE_URL}${report.chunks_path}.json`);
+    const list = Object.values(chunks || {}).sort((a,b)=>(a.chunk_index||0)-(b.chunk_index||0));
+    return list.flatMap(chunk => Array.isArray(chunk.rows) ? chunk.rows : []);
+  }
+  if(report.preview_json){
+    try{
+      const parsedPreview = typeof report.preview_json === 'string' ? JSON.parse(report.preview_json) : report.preview_json;
+      return Array.isArray(parsedPreview.rows) ? parsedPreview.rows : [];
+    }catch(err){ return []; }
+  }
+  return [];
+}
+function parseCancelamentosRows(rows){
+  return rows.map((row,index) => {
+    const date = parseDateFlex(fieldValue(row,['Data','Data do pedido','Dia','Data cancelamento','Data/Hora']));
+    const hour = getHour(fieldValue(row,['Hora','Hora do pedido','Horário','Horario']));
+    const cancelText = normalize(fieldValue(row,['Tipo cancelamento','Classificação','Tipo','Parcial/Total','Status cancelamento']));
+    const cancelType = cancelText.includes('parcial') ? 'parcial' : 'total';
+    const origemRaw = normalize(fieldValue(row,['Origem','Responsável','Responsavel','Origem cancelamento']));
+    return {
+      id:index + 1,
+      date,
+      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Store','Unidade','Merchant'])),
+      turno:getTurno(hour),
+      value:toNumber(fieldValue(row,['Valor cancelado','Valor','Total cancelado','Total'])),
+      quantity:Math.max(1, Math.round(toNumber(fieldValue(row,['Quantidade','Qtd','Qtde','Qtd itens'])) || 1)),
+      reason:String(fieldValue(row,['Motivo','Motivo cancelamento','Razão','Razao']) || 'Motivo não informado').trim(),
+      impactSuper: String(fieldValue(row,['Impacto no super','Impacto super','Super impactado']) || 'Não').trim(),
+      origin: origemRaw.includes('merchant') || origemRaw.includes('loja') ? 'Loja' : (origemRaw.includes('cliente') ? 'Cliente' : 'Loja'),
+      contestStatus: String(fieldValue(row,['Contestável','Contestavel','Situação contestação','Situacao contestacao','Contestação solicitada']) || 'Contestável').trim(),
+      cancelType,
+      item: String(fieldValue(row,['Item','Nome item','Produto','Itens cancelados']) || 'Item não informado').trim(),
+      attempts: Math.max(0, Math.round(toNumber(fieldValue(row,['Tentativas','Tentativas negociação','Tentativas negociacao'])) || 0))
+    };
+  }).filter(row => row.date);
+}
+function parseNegotiationRows(rows){
+  return rows.map((row,index) => {
+    const date = parseDateFlex(fieldValue(row,['Data','Data do pedido','Dia','Data/Hora']));
+    const hour = getHour(fieldValue(row,['Hora','Hora do pedido','Horário','Horario']));
+    const attempts = Math.max(1, Math.round(toNumber(fieldValue(row,['Tentativas','Qtd tentativas','Quantidade tentativas'])) || 1));
+    return {
+      id:index + 1,
+      date,
+      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Store','Unidade','Merchant'])),
+      turno:getTurno(hour),
+      attempts,
+      value:toNumber(fieldValue(row,['Valor recuperado','Valor','Valor negociação','Valor negociado']))
+    };
+  }).filter(row => row.date);
+}
+function parseQualityRows(rows){
+  return rows.map((row,index) => {
+    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data/Hora']));
+    const hour = getHour(fieldValue(row,['Hora','Horário','Horario']));
+    return {
+      id:index + 1,
+      date,
+      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Store','Unidade'])),
+      turno:getTurno(hour),
+      value:toNumber(fieldValue(row,['Quantidade','Qtd','Ocorrências','Ocorrencias'])) || 1,
+      score:toNumber(fieldValue(row,['Nota','Score','Avaliação','Avaliacao']))
+    };
+  }).filter(row => row.date);
+}
+function parseCardapioRows(rows){
+  return rows.map((row,index) => {
+    const date = parseDateFlex(fieldValue(row,['Data','Dia','Data/Hora']));
+    const hour = getHour(fieldValue(row,['Hora','Horário','Horario']));
+    return {
+      id:index + 1,
+      date,
+      store:normalizeStore(fieldValue(row,['Loja','Nome loja','Store','Unidade'])),
+      turno:getTurno(hour),
+      quantity:Math.max(1, Math.round(toNumber(fieldValue(row,['Quantidade','Qtd','Qtde'])) || 1)),
+      item:String(fieldValue(row,['Item','Produto','Nome item']) || 'Item não informado').trim(),
+      value:toNumber(fieldValue(row,['Valor','Preço','Preco']))
+    };
+  }).filter(row => row.date);
+}
+async function loadData(){
+  document.getElementById('statusPill').textContent = '⏳ Carregando base operacional...';
+  const reportsObj = await fetchJson(REPORTS_URL);
+  const reports = Object.entries(reportsObj || {}).map(([id, value]) => ({id, ...value}))
+    .filter(report => report.status !== 'deletado' && report.status !== 'substituido')
+    .filter(report => OP_TYPES.includes(canonicalType(report.tipo)))
+    .sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
+
+  if(!reports.length){
+    document.getElementById('statusPill').textContent = '⚠️ Nenhum relatório operacional ativo encontrado';
+    render();
+    return;
+  }
+
+  latestStamp = reports[0].timestamp_upload || Date.now();
+  const reportsByBatch = new Map();
+  reports.forEach(report => {
+    const batch = report.batch_id || `legacy-${canonicalType(report.tipo)}`;
+    if(!reportsByBatch.has(batch)) reportsByBatch.set(batch, []);
+    reportsByBatch.get(batch).push(report);
+  });
+  const pickedBatch = [...reportsByBatch.entries()].sort((a,b)=>Math.max(...b[1].map(r=>r.timestamp_upload||0)) - Math.max(...a[1].map(r=>r.timestamp_upload||0)))[0];
+  latestBatchId = pickedBatch ? pickedBatch[0] : '';
+  const selectedReports = pickedBatch ? pickedBatch[1] : reports;
+
+  parsed.cancelamentos = [];
+  parsed.negociacoes = [];
+  parsed.qualidade = [];
+  parsed.cardapio = [];
+
+  for(const report of selectedReports){
+    const rows = await readReportRows(report);
+    const type = canonicalType(report.tipo);
+    if(type === 'cancelamentos') parsed.cancelamentos.push(...parseCancelamentosRows(rows));
+    if(type === 'negociacoes') parsed.negociacoes.push(...parseNegotiationRows(rows));
+    if(type === 'qualidade') parsed.qualidade.push(...parseQualityRows(rows));
+    if(type === 'cardapio') parsed.cardapio.push(...parseCardapioRows(rows));
+  }
+
+  document.getElementById('statusPill').textContent = `✅ Base operacional lida em ${new Date(latestStamp).toLocaleString('pt-BR')} · lote ${latestBatchId || 'legado'}`;
+  render();
+}
+
+document.getElementById('metricButtons').addEventListener('click', event => {
+  const btn = event.target.closest('[data-metric]');
+  if(!btn) return;
+  state.metric = btn.dataset.metric;
+  document.querySelectorAll('#metricButtons .btn-chip').forEach(node => node.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+});
+document.getElementById('turnoButtons').addEventListener('click', event => {
+  const btn = event.target.closest('[data-turno]');
+  if(!btn) return;
+  state.turno = btn.dataset.turno;
+  document.querySelectorAll('#turnoButtons .btn-chip').forEach(node => node.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+});
+document.getElementById('feedButtons').addEventListener('click', event => {
+  const btn = event.target.closest('[data-feed]');
+  if(!btn) return;
+  state.feed = btn.dataset.feed;
+  document.querySelectorAll('#feedButtons .btn-chip').forEach(node => node.classList.remove('active'));
+  btn.classList.add('active');
+  renderFeed();
+});
+document.getElementById('modalClose').addEventListener('click', () => document.getElementById('modalBg').classList.remove('open'));
+document.getElementById('modalBg').addEventListener('click', event => { if(event.target.id === 'modalBg') document.getElementById('modalBg').classList.remove('open'); });
+
+render();
+loadData().catch(error => {
+  console.error(error);
+  document.getElementById('statusPill').textContent = '❌ Erro ao carregar a base operacional';
+  document.getElementById('feedWrap').innerHTML = '<div class="empty">Não foi possível ler os relatórios operacionais. Reenvie a carga na página de uploads.</div>';
+});
+</script>
 </body>
 </html>
