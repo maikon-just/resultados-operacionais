@@ -77,12 +77,18 @@
     .finance-ranking-wrap{border-radius:18px;overflow:auto;background:#fff;border:1px solid #dde6f2}
     .finance-ranking-table{min-width:980px}
     .finance-ranking-table thead th{background:#37465c;color:#fff}
-    .finance-ranking-table tbody td{vertical-align:middle}
-    .rank-badge{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:#5b9cf6;color:#fff;font-size:10px;font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+    .finance-ranking-table tbody td{vertical-align:middle;background:#fff}
+    .finance-ranking-table tbody tr:nth-child(even) td{background:#fdfefe}
+    .finance-ranking-table tbody tr:hover td{background:#f7fbff}
+    .finance-ranking-table tbody td:nth-child(3),.finance-ranking-table tbody td:nth-child(8),.finance-ranking-table tbody td:nth-child(9){color:#334155;font-weight:800}
+    .finance-ranking-table tbody td:nth-child(4),.finance-ranking-table tbody td:nth-child(7){color:#57c271;font-weight:800}
+    .finance-ranking-table tbody td:nth-child(5){color:#4d8dff;font-weight:800}
+    .finance-ranking-table tbody td:nth-child(6){color:#ff4d4f;font-weight:800}
+    .rank-badge{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:999px;background:linear-gradient(180deg,#66a8ff 0%,#4f8ff5 100%);color:#fff;font-size:10px;font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 4px 10px rgba(79,143,245,.22)}
     .store-name-strong{font-weight:800;color:#334155}
-    .money-green{color:#59c17a;font-weight:800}
-    .money-blue{color:#5b8def;font-weight:800}
-    .money-red{color:#ff5a52;font-weight:800}
+    .money-green{color:#57c271;font-weight:800}
+    .money-blue{color:#4d8dff;font-weight:800}
+    .money-red{color:#ff4d4f;font-weight:800}
     .money-dark{color:#334155;font-weight:800}
     .share-strong{font-weight:800;color:#1f2937}
     @media(max-width:1320px){.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2,.grid-3{grid-template-columns:1fr}.toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
