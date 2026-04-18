@@ -1230,55 +1230,102 @@ window.__jbAutoInitDisabled = true;
   #globalStorePanelPatch,
   .live,
   .hero p,
-  .footer-note{display:none !important}
-  .wrap{max-width:1500px;padding-top:14px}
+  .footer-note,
+  .result-line-light{display:none !important}
+  .wrap{max-width:1540px;padding-top:14px}
   .hero{padding:14px 16px;border-radius:20px;margin-bottom:12px}
   .hero h1{font-size:26px}
-  .toolbar{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:10px}
+
+  .toolbar{
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    align-items:end;
+    gap:10px;
+    padding:10px 12px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .toolbar::-webkit-scrollbar{display:none}
+  .toolbar .field{flex:0 0 auto;min-width:0}
+  .toolbar .field:nth-child(1){width:330px}
+  .toolbar .field:nth-child(2),
+  .toolbar .field:nth-child(3){width:150px}
+  .toolbar .field:nth-child(4){flex:1 0 420px}
+  .preset-group,.action-group{display:flex !important;flex-wrap:nowrap !important;gap:8px;width:100%}
+  .preset-btn,.btn{flex:1 1 0;min-width:0}
+
+  .store-top-shell{margin:10px 0 12px}
+  .store-filter-row{
+    display:grid;
+    grid-auto-flow:column;
+    grid-auto-columns:max-content;
+    gap:8px;
+    margin:0 0 8px;
+    overflow-x:auto;
+    padding-bottom:2px;
+    scrollbar-width:none;
+  }
+  .store-filter-row::-webkit-scrollbar{display:none}
+  .store-filter-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:38px;
+    padding:0 14px;
+    border-radius:999px;
+    border:2px solid #d6e2f1;
+    background:#fff;
+    font:800 12px Montserrat,system-ui,sans-serif;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:.15s ease;
+  }
+  .store-filter-btn:hover{transform:translateY(-1px)}
+  .store-filter-btn.active{box-shadow:0 10px 18px rgba(15,23,42,.12)}
+  #storePills.store-filter-row .store-pill,
+  #storePills .store-pill{display:none !important}
+
   .kpi-row{gap:10px;margin-bottom:12px}
   .kpi{padding:12px;border-radius:16px}
   .kpi .label{margin-bottom:6px;font-size:10px}
   .kpi .value{font-size:24px}
-  .kpi .sub{margin-top:6px;padding-top:6px;font-size:11px;line-height:1.2;align-items:center;gap:8px}
-  .result-line-light{margin:10px 0;padding:10px 12px;gap:8px}
-  .result-chip{padding:6px 10px;font-size:11px}
+  .kpi .sub{margin-top:6px;padding-top:6px;font-size:11px;line-height:1.2;align-items:center;gap:8px;flex-wrap:wrap}
   .card{padding:12px}
   .card h3{margin-bottom:10px;font-size:12px}
   .chart{height:280px}
   .chart.sm{height:230px}
   .chart.tall{height:300px}
-  .store-top-shell{margin:10px 0 12px}
-  .store-filter-row{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px}
-  .store-filter-btn{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 12px;border-radius:999px;border:2px solid #d6e2f1;background:#fff;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;white-space:nowrap;transition:.15s ease}
-  .store-filter-btn:hover{transform:translateY(-1px)}
-  .store-filter-btn.active{box-shadow:0 10px 18px rgba(15,23,42,.12)}
-  #kpisLoja{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0 0 12px}
-  #kpisLoja .kpi{padding:12px}
-  #kpisLoja .kpi .value{font-size:20px}
-  #storePills.store-filter-row .store-pill,
-  #storePills .store-pill{display:none !important}
   .badge{padding:4px 8px;font-size:10px}
+
+  #kpisLoja{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:0 0 12px}
+  #kpisLoja .kpi{padding:12px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between}
+  #kpisLoja .kpi .value{font-size:19px;line-height:1.08}
+
   @media (max-width: 760px){
     .wrap{padding:10px 10px 24px}
     .hero h1{font-size:20px}
-    .toolbar{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
-    .toolbar .field:nth-child(1){grid-column:1 / -1}
-    .toolbar .field:nth-child(2),
-    .toolbar .field:nth-child(3),
-    .toolbar .field:nth-child(4),
-    .toolbar .field:nth-child(5){grid-column:span 3}
-    .toolbar .field:nth-child(6){grid-column:1 / -1}
+    .toolbar{
+      display:grid !important;
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      gap:8px;
+      overflow:visible;
+      padding:10px;
+    }
+    .toolbar .field:nth-child(1){grid-column:1 / -1;width:auto}
+    .toolbar .field:nth-child(2){grid-column:1 / span 3;width:auto}
+    .toolbar .field:nth-child(3){grid-column:4 / span 3;width:auto}
+    .toolbar .field:nth-child(4){grid-column:1 / -1;flex:unset}
     .preset-group,.action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
     .field input,.preset-btn,.btn{height:40px;padding:0 8px;font-size:11px}
-    .kpi-row,#kpisLoja{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-    .kpi-row .kpi:first-child,#kpisLoja .kpi:first-child{grid-column:span 2}
+    .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .kpi-row .kpi:first-child{grid-column:span 2}
+    #kpisLoja{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    #kpisLoja .kpi{min-height:104px}
     .kpi .value,#kpisLoja .kpi .value{font-size:18px}
     .kpi .sub{font-size:10px}
     .grid-2{grid-template-columns:1fr;gap:12px}
     .chart,.chart.sm,.chart.tall{height:220px}
-    .result-line-light{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-    .result-chip{width:100%;justify-content:center;text-align:center}
-    .store-filter-btn{flex:1 1 calc(50% - 8px)}
+    .store-filter-btn{min-height:36px;padding:0 12px;font-size:11px}
     th,td{padding:10px 10px;font-size:12px}
   }
 </style>
@@ -1287,19 +1334,22 @@ window.__jbAutoInitDisabled = true;
   const ALL_STORES_KEY = '__ALL__';
   const FULL_CACHE_DB = 'jb_dash_full_cache_db';
   const FULL_CACHE_STORE = 'dash';
-  const FULL_CACHE_KEY = 'full_rows_v4';
-  let currentStoreFilter = ALL_STORES_KEY;
+  const FULL_CACHE_KEY = 'full_rows_v5';
+  const CACHE_VERSION = 2;
+  let currentStoreFilter = null;
+  let syncPromise = null;
 
   function cleanDay(date){ return new Date(date.getFullYear(), date.getMonth(), date.getDate()); }
   function todayKey(){ return ymd(cleanDay(new Date())); }
-  function sameMonth(a,b){ return !!a && !!b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth(); }
   function monthLastDay(date){ return new Date(date.getFullYear(), date.getMonth()+1, 0); }
+  function sameMonth(a,b){ return !!a && !!b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth(); }
   function clampPrevMonth(date){
     const y = date.getFullYear();
     const m = date.getMonth() - 1;
     const last = new Date(y, m + 1, 0).getDate();
     return new Date(y, m, Math.min(date.getDate(), last));
   }
+  function reportRowKey(row){ return `${row.pedido || ''}||${row.loja}||${ymd(row.data)}`; }
   function rangeDays(range){
     if(!range?.from || !range?.to) return 0;
     return Math.round((cleanDay(range.to) - cleanDay(range.from)) / 86400000) + 1;
@@ -1319,23 +1369,17 @@ window.__jbAutoInitDisabled = true;
     }
     return {key: ymd(date), label: shortDate(date)};
   }
-  function formatMaybeMoney(value, kind){
-    if(kind === 'money') return fmtMoney.format(value || 0);
+  function formatMaybe(value, kind){
     if(kind === 'int') return fmtInt.format(Math.round(value || 0));
     return fmtMoney.format(value || 0);
   }
   function compareText(current, previous, kind){
     if(!previous) return 'Anterior sem base';
     const delta = ((current / previous) - 1) * 100;
-    if(!isFinite(delta)) return `Anterior ${formatMaybeMoney(previous, kind)}`;
+    if(!isFinite(delta)) return `Anterior ${formatMaybe(previous, kind)}`;
     const prefix = delta >= 0 ? '▲' : '▼';
     const cls = Math.abs(delta) < 0.05 ? 'flat' : (delta >= 0 ? 'up' : 'down');
-    const badge = `<span class="badge ${cls}">${Math.abs(delta) < 0.05 ? 'estável' : `${prefix} ${fmtPct(Math.abs(delta))}`}</span>`;
-    return `Anterior ${formatMaybeMoney(previous, kind)} ${badge}`;
-  }
-  function previousLabel(range){
-    const prev = previousComparableRange(range);
-    return prev.from && prev.to ? `${brDate(prev.from)} até ${brDate(prev.to)}` : 'Sem comparação';
+    return `Anterior ${formatMaybe(previous, kind)} <span class="badge ${cls}">${Math.abs(delta) < 0.05 ? 'estável' : `${prefix} ${fmtPct(Math.abs(delta))}`}</span>`;
   }
   function allDateRows(range = selectedRange()){
     return rowsBase.filter(r => {
@@ -1346,11 +1390,10 @@ window.__jbAutoInitDisabled = true;
     });
   }
   function scopedRows(range = selectedRange()){
-    return allDateRows(range).filter(r => currentStoreFilter === ALL_STORES_KEY || r.loja === currentStoreFilter);
+    return allDateRows(range).filter(r => !currentStoreFilter || r.loja === currentStoreFilter);
   }
-  function byStoreMap(rows){
-    return new Map(summarize(rows).stores.map(item => [item.loja, item]));
-  }
+  function byStoreMap(rows){ return new Map(summarize(rows).stores.map(item => [item.loja, item])); }
+
   function openCacheDb(){
     return new Promise((resolve, reject) => {
       const req = indexedDB.open(FULL_CACHE_DB, 1);
@@ -1362,7 +1405,7 @@ window.__jbAutoInitDisabled = true;
       req.onerror = () => reject(req.error);
     });
   }
-  async function readDailyFullCache(){
+  async function readCacheRecord(){
     try{
       const db = await openCacheDb();
       return await new Promise(resolve => {
@@ -1371,114 +1414,144 @@ window.__jbAutoInitDisabled = true;
         req.onsuccess = () => resolve(req.result || null);
         req.onerror = () => resolve(null);
       });
-    }catch(e){
-      return null;
-    }
+    }catch(e){ return null; }
   }
-  async function writeDailyFullCache(rows){
+  async function writeCacheRecord(record){
     try{
       const db = await openCacheDb();
-      const payload = { id: FULL_CACHE_KEY, day: todayKey(), saved_at: new Date().toISOString(), rows: rows.map(rowToCacheShape) };
       await new Promise((resolve, reject) => {
         const tx = db.transaction(FULL_CACHE_STORE, 'readwrite');
-        tx.objectStore(FULL_CACHE_STORE).put(payload);
+        tx.objectStore(FULL_CACHE_STORE).put(record);
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
       });
     }catch(e){}
   }
-  async function loadFullBaseFromDailyCache(){
-    if(window.__jbFullRowsMemory?.day === todayKey() && Array.isArray(window.__jbFullRowsMemory.rows) && window.__jbFullRowsMemory.rows.length){
-      rowsBase = window.__jbFullRowsMemory.rows.map(rowFromCacheShape).filter(Boolean);
-      fullBaseLoaded = true;
-      threeMonthBaseLoaded = true;
+  function rowsFromCacheRows(raw){ return Array.isArray(raw) ? raw.map(rowFromCacheShape).filter(Boolean) : []; }
+  function cacheRowsFromLiveRows(rows){ return Array.isArray(rows) ? rows.map(rowToCacheShape) : []; }
+  function maxUploadFromMeta(meta){ return Math.max(0, ...meta.map(rep => Number(rep.timestamp_upload || 0))); }
+
+  async function syncFullCache(existingCache = null, wait = true){
+    if(syncPromise){
+      if(wait) await syncPromise;
       return rowsBase;
     }
-    const cached = await readDailyFullCache();
-    if(cached?.day === todayKey() && Array.isArray(cached.rows) && cached.rows.length){
-      rowsBase = cached.rows.map(rowFromCacheShape).filter(Boolean);
-      window.__jbFullRowsMemory = {day: cached.day, rows: cached.rows};
+    syncPromise = (async () => {
+      const cached = existingCache || await readCacheRecord();
+      await ensureReportsMetaLoaded();
+      const allIds = reportsMetaCache.map(rep => rep.id);
+      const latestUpload = maxUploadFromMeta(reportsMetaCache);
+
+      if(cached?.version === CACHE_VERSION && Array.isArray(cached.rows) && cached.rows.length){
+        let liveRows = rowsFromCacheRows(cached.rows);
+        const cachedIds = new Set(cached.report_ids || []);
+        const deltaReports = reportsMetaCache.filter(rep => !cachedIds.has(rep.id) || Number(rep.timestamp_upload || 0) > Number(cached.latest_upload || 0));
+        if(deltaReports.length){
+          const deltaRows = await buildRowsFromReports(deltaReports, 6);
+          const dedupe = new Map(liveRows.map(row => [reportRowKey(row), row]));
+          deltaRows.forEach(row => dedupe.set(reportRowKey(row), row));
+          liveRows = [...dedupe.values()].sort((a,b) => a.data - b.data);
+        }
+        rowsBase = liveRows;
+        fullBaseLoaded = true;
+        threeMonthBaseLoaded = true;
+        const nextRecord = {
+          id: FULL_CACHE_KEY,
+          version: CACHE_VERSION,
+          day: todayKey(),
+          saved_at: new Date().toISOString(),
+          latest_upload: latestUpload,
+          report_ids: allIds,
+          rows: cacheRowsFromLiveRows(liveRows)
+        };
+        window.__jbFullRowsMemory = nextRecord;
+        await writeCacheRecord(nextRecord);
+        return rowsBase;
+      }
+
+      rowsBase = await buildRowsFromReports(reportsMetaCache, 6);
       fullBaseLoaded = true;
       threeMonthBaseLoaded = true;
+      const firstRecord = {
+        id: FULL_CACHE_KEY,
+        version: CACHE_VERSION,
+        day: todayKey(),
+        saved_at: new Date().toISOString(),
+        latest_upload: latestUpload,
+        report_ids: allIds,
+        rows: cacheRowsFromLiveRows(rowsBase)
+      };
+      window.__jbFullRowsMemory = firstRecord;
+      await writeCacheRecord(firstRecord);
+      return rowsBase;
+    })().finally(() => { syncPromise = null; });
+
+    if(wait) await syncPromise;
+    return rowsBase;
+  }
+
+  async function loadFullBaseSmart(){
+    if(window.__jbFullRowsMemory?.version === CACHE_VERSION && Array.isArray(window.__jbFullRowsMemory.rows) && window.__jbFullRowsMemory.rows.length){
+      rowsBase = rowsFromCacheRows(window.__jbFullRowsMemory.rows);
+      fullBaseLoaded = true;
+      threeMonthBaseLoaded = true;
+      if(window.__jbFullRowsMemory.day !== todayKey()) setTimeout(() => { syncFullCache(window.__jbFullRowsMemory, false); }, 60);
       return rowsBase;
     }
-    await ensureReportsMetaLoaded();
-    rowsBase = await buildRowsFromReports(reportsMetaCache, 6);
-    fullBaseLoaded = true;
-    threeMonthBaseLoaded = true;
-    const compactRows = rowsBase.map(rowToCacheShape);
-    window.__jbFullRowsMemory = {day: todayKey(), rows: compactRows};
-    await writeDailyFullCache(rowsBase);
+
+    const cached = await readCacheRecord();
+    if(cached?.version === CACHE_VERSION && Array.isArray(cached.rows) && cached.rows.length){
+      rowsBase = rowsFromCacheRows(cached.rows);
+      fullBaseLoaded = true;
+      threeMonthBaseLoaded = true;
+      window.__jbFullRowsMemory = cached;
+      if(cached.day !== todayKey()) setTimeout(() => { syncFullCache(cached, false); }, 60);
+      return rowsBase;
+    }
+
+    await syncFullCache(null, true);
     return rowsBase;
   }
 
   previousComparableRange = function(range){
     if(!range?.from || !range?.to) return {from:null, to:null};
-    const from = cleanDay(range.from);
-    const to = cleanDay(range.to);
-    const prevFrom = clampPrevMonth(from);
-    const prevTo = clampPrevMonth(to);
+    const prevFrom = clampPrevMonth(cleanDay(range.from));
+    const prevTo = clampPrevMonth(cleanDay(range.to));
     prevFrom.setHours(0,0,0,0);
     prevTo.setHours(23,59,59,999);
     return {from: prevFrom, to: prevTo};
   };
 
-  filteredRows = function(range = selectedRange()){
-    return scopedRows(range);
-  };
+  filteredRows = function(range = selectedRange()){ return scopedRows(range); };
 
+  function removeResultLine(){
+    document.getElementById('resultLineLightPatch')?.remove();
+  }
   function ensureStoreTopShell(){
+    removeResultLine();
     let shell = document.getElementById('storeTopShell');
     if(!shell){
       shell = document.createElement('div');
       shell.id = 'storeTopShell';
       shell.className = 'store-top-shell';
-      const anchor = document.getElementById('resultLineLightPatch') || document.querySelector('.toolbar');
-      anchor.insertAdjacentElement('afterend', shell);
+      document.querySelector('.toolbar').insertAdjacentElement('afterend', shell);
     }
     const pills = document.getElementById('storePills');
     const cards = document.getElementById('kpisLoja');
     if(pills) shell.appendChild(pills);
     if(cards) shell.appendChild(cards);
   }
-
   function renderStoreFilters(){
     const el = document.getElementById('storePills');
     if(!el) return;
     el.className = 'store-filter-row';
-    const items = [{key: ALL_STORES_KEY, label: 'Todas', color: '#33507c'}].concat(STORE_ORDER.map(store => ({key: store, label: store, color: colorOf(store)})));
+    const items = STORE_ORDER.map(store => ({key: store, label: store, color: colorOf(store)}));
     el.innerHTML = items.map(item => {
       const active = currentStoreFilter === item.key;
-      const style = active
-        ? `background:${item.color};border-color:${item.color};color:#fff;`
-        : `background:#fff;border-color:${item.color};color:${item.color};`;
+      const style = active ? `background:${item.color};border-color:${item.color};color:#fff;` : `background:#fff;border-color:${item.color};color:${item.color};`;
       return `<button type="button" class="store-filter-btn ${active ? 'active' : ''}" data-store-final="${item.key}" style="${style}">${item.label}</button>`;
     }).join('');
   }
-
-  function ensureResultLine(){
-    if(document.getElementById('resultLineLightPatch')) return document.getElementById('resultLineLightPatch');
-    const toolbar = document.querySelector('.toolbar');
-    const box = document.createElement('div');
-    box.id = 'resultLineLightPatch';
-    box.className = 'result-line-light';
-    toolbar.insertAdjacentElement('afterend', box);
-    return box;
-  }
-
-  function renderResultLine(range, curr, prev){
-    const box = ensureResultLine();
-    const loja = currentStoreFilter === ALL_STORES_KEY ? 'Todas as lojas' : currentStoreFilter;
-    box.innerHTML = [
-      `<span class="result-chip">Período <strong>${periodLabel(range)}</strong></span>`,
-      `<span class="result-chip">Comparação <strong>${previousLabel(range)}</strong></span>`,
-      `<span class="result-chip">Loja <strong>${loja}</strong></span>`,
-      `<span class="result-chip">Pedidos <strong>${fmtInt.format(curr.pedidos)}</strong></span>`,
-      `<span class="result-chip">Faturamento <strong>${fmtMoney.format(curr.faturamento)}</strong></span>`,
-      `<span class="result-chip">Anterior <strong>${fmtMoney.format(prev.faturamento || 0)}</strong></span>`
-    ].join('');
-  }
-
   function setSummaryTableHeader(){
     const head = document.querySelector('#sec-geral thead tr');
     if(!head) return;
@@ -1491,7 +1564,6 @@ window.__jbAutoInitDisabled = true;
     const prevRows = scopedRows(previousComparableRange(range));
     const curr = summarize(currRows);
     const prev = summarize(prevRows);
-    renderResultLine(range, curr, prev);
 
     document.getElementById('kpisGeral').innerHTML = `
       <div class="kpi green"><div class="label">Faturamento Total</div><div class="value">${fmtMoney.format(curr.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${compareText(curr.faturamento, prev.faturamento, 'money')}</span></div></div>
@@ -1500,7 +1572,7 @@ window.__jbAutoInitDisabled = true;
       <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(curr.desconto)}</div><div class="sub"><span>${curr.faturamento ? fmtPct(curr.desconto / curr.faturamento * 100) : '0,0%'}</span><span>${compareText(curr.desconto, prev.desconto, 'money')}</span></div></div>
       <div class="kpi purple"><div class="label">Taxa de Entrega</div><div class="value">${fmtMoney.format(curr.entrega)}</div><div class="sub"><span>Receita de entrega</span><span>${compareText(curr.entrega, prev.entrega, 'money')}</span></div></div>`;
 
-    const stores = summarize(currRows).stores.filter(item => currentStoreFilter === ALL_STORES_KEY ? (item.pedidos > 0 || item.faturamento > 0 || item.desconto > 0 || item.entrega > 0) : item.loja === currentStoreFilter);
+    const stores = summarize(currRows).stores.filter(item => currentStoreFilter ? item.loja === currentStoreFilter : (item.pedidos > 0 || item.faturamento > 0 || item.desconto > 0 || item.entrega > 0));
     draw('chartFatLoja','bar',{
       labels: stores.map(s => s.loja),
       datasets:[{label:'Faturamento',data: stores.map(s => s.faturamento),backgroundColor: stores.map(s => colorOf(s.loja) + 'cc'),borderColor: stores.map(s => colorOf(s.loja)),borderWidth:1.5,borderRadius:8}]
@@ -1521,7 +1593,7 @@ window.__jbAutoInitDisabled = true;
     setSummaryTableHeader();
     const prevMap = byStoreMap(prevRows);
     document.getElementById('tbodyResumo').innerHTML = stores.map(store => {
-      const prevStore = prevMap.get(store.loja) || {faturamento:0,pedidos:0,desconto:0,entrega:0};
+      const prevStore = prevMap.get(store.loja) || {faturamento:0};
       return `<tr>
         <td><span class="store-name-strong">${store.loja}</span></td>
         <td>${fmtInt.format(store.pedidos)}</td>
@@ -1538,7 +1610,7 @@ window.__jbAutoInitDisabled = true;
     ensureStoreTopShell();
     renderStoreFilters();
     const range = selectedRange();
-    const visibleStores = currentStoreFilter === ALL_STORES_KEY ? STORE_ORDER : [currentStoreFilter];
+    const visibleStores = currentStoreFilter ? [currentStoreFilter] : STORE_ORDER;
     const currAllMap = byStoreMap(allDateRows(range));
     const prevAllMap = byStoreMap(allDateRows(previousComparableRange(range)));
 
@@ -1609,25 +1681,29 @@ window.__jbAutoInitDisabled = true;
   };
 
   function scrollTopCards(){
-    const target = document.querySelector('.hero') || document.body;
+    const target = document.getElementById('storeTopShell') || document.querySelector('.toolbar');
     target.scrollIntoView({behavior:'smooth', block:'start'});
   }
-  function clearPresetButtons(){
-    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-  }
-  function markPreset(name){
-    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.preset === name));
-    activePreset = name;
-  }
-  function setDateRange(from, to, presetName){
+  function clearPresetButtons(){ document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active')); }
+  function markPreset(name){ document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.preset === name)); activePreset = name; }
+  function setDateRange(from, to, presetName = null){
     document.getElementById('dataInicio').value = ymd(from);
     document.getElementById('dataFim').value = ymd(to);
-    if(presetName) markPreset(presetName); else clearPresetButtons();
+    if(presetName) markPreset(presetName); else { clearPresetButtons(); activePreset = 'custom'; }
   }
   function currentMonthRange(){
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     return {from: new Date(today.getFullYear(), today.getMonth(), 1), to: today};
+  }
+  function previousMonthRange(){
+    const now = new Date();
+    return {from: new Date(now.getFullYear(), now.getMonth()-1, 1), to: new Date(now.getFullYear(), now.getMonth(), 0)};
+  }
+  function yesterdayRange(){
+    const now = new Date();
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate()-1);
+    return {from:d, to:d};
   }
   function projectionMonthRange(){
     const now = new Date();
@@ -1636,10 +1712,9 @@ window.__jbAutoInitDisabled = true;
     yesterday.setDate(yesterday.getDate() - 1);
     return {from: new Date(today.getFullYear(), today.getMonth(), 1), to: yesterday};
   }
-
   async function renderAllFinal(shouldScroll){
     const runId = ++renderRunId;
-    await loadFullBaseFromDailyCache();
+    await loadFullBaseSmart();
     if(runId !== renderRunId) return;
     destroyCharts();
     ensureStoreTopShell();
@@ -1669,7 +1744,6 @@ window.__jbAutoInitDisabled = true;
     ev.preventDefault();
     ev.stopImmediatePropagation();
     const r = projectionMonthRange();
-    currentStoreFilter = ALL_STORES_KEY;
     setDateRange(r.from, r.to, null);
     await renderAllFinal(true);
   }, true);
@@ -1677,19 +1751,9 @@ window.__jbAutoInitDisabled = true;
     ev.preventDefault();
     ev.stopImmediatePropagation();
     const preset = btn.dataset.preset;
-    if(preset === 'mes_atual'){
-      const r = currentMonthRange();
-      setDateRange(r.from, r.to, 'mes_atual');
-    }else if(preset === 'mes_anterior'){
-      const now = new Date();
-      const from = new Date(now.getFullYear(), now.getMonth()-1, 1);
-      const to = new Date(now.getFullYear(), now.getMonth(), 0);
-      setDateRange(from, to, 'mes_anterior');
-    }else if(preset === 'ontem'){
-      const now = new Date();
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate()-1);
-      setDateRange(d, d, 'ontem');
-    }
+    if(preset === 'mes_atual') setDateRange(currentMonthRange().from, currentMonthRange().to, 'mes_atual');
+    else if(preset === 'mes_anterior') setDateRange(previousMonthRange().from, previousMonthRange().to, 'mes_anterior');
+    else if(preset === 'ontem') setDateRange(yesterdayRange().from, yesterdayRange().to, 'ontem');
     await renderAllFinal(true);
   }, true));
   document.getElementById('dataInicio').addEventListener('change', () => {
@@ -1697,25 +1761,22 @@ window.__jbAutoInitDisabled = true;
     activePreset = 'custom';
     const from = parseDateFlex(document.getElementById('dataInicio').value);
     const to = parseDateFlex(document.getElementById('dataFim').value);
-    if(from && (!to || !sameMonth(from, to))){
-      document.getElementById('dataFim').value = ymd(monthLastDay(from));
-    }
+    if(from && (!to || !sameMonth(from, to))) document.getElementById('dataFim').value = ymd(monthLastDay(from));
   });
-  document.getElementById('dataFim').addEventListener('change', () => {
-    clearPresetButtons();
-    activePreset = 'custom';
-  });
+  document.getElementById('dataFim').addEventListener('change', () => { clearPresetButtons(); activePreset = 'custom'; });
   document.addEventListener('click', async ev => {
     const btn = ev.target.closest('[data-store-final]');
     if(!btn) return;
     ev.preventDefault();
     ev.stopImmediatePropagation();
-    currentStoreFilter = btn.dataset.storeFinal;
-    activeStore = currentStoreFilter === ALL_STORES_KEY ? STORE_ORDER[0] : currentStoreFilter;
-    await renderAllFinal(true);
+    const selectedStore = btn.dataset.storeFinal;
+    currentStoreFilter = currentStoreFilter === selectedStore ? null : selectedStore;
+    activeStore = currentStoreFilter || STORE_ORDER[0];
+    await renderAllFinal(false);
   }, true);
 
   ensureStoreTopShell();
+  removeResultLine();
   const start = currentMonthRange();
   setDateRange(start.from, start.to, 'mes_atual');
   await renderAllFinal(false);
