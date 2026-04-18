@@ -943,10 +943,7 @@ document.addEventListener('click', e => {
   renderStoreSection();
 });
 
-loadBase().catch(err => {
-  console.error(err);
-  document.getElementById('kpisGeral').innerHTML = '<div class="panel empty">Não foi possível carregar a base de uploads.</div>';
-});
+window.__jbAutoInitDisabled = true;
 
 </script>
 
@@ -1222,6 +1219,506 @@ loadBase().catch(err => {
   };
   ensureGlobalStorePanel();
   ensureResultLinePatch();
+})();
+</script>
+
+
+<style id="dash-final-style">
+  .tabs,
+  #sec-projecao,
+  #sec-diario,
+  #globalStorePanelPatch,
+  .live,
+  .hero p,
+  .footer-note{display:none !important}
+  .wrap{max-width:1500px;padding-top:14px}
+  .hero{padding:14px 16px;border-radius:20px;margin-bottom:12px}
+  .hero h1{font-size:26px}
+  .toolbar{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:10px}
+  .kpi-row{gap:10px;margin-bottom:12px}
+  .kpi{padding:12px;border-radius:16px}
+  .kpi .label{margin-bottom:6px;font-size:10px}
+  .kpi .value{font-size:24px}
+  .kpi .sub{margin-top:6px;padding-top:6px;font-size:11px;line-height:1.2;align-items:center;gap:8px}
+  .result-line-light{margin:10px 0;padding:10px 12px;gap:8px}
+  .result-chip{padding:6px 10px;font-size:11px}
+  .card{padding:12px}
+  .card h3{margin-bottom:10px;font-size:12px}
+  .chart{height:280px}
+  .chart.sm{height:230px}
+  .chart.tall{height:300px}
+  .store-top-shell{margin:10px 0 12px}
+  .store-filter-row{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px}
+  .store-filter-btn{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 12px;border-radius:999px;border:2px solid #d6e2f1;background:#fff;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;white-space:nowrap;transition:.15s ease}
+  .store-filter-btn:hover{transform:translateY(-1px)}
+  .store-filter-btn.active{box-shadow:0 10px 18px rgba(15,23,42,.12)}
+  #kpisLoja{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0 0 12px}
+  #kpisLoja .kpi{padding:12px}
+  #kpisLoja .kpi .value{font-size:20px}
+  #storePills.store-filter-row .store-pill,
+  #storePills .store-pill{display:none !important}
+  .badge{padding:4px 8px;font-size:10px}
+  @media (max-width: 760px){
+    .wrap{padding:10px 10px 24px}
+    .hero h1{font-size:20px}
+    .toolbar{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+    .toolbar .field:nth-child(1){grid-column:1 / -1}
+    .toolbar .field:nth-child(2),
+    .toolbar .field:nth-child(3),
+    .toolbar .field:nth-child(4),
+    .toolbar .field:nth-child(5){grid-column:span 3}
+    .toolbar .field:nth-child(6){grid-column:1 / -1}
+    .preset-group,.action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
+    .field input,.preset-btn,.btn{height:40px;padding:0 8px;font-size:11px}
+    .kpi-row,#kpisLoja{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .kpi-row .kpi:first-child,#kpisLoja .kpi:first-child{grid-column:span 2}
+    .kpi .value,#kpisLoja .kpi .value{font-size:18px}
+    .kpi .sub{font-size:10px}
+    .grid-2{grid-template-columns:1fr;gap:12px}
+    .chart,.chart.sm,.chart.tall{height:220px}
+    .result-line-light{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+    .result-chip{width:100%;justify-content:center;text-align:center}
+    .store-filter-btn{flex:1 1 calc(50% - 8px)}
+    th,td{padding:10px 10px;font-size:12px}
+  }
+</style>
+<script id="dash-final-patch">
+(async function(){
+  const ALL_STORES_KEY = '__ALL__';
+  const FULL_CACHE_DB = 'jb_dash_full_cache_db';
+  const FULL_CACHE_STORE = 'dash';
+  const FULL_CACHE_KEY = 'full_rows_v4';
+  let currentStoreFilter = ALL_STORES_KEY;
+
+  function cleanDay(date){ return new Date(date.getFullYear(), date.getMonth(), date.getDate()); }
+  function todayKey(){ return ymd(cleanDay(new Date())); }
+  function sameMonth(a,b){ return !!a && !!b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth(); }
+  function monthLastDay(date){ return new Date(date.getFullYear(), date.getMonth()+1, 0); }
+  function clampPrevMonth(date){
+    const y = date.getFullYear();
+    const m = date.getMonth() - 1;
+    const last = new Date(y, m + 1, 0).getDate();
+    return new Date(y, m, Math.min(date.getDate(), last));
+  }
+  function rangeDays(range){
+    if(!range?.from || !range?.to) return 0;
+    return Math.round((cleanDay(range.to) - cleanDay(range.from)) / 86400000) + 1;
+  }
+  function isWholeMonthRange(range){
+    if(!range?.from || !range?.to) return false;
+    const from = cleanDay(range.from);
+    const to = cleanDay(range.to);
+    const last = monthLastDay(to);
+    return from.getDate() === 1 && to.getDate() === last.getDate() && from.getMonth() === to.getMonth() && from.getFullYear() === to.getFullYear();
+  }
+  function bucketInfo(date, range){
+    if(isWholeMonthRange(range) || rangeDays(range) > 35){
+      const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+      const label = date.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}).replace('.', '').replace(/^./, m => m.toUpperCase());
+      return {key, label};
+    }
+    return {key: ymd(date), label: shortDate(date)};
+  }
+  function formatMaybeMoney(value, kind){
+    if(kind === 'money') return fmtMoney.format(value || 0);
+    if(kind === 'int') return fmtInt.format(Math.round(value || 0));
+    return fmtMoney.format(value || 0);
+  }
+  function compareText(current, previous, kind){
+    if(!previous) return 'Anterior sem base';
+    const delta = ((current / previous) - 1) * 100;
+    if(!isFinite(delta)) return `Anterior ${formatMaybeMoney(previous, kind)}`;
+    const prefix = delta >= 0 ? '▲' : '▼';
+    const cls = Math.abs(delta) < 0.05 ? 'flat' : (delta >= 0 ? 'up' : 'down');
+    const badge = `<span class="badge ${cls}">${Math.abs(delta) < 0.05 ? 'estável' : `${prefix} ${fmtPct(Math.abs(delta))}`}</span>`;
+    return `Anterior ${formatMaybeMoney(previous, kind)} ${badge}`;
+  }
+  function previousLabel(range){
+    const prev = previousComparableRange(range);
+    return prev.from && prev.to ? `${brDate(prev.from)} até ${brDate(prev.to)}` : 'Sem comparação';
+  }
+  function allDateRows(range = selectedRange()){
+    return rowsBase.filter(r => {
+      if(r.cancelado) return false;
+      if(range.from && r.data < range.from) return false;
+      if(range.to && r.data > range.to) return false;
+      return true;
+    });
+  }
+  function scopedRows(range = selectedRange()){
+    return allDateRows(range).filter(r => currentStoreFilter === ALL_STORES_KEY || r.loja === currentStoreFilter);
+  }
+  function byStoreMap(rows){
+    return new Map(summarize(rows).stores.map(item => [item.loja, item]));
+  }
+  function openCacheDb(){
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(FULL_CACHE_DB, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if(!db.objectStoreNames.contains(FULL_CACHE_STORE)) db.createObjectStore(FULL_CACHE_STORE, {keyPath:'id'});
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function readDailyFullCache(){
+    try{
+      const db = await openCacheDb();
+      return await new Promise(resolve => {
+        const tx = db.transaction(FULL_CACHE_STORE, 'readonly');
+        const req = tx.objectStore(FULL_CACHE_STORE).get(FULL_CACHE_KEY);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    }catch(e){
+      return null;
+    }
+  }
+  async function writeDailyFullCache(rows){
+    try{
+      const db = await openCacheDb();
+      const payload = { id: FULL_CACHE_KEY, day: todayKey(), saved_at: new Date().toISOString(), rows: rows.map(rowToCacheShape) };
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(FULL_CACHE_STORE, 'readwrite');
+        tx.objectStore(FULL_CACHE_STORE).put(payload);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }catch(e){}
+  }
+  async function loadFullBaseFromDailyCache(){
+    if(window.__jbFullRowsMemory?.day === todayKey() && Array.isArray(window.__jbFullRowsMemory.rows) && window.__jbFullRowsMemory.rows.length){
+      rowsBase = window.__jbFullRowsMemory.rows.map(rowFromCacheShape).filter(Boolean);
+      fullBaseLoaded = true;
+      threeMonthBaseLoaded = true;
+      return rowsBase;
+    }
+    const cached = await readDailyFullCache();
+    if(cached?.day === todayKey() && Array.isArray(cached.rows) && cached.rows.length){
+      rowsBase = cached.rows.map(rowFromCacheShape).filter(Boolean);
+      window.__jbFullRowsMemory = {day: cached.day, rows: cached.rows};
+      fullBaseLoaded = true;
+      threeMonthBaseLoaded = true;
+      return rowsBase;
+    }
+    await ensureReportsMetaLoaded();
+    rowsBase = await buildRowsFromReports(reportsMetaCache, 6);
+    fullBaseLoaded = true;
+    threeMonthBaseLoaded = true;
+    const compactRows = rowsBase.map(rowToCacheShape);
+    window.__jbFullRowsMemory = {day: todayKey(), rows: compactRows};
+    await writeDailyFullCache(rowsBase);
+    return rowsBase;
+  }
+
+  previousComparableRange = function(range){
+    if(!range?.from || !range?.to) return {from:null, to:null};
+    const from = cleanDay(range.from);
+    const to = cleanDay(range.to);
+    const prevFrom = clampPrevMonth(from);
+    const prevTo = clampPrevMonth(to);
+    prevFrom.setHours(0,0,0,0);
+    prevTo.setHours(23,59,59,999);
+    return {from: prevFrom, to: prevTo};
+  };
+
+  filteredRows = function(range = selectedRange()){
+    return scopedRows(range);
+  };
+
+  function ensureStoreTopShell(){
+    let shell = document.getElementById('storeTopShell');
+    if(!shell){
+      shell = document.createElement('div');
+      shell.id = 'storeTopShell';
+      shell.className = 'store-top-shell';
+      const anchor = document.getElementById('resultLineLightPatch') || document.querySelector('.toolbar');
+      anchor.insertAdjacentElement('afterend', shell);
+    }
+    const pills = document.getElementById('storePills');
+    const cards = document.getElementById('kpisLoja');
+    if(pills) shell.appendChild(pills);
+    if(cards) shell.appendChild(cards);
+  }
+
+  function renderStoreFilters(){
+    const el = document.getElementById('storePills');
+    if(!el) return;
+    el.className = 'store-filter-row';
+    const items = [{key: ALL_STORES_KEY, label: 'Todas', color: '#33507c'}].concat(STORE_ORDER.map(store => ({key: store, label: store, color: colorOf(store)})));
+    el.innerHTML = items.map(item => {
+      const active = currentStoreFilter === item.key;
+      const style = active
+        ? `background:${item.color};border-color:${item.color};color:#fff;`
+        : `background:#fff;border-color:${item.color};color:${item.color};`;
+      return `<button type="button" class="store-filter-btn ${active ? 'active' : ''}" data-store-final="${item.key}" style="${style}">${item.label}</button>`;
+    }).join('');
+  }
+
+  function ensureResultLine(){
+    if(document.getElementById('resultLineLightPatch')) return document.getElementById('resultLineLightPatch');
+    const toolbar = document.querySelector('.toolbar');
+    const box = document.createElement('div');
+    box.id = 'resultLineLightPatch';
+    box.className = 'result-line-light';
+    toolbar.insertAdjacentElement('afterend', box);
+    return box;
+  }
+
+  function renderResultLine(range, curr, prev){
+    const box = ensureResultLine();
+    const loja = currentStoreFilter === ALL_STORES_KEY ? 'Todas as lojas' : currentStoreFilter;
+    box.innerHTML = [
+      `<span class="result-chip">Período <strong>${periodLabel(range)}</strong></span>`,
+      `<span class="result-chip">Comparação <strong>${previousLabel(range)}</strong></span>`,
+      `<span class="result-chip">Loja <strong>${loja}</strong></span>`,
+      `<span class="result-chip">Pedidos <strong>${fmtInt.format(curr.pedidos)}</strong></span>`,
+      `<span class="result-chip">Faturamento <strong>${fmtMoney.format(curr.faturamento)}</strong></span>`,
+      `<span class="result-chip">Anterior <strong>${fmtMoney.format(prev.faturamento || 0)}</strong></span>`
+    ].join('');
+  }
+
+  function setSummaryTableHeader(){
+    const head = document.querySelector('#sec-geral thead tr');
+    if(!head) return;
+    head.innerHTML = '<th>Loja</th><th>Pedidos</th><th>Faturamento</th><th>Ticket Médio</th><th>Descontos</th><th>Entrega</th><th>Comparação</th>';
+  }
+
+  renderGeral = function(){
+    const range = selectedRange();
+    const currRows = scopedRows(range);
+    const prevRows = scopedRows(previousComparableRange(range));
+    const curr = summarize(currRows);
+    const prev = summarize(prevRows);
+    renderResultLine(range, curr, prev);
+
+    document.getElementById('kpisGeral').innerHTML = `
+      <div class="kpi green"><div class="label">Faturamento Total</div><div class="value">${fmtMoney.format(curr.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${compareText(curr.faturamento, prev.faturamento, 'money')}</span></div></div>
+      <div class="kpi blue"><div class="label">Total de Pedidos</div><div class="value">${fmtInt.format(curr.pedidos)}</div><div class="sub"><span>Pedidos válidos</span><span>${compareText(curr.pedidos, prev.pedidos, 'int')}</span></div></div>
+      <div class="kpi yellow"><div class="label">Ticket Médio</div><div class="value">${fmtMoney.format(curr.ticket)}</div><div class="sub"><span>Média por pedido</span><span>${compareText(curr.ticket, prev.ticket, 'money')}</span></div></div>
+      <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(curr.desconto)}</div><div class="sub"><span>${curr.faturamento ? fmtPct(curr.desconto / curr.faturamento * 100) : '0,0%'}</span><span>${compareText(curr.desconto, prev.desconto, 'money')}</span></div></div>
+      <div class="kpi purple"><div class="label">Taxa de Entrega</div><div class="value">${fmtMoney.format(curr.entrega)}</div><div class="sub"><span>Receita de entrega</span><span>${compareText(curr.entrega, prev.entrega, 'money')}</span></div></div>`;
+
+    const stores = summarize(currRows).stores.filter(item => currentStoreFilter === ALL_STORES_KEY ? (item.pedidos > 0 || item.faturamento > 0 || item.desconto > 0 || item.entrega > 0) : item.loja === currentStoreFilter);
+    draw('chartFatLoja','bar',{
+      labels: stores.map(s => s.loja),
+      datasets:[{label:'Faturamento',data: stores.map(s => s.faturamento),backgroundColor: stores.map(s => colorOf(s.loja) + 'cc'),borderColor: stores.map(s => colorOf(s.loja)),borderWidth:1.5,borderRadius:8}]
+    },{plugins:{legend:{display:false}}});
+    draw('chartPedLoja','bar',{
+      labels: stores.map(s => s.loja),
+      datasets:[{label:'Pedidos',data: stores.map(s => s.pedidos),backgroundColor: stores.map(s => colorOf(s.loja) + 'a8'),borderColor: stores.map(s => colorOf(s.loja)),borderWidth:1.5,borderRadius:8}]
+    },{plugins:{legend:{display:false}}});
+    draw('chartDescLoja','bar',{
+      labels: stores.map(s => s.loja),
+      datasets:[{label:'Descontos',data: stores.map(s => s.desconto),backgroundColor: stores.map(s => colorOf(s.loja) + 'aa'),borderColor: stores.map(s => colorOf(s.loja)),borderWidth:1.5,borderRadius:8}]
+    },{plugins:{legend:{display:false}}});
+    draw('chartEntregaLoja','bar',{
+      labels: stores.map(s => s.loja),
+      datasets:[{label:'Entrega',data: stores.map(s => s.entrega),backgroundColor: stores.map(s => colorOf(s.loja) + '99'),borderColor: stores.map(s => colorOf(s.loja)),borderWidth:1.5,borderRadius:8}]
+    },{plugins:{legend:{display:false}}});
+
+    setSummaryTableHeader();
+    const prevMap = byStoreMap(prevRows);
+    document.getElementById('tbodyResumo').innerHTML = stores.map(store => {
+      const prevStore = prevMap.get(store.loja) || {faturamento:0,pedidos:0,desconto:0,entrega:0};
+      return `<tr>
+        <td><span class="store-name-strong">${store.loja}</span></td>
+        <td>${fmtInt.format(store.pedidos)}</td>
+        <td><span class="money-green">${fmtMoney.format(store.faturamento)}</span></td>
+        <td>${fmtMoney.format(store.pedidos ? store.faturamento / store.pedidos : 0)}</td>
+        <td><span class="money-red">${fmtMoney.format(store.desconto)}</span></td>
+        <td><span class="money-blue">${fmtMoney.format(store.entrega)}</span></td>
+        <td>${compareText(store.faturamento, prevStore.faturamento, 'money')}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="7" class="empty">Sem dados no período selecionado.</td></tr>';
+  };
+
+  renderStoreSection = function(){
+    ensureStoreTopShell();
+    renderStoreFilters();
+    const range = selectedRange();
+    const visibleStores = currentStoreFilter === ALL_STORES_KEY ? STORE_ORDER : [currentStoreFilter];
+    const currAllMap = byStoreMap(allDateRows(range));
+    const prevAllMap = byStoreMap(allDateRows(previousComparableRange(range)));
+
+    document.getElementById('kpisLoja').innerHTML = visibleStores.map(store => {
+      const curr = currAllMap.get(store) || {loja:store,pedidos:0,faturamento:0,desconto:0,entrega:0};
+      const prev = prevAllMap.get(store) || {loja:store,pedidos:0,faturamento:0,desconto:0,entrega:0};
+      const ticket = curr.pedidos ? curr.faturamento / curr.pedidos : 0;
+      return `<div class="kpi blue"><div class="label">${store}</div><div class="value" style="color:${colorOf(store)}">${fmtMoney.format(curr.faturamento)}</div><div class="sub"><span>${fmtInt.format(curr.pedidos)} pedidos · Ticket ${fmtMoney.format(ticket)}</span><span>${compareText(curr.faturamento, prev.faturamento, 'money')}</span></div></div>`;
+    }).join('');
+
+    const rows = allDateRows(range).filter(r => visibleStores.includes(r.loja));
+    const grouped = new Map();
+    rows.forEach(r => {
+      const info = bucketInfo(r.data, range);
+      const key = `${info.key}||${r.loja}`;
+      if(!grouped.has(key)) grouped.set(key, {label: info.label, loja: r.loja, pedidos:0, faturamento:0, desconto:0, entrega:0});
+      const item = grouped.get(key);
+      item.pedidos += 1;
+      item.faturamento += r.total;
+      item.desconto += r.desconto;
+      item.entrega += r.entrega;
+    });
+    const list = [...grouped.values()].sort((a,b) => `${a.label}||${a.loja}`.localeCompare(`${b.label}||${b.loja}`));
+    const labels = [...new Set(list.map(item => item.label))];
+    const datasetsFat = visibleStores.map(store => ({
+      label: store,
+      data: labels.map(label => (list.find(item => item.label === label && item.loja === store) || {}).faturamento || 0),
+      borderColor: colorOf(store),
+      backgroundColor: colorOf(store) + '2b',
+      fill: visibleStores.length === 1,
+      tension:.28,
+      pointRadius:2,
+      borderWidth:2
+    }));
+    const datasetsPed = visibleStores.map(store => ({
+      label: `${store} · pedidos`,
+      data: labels.map(label => (list.find(item => item.label === label && item.loja === store) || {}).pedidos || 0),
+      borderColor: colorOf(store),
+      backgroundColor: colorOf(store) + '20',
+      fill:false,
+      tension:.28,
+      pointRadius:2,
+      borderWidth:2
+    }));
+    draw('chartLojaFat', visibleStores.length > 1 ? 'line' : 'bar', {labels, datasets: datasetsFat}, {plugins:{legend:{display:true}}});
+    draw('chartLojaPed', 'line', {labels, datasets: datasetsPed}, {plugins:{legend:{display:true}}});
+    document.getElementById('tbodyLojaDia').innerHTML = list.map(item => `<tr><td>${visibleStores.length > 1 ? `${item.label} — ${item.loja}` : item.label}</td><td>${fmtInt.format(item.pedidos)}</td><td>${fmtMoney.format(item.faturamento)}</td><td>${fmtMoney.format(item.pedidos ? item.faturamento / item.pedidos : 0)}</td><td>${fmtMoney.format(item.desconto)}</td><td>${fmtMoney.format(item.entrega)}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Sem dados para a seleção.</td></tr>';
+  };
+
+  renderDailySection = function(){};
+  renderProjection = function(){};
+  showTab = function(){
+    document.getElementById('sec-geral').classList.add('active');
+    document.getElementById('sec-geral').style.display = 'block';
+    document.getElementById('sec-lojas').classList.add('active');
+    document.getElementById('sec-lojas').style.display = 'block';
+    document.getElementById('sec-projecao').style.display = 'none';
+    document.getElementById('sec-diario').style.display = 'none';
+    refreshVisibleCharts();
+  };
+  refreshVisibleCharts = function(){
+    clearTimeout(chartRefreshTimer);
+    chartRefreshTimer = setTimeout(() => {
+      Object.values(charts).forEach(chart => {
+        try{ chart.resize(); chart.update('none'); }catch(e){}
+      });
+    }, 60);
+  };
+
+  function scrollTopCards(){
+    const target = document.querySelector('.hero') || document.body;
+    target.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  function clearPresetButtons(){
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+  }
+  function markPreset(name){
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.preset === name));
+    activePreset = name;
+  }
+  function setDateRange(from, to, presetName){
+    document.getElementById('dataInicio').value = ymd(from);
+    document.getElementById('dataFim').value = ymd(to);
+    if(presetName) markPreset(presetName); else clearPresetButtons();
+  }
+  function currentMonthRange(){
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return {from: new Date(today.getFullYear(), today.getMonth(), 1), to: today};
+  }
+  function projectionMonthRange(){
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return {from: new Date(today.getFullYear(), today.getMonth(), 1), to: yesterday};
+  }
+
+  async function renderAllFinal(shouldScroll){
+    const runId = ++renderRunId;
+    await loadFullBaseFromDailyCache();
+    if(runId !== renderRunId) return;
+    destroyCharts();
+    ensureStoreTopShell();
+    renderGeral();
+    renderStoreSection();
+    showTab();
+    refreshVisibleCharts();
+    if(shouldScroll) scrollTopCards();
+  }
+  renderAll = function(){ return renderAllFinal(false); };
+
+  document.getElementById('btnAplicar').addEventListener('click', async ev => {
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    clearPresetButtons();
+    activePreset = 'custom';
+    await renderAllFinal(true);
+  }, true);
+  document.getElementById('btnLimpar').addEventListener('click', async ev => {
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    const r = currentMonthRange();
+    setDateRange(r.from, r.to, 'mes_atual');
+    await renderAllFinal(true);
+  }, true);
+  document.getElementById('btnProjecao').addEventListener('click', async ev => {
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    const r = projectionMonthRange();
+    currentStoreFilter = ALL_STORES_KEY;
+    setDateRange(r.from, r.to, null);
+    await renderAllFinal(true);
+  }, true);
+  document.querySelectorAll('.preset-btn').forEach(btn => btn.addEventListener('click', async ev => {
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    const preset = btn.dataset.preset;
+    if(preset === 'mes_atual'){
+      const r = currentMonthRange();
+      setDateRange(r.from, r.to, 'mes_atual');
+    }else if(preset === 'mes_anterior'){
+      const now = new Date();
+      const from = new Date(now.getFullYear(), now.getMonth()-1, 1);
+      const to = new Date(now.getFullYear(), now.getMonth(), 0);
+      setDateRange(from, to, 'mes_anterior');
+    }else if(preset === 'ontem'){
+      const now = new Date();
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate()-1);
+      setDateRange(d, d, 'ontem');
+    }
+    await renderAllFinal(true);
+  }, true));
+  document.getElementById('dataInicio').addEventListener('change', () => {
+    clearPresetButtons();
+    activePreset = 'custom';
+    const from = parseDateFlex(document.getElementById('dataInicio').value);
+    const to = parseDateFlex(document.getElementById('dataFim').value);
+    if(from && (!to || !sameMonth(from, to))){
+      document.getElementById('dataFim').value = ymd(monthLastDay(from));
+    }
+  });
+  document.getElementById('dataFim').addEventListener('change', () => {
+    clearPresetButtons();
+    activePreset = 'custom';
+  });
+  document.addEventListener('click', async ev => {
+    const btn = ev.target.closest('[data-store-final]');
+    if(!btn) return;
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    currentStoreFilter = btn.dataset.storeFinal;
+    activeStore = currentStoreFilter === ALL_STORES_KEY ? STORE_ORDER[0] : currentStoreFilter;
+    await renderAllFinal(true);
+  }, true);
+
+  ensureStoreTopShell();
+  const start = currentMonthRange();
+  setDateRange(start.from, start.to, 'mes_atual');
+  await renderAllFinal(false);
 })();
 </script>
 
