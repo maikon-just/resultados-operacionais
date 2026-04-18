@@ -727,5 +727,299 @@ carregarBase(false).then(() => {
 });
 </script>
 
+
+<style id="dash1-compare-patch-style">
+  .field.store{display:none!important}
+  .store-button-panel{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .store-button-label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#475569;margin-right:2px}
+  .store-filter-btn{height:38px;padding:0 14px;border-radius:999px;border:1px solid #cfe0ff;background:#fff;color:#285ea8;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 10px rgba(102,126,234,.10)}
+  .store-filter-btn:hover{transform:translateY(-1px)}
+  .store-filter-btn.active{background:#285ea8;color:#fff;border-color:#285ea8}
+  .store-filter-btn.compare{background:#0f766e;color:#fff;border-color:#0f766e}
+  .store-filter-hint{font-size:11px;font-weight:700;color:#64748b;margin-left:auto}
+  .result-line{display:flex!important;margin-top:10px;padding:12px 16px;flex-wrap:wrap;gap:10px;align-items:center}
+  .compare-panel{margin-bottom:18px}
+</style>
+<script id="dash1-compare-patch">
+(function(){
+  const STORE_ORDER_PATCH = ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi'];
+  let selectedStoresPatch = [];
+
+  function fmtMonthYear(date){
+    return date.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^./,m=>m.toUpperCase());
+  }
+  function cleanDay(date){ return new Date(date.getFullYear(), date.getMonth(), date.getDate()); }
+  function daysBetween(a,b){
+    if(!a || !b) return 0;
+    const ms = cleanDay(b) - cleanDay(a);
+    return Math.round(ms / 86400000) + 1;
+  }
+  function getActiveRangePatch(){
+    return rangeFromPreset(document.getElementById('presetPeriodo').value);
+  }
+  function isWholeMonthRangePatch(range){
+    if(!range?.from || !range?.to) return false;
+    const from = cleanDay(range.from);
+    const to = cleanDay(range.to);
+    const last = new Date(to.getFullYear(), to.getMonth()+1, 0);
+    return from.getDate() === 1 && to.getDate() === last.getDate();
+  }
+  function periodModePatch(range){
+    const totalDays = daysBetween(range?.from, range?.to);
+    if(totalDays > 1 && totalDays <= 8) return 'day';
+    if(isWholeMonthRangePatch(range)) return 'month';
+    return 'day';
+  }
+  function periodInfoPatch(date, range){
+    const mode = periodModePatch(range);
+    if(mode === 'month'){
+      const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+      return {key, label: fmtMonthYear(date)};
+    }
+    const key = ymd(date);
+    return {key, label: date.toLocaleDateString('pt-BR')};
+  }
+  function ensureStoreButtonsPatch(){
+    const filters = document.querySelector('.filters');
+    if(!filters || document.getElementById('storeButtonPanelPatch')) return;
+    const box = document.createElement('div');
+    box.className = 'store-button-panel';
+    box.id = 'storeButtonPanelPatch';
+    box.innerHTML = `<span class="store-button-label">Lojas</span>` +
+      STORE_ORDER_PATCH.map(store => `<button type="button" class="store-filter-btn" data-store="${store}">${store}</button>`).join('') +
+      `<span class="store-filter-hint">Ctrl/Cmd + clique compara 2 lojas</span>`;
+    filters.appendChild(box);
+    box.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('.store-filter-btn');
+      if(!btn) return;
+      const store = btn.dataset.store;
+      const multi = ev.ctrlKey || ev.metaKey;
+      if(multi){
+        if(selectedStoresPatch.includes(store)) selectedStoresPatch = selectedStoresPatch.filter(s => s !== store);
+        else selectedStoresPatch = [...selectedStoresPatch.slice(-1), store];
+      }else{
+        selectedStoresPatch = selectedStoresPatch.length === 1 && selectedStoresPatch[0] === store ? [] : [store];
+      }
+      syncStoreButtonsPatch();
+      aplicarFiltros();
+    });
+    syncStoreButtonsPatch();
+  }
+  function syncStoreButtonsPatch(){
+    document.querySelectorAll('#storeButtonPanelPatch .store-filter-btn').forEach(btn => {
+      const active = selectedStoresPatch.includes(btn.dataset.store);
+      btn.classList.toggle('active', active);
+      btn.classList.toggle('compare', active && selectedStoresPatch.length > 1);
+    });
+    const select = document.getElementById('fLoja');
+    if(select) select.value = selectedStoresPatch.length === 1 ? selectedStoresPatch[0] : 'todos';
+  }
+  function ensureComparePanelPatch(){
+    const detail = document.getElementById('detailWrap');
+    if(!detail || document.getElementById('comparePanelPatch')) return;
+    const panel = document.createElement('div');
+    panel.className = 'panel card compare-panel';
+    panel.id = 'comparePanelPatch';
+    panel.innerHTML = '<h3>Comparação temporal em velas</h3><div class="chart"><canvas id="chartComparativoVela"></canvas></div><div class="foot" id="comparePanelFoot"></div>';
+    const ref = detail.querySelector('.summary-section')?.nextElementSibling || detail.firstElementChild;
+    detail.insertBefore(panel, ref);
+  }
+  function getFilteredRowsPatched(){
+    const preset = document.getElementById('presetPeriodo').value;
+    const {from,to} = rangeFromPreset(preset);
+    const fCanal = document.getElementById('fCanal').value;
+    const fTurno = document.getElementById('fTurno').value;
+    const fStatus = document.getElementById('fStatusLinha').value;
+    const fLoja = document.getElementById('fLoja').value;
+    return rowsBase.filter(r => {
+      if(from && r.data < from) return false;
+      if(to && r.data > to) return false;
+      if(selectedStoresPatch.length && !selectedStoresPatch.includes(r.loja)) return false;
+      if(!selectedStoresPatch.length && fLoja !== 'todos' && r.loja !== fLoja) return false;
+      if(fCanal !== 'todos' && r.canal !== fCanal) return false;
+      if(fTurno !== 'todos' && r.turno !== fTurno) return false;
+      if(fStatus === 'ativos' && r.cancelado) return false;
+      if(fStatus === 'cancelados' && !r.cancelado) return false;
+      return true;
+    });
+  }
+  function renderResultLinePatched(rows, range){
+    const box = document.getElementById('resultLine');
+    if(!box) return;
+    const validos = rows.filter(r => !r.cancelado);
+    const cancelados = rows.filter(r => r.cancelado);
+    const receita = validos.reduce((s,r)=>s+r.total,0);
+    const lojas = new Set(rows.map(r => r.loja).filter(Boolean)).size;
+    const empresas = new Set(rows.map(r => r.empresa).filter(Boolean)).size;
+    const canais = new Set(rows.map(r => r.canal).filter(Boolean)).size;
+    const modo = periodModePatch(range) === 'month' ? 'Mensal' : 'Diário';
+    const lojasTxt = selectedStoresPatch.length ? selectedStoresPatch.join(' × ') : 'Todas';
+    box.innerHTML = [
+      `<span class="result-chip accent"><strong>Total das empresas</strong></span>`,
+      `<span class="result-chip">Período <strong>${sanitizeHtml(rangeLabel(range.from, range.to))}</strong></span>`,
+      `<span class="result-chip">Modo <strong>${modo}</strong></span>`,
+      `<span class="result-chip">Lojas selecionadas <strong>${sanitizeHtml(lojasTxt)}</strong></span>`,
+      `<span class="result-chip">Receita <strong>${fmtMoney.format(receita)}</strong></span>`,
+      `<span class="result-chip">Pedidos válidos <strong>${fmtInt.format(validos.length)}</strong></span>`,
+      `<span class="result-chip">Cancelados <strong>${fmtInt.format(cancelados.length)}</strong></span>`,
+      `<span class="result-chip">Lojas <strong>${fmtInt.format(lojas)}</strong></span>`,
+      `<span class="result-chip">Empresas <strong>${fmtInt.format(empresas)}</strong></span>`,
+      `<span class="result-chip">Canais <strong>${fmtInt.format(canais)}</strong></span>`
+    ].join('');
+  }
+  function aggregateRowsForTablePatch(rows, range){
+    const mode = periodModePatch(range);
+    const useStoreBreak = selectedStoresPatch.length > 1;
+    const map = new Map();
+    rows.forEach(r => {
+      const info = periodInfoPatch(r.data, range);
+      const key = `${info.key}||${useStoreBreak ? r.loja : 'all'}`;
+      if(!map.has(key)) map.set(key, {label: useStoreBreak ? `${info.label} — ${r.loja}` : info.label, sortKey: `${info.key}||${r.loja}`, pedidos:0, itens:0, entrega:0, descontos:0, receita:0, validos:0});
+      const o = map.get(key);
+      o.pedidos++;
+      if(r.cancelado) return;
+      o.validos++;
+      o.receita += r.total;
+      o.itens += r.itens;
+      o.descontos += r.desconto;
+      o.entrega += r.entrega;
+    });
+    return [...map.values()].sort((a,b) => a.sortKey.localeCompare(b.sortKey));
+  }
+  function renderTablePatched(rows){
+    const body = document.getElementById('tableBody');
+    if(!body) return;
+    const range = getActiveRangePatch();
+    const mode = periodModePatch(range);
+    const list = mode === 'month' || selectedStoresPatch.length > 1 ? aggregateRowsForTablePatch(rows, range) : (() => {
+      const agg = new Map();
+      rows.forEach(r => {
+        const key = `${r.loja}`;
+        if(!agg.has(key)) agg.set(key,{label:r.loja,sortKey:r.loja,pedidos:0,receita:0,itens:0,descontos:0,entrega:0,validos:0});
+        const o = agg.get(key);
+        o.pedidos++;
+        if(r.cancelado) return;
+        o.validos++;
+        o.receita += r.total;
+        o.itens += r.itens;
+        o.descontos += r.desconto;
+        o.entrega += r.entrega;
+      });
+      return [...agg.values()].sort((a,b)=>b.receita-a.receita);
+    })();
+    const totalReceita = list.reduce((s,r)=>s+r.receita,0);
+    body.innerHTML = list.length ? list.map((r,idx) => `<tr>
+      <td><span class="rank-badge">${idx+1}º</span></td>
+      <td class="cell-loja">${sanitizeHtml(r.label)}</td>
+      <td>${fmtInt.format(r.pedidos)}</td>
+      <td class="money-itens">${fmtMoney.format(r.itens)}</td>
+      <td class="money-entrega">${fmtMoney.format(r.entrega)}</td>
+      <td class="money-desconto">${fmtMoney.format(r.descontos)}</td>
+      <td class="money-total">${fmtMoney.format(r.receita)}</td>
+      <td>${fmtMoney.format(r.validos ? r.receita/r.validos : 0)}</td>
+      <td class="pct-share">${totalReceita ? ((r.receita/totalReceita)*100).toFixed(1).replace('.', ',') : '0,0'}%</td>
+    </tr>`).join('') : '<tr><td colspan="9" class="empty">Nenhum dado encontrado para os filtros selecionados.</td></tr>';
+  }
+  function buildCandleSeriesPatch(rows, range){
+    const validos = rows.filter(r => !r.cancelado);
+    const stores = selectedStoresPatch.length ? selectedStoresPatch : [...new Set(validos.map(r => r.loja))].slice(0,2);
+    const mode = periodModePatch(range);
+    const bucketMap = new Map();
+    validos.forEach(r => {
+      if(stores.length && !stores.includes(r.loja) && selectedStoresPatch.length) return;
+      const info = periodInfoPatch(r.data, range);
+      const key = `${info.key}||${r.loja}`;
+      if(!bucketMap.has(key)) bucketMap.set(key,{period:info.key,label:info.label,store:r.loja,pedidos:0,faturamento:0});
+      const o = bucketMap.get(key);
+      o.pedidos += 1;
+      o.faturamento += r.total;
+    });
+    const items = [...bucketMap.values()].sort((a,b)=>`${a.period}||${a.store}`.localeCompare(`${b.period}||${b.store}`));
+    const fatMax = Math.max(1, ...items.map(i => i.faturamento));
+    const pedMax = Math.max(1, ...items.map(i => i.pedidos));
+    const prevFat = new Map();
+    return items.map(item => {
+      const prev = prevFat.get(item.store) || item.faturamento;
+      prevFat.set(item.store, item.faturamento);
+      const a = item.pedidos / pedMax * 100;
+      const b = item.faturamento / fatMax * 100;
+      return {
+        label: stores.length > 1 ? `${item.label} · ${item.store}` : item.label,
+        range: [Math.min(a,b), Math.max(a,b)],
+        color: item.faturamento >= prev ? 'rgba(16,185,129,.65)' : 'rgba(239,68,68,.65)',
+        border: item.faturamento >= prev ? '#10b981' : '#ef4444',
+        pedidos: item.pedidos,
+        faturamento: item.faturamento,
+        mode
+      };
+    });
+  }
+  function renderCompareChartPatch(rows, range){
+    ensureComparePanelPatch();
+    const foot = document.getElementById('comparePanelFoot');
+    const series = buildCandleSeriesPatch(rows, range);
+    if(!series.length){
+      if(charts['chartComparativoVela']){ try{ charts['chartComparativoVela'].destroy(); }catch(e){} delete charts['chartComparativoVela']; }
+      if(foot) foot.textContent = 'Sem base para comparação temporal.';
+      return;
+    }
+    draw('chartComparativoVela','bar',{
+      labels: series.map(s => s.label),
+      datasets:[{
+        label:'Vela comparativa',
+        data: series.map(s => s.range),
+        backgroundColor: series.map(s => s.color),
+        borderColor: series.map(s => s.border),
+        borderWidth:2,
+        borderRadius:4,
+        borderSkipped:false,
+        barPercentage:.7,
+        categoryPercentage:.84
+      }]
+    },{
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          label:(ctx)=>{
+            const s = series[ctx.dataIndex];
+            return [`Pedidos: ${fmtInt.format(s.pedidos)}`, `Faturamento: ${fmtMoney.format(s.faturamento)}`];
+          }
+        }}
+      },
+      scales:{
+        x:{ticks:{color:'#475569',maxRotation:35,minRotation:0},grid:{display:false}},
+        y:{ticks:{color:'#475569',callback:v=>`${v}%`},grid:{color:'rgba(148,163,184,.18)'},title:{display:true,text:'Índice comparativo pedidos × faturamento',color:'#475569'}}
+      }
+    });
+    if(foot){
+      foot.textContent = series[0].mode === 'month'
+        ? 'Período fechado em meses: cada vela mostra pedidos e faturamento por mês.'
+        : 'Recorte curto/semanal: cada vela mostra pedidos e faturamento por dia.';
+    }
+  }
+  const originalRenderDetails = renderDetails;
+  renderDetails = function(rows, range){
+    originalRenderDetails(rows, range);
+    renderCompareChartPatch(rows, range);
+  };
+  getFilteredRows = getFilteredRowsPatched;
+  renderResultLine = renderResultLinePatched;
+  renderTable = renderTablePatched;
+  const originalShouldShowCompanyCards = shouldShowCompanyCards;
+  shouldShowCompanyCards = function(){
+    if(selectedStoresPatch.length) return false;
+    return originalShouldShowCompanyCards();
+  };
+  const originalCarregarBase = carregarBase;
+  carregarBase = async function(forceAll=false){
+    await originalCarregarBase(forceAll);
+    ensureStoreButtonsPatch();
+    syncStoreButtonsPatch();
+  };
+  ensureStoreButtonsPatch();
+  ensureComparePanelPatch();
+})();
+</script>
+
 </body>
 </html>
