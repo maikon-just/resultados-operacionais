@@ -278,8 +278,12 @@ let activePreset = 'mes_atual';
 let reportsMetaCache = [];
 let fullBaseLoaded = false;
 let fullBasePromise = null;
+let threeMonthBaseLoaded = false;
+let threeMonthBasePromise = null;
 let fastBaseStart = null;
+let currentMonthStart = null;
 let renderRunId = 0;
+let chartRefreshTimer = null;
 
 function colorOf(store){ return STORE_COLORS[store] || '#64748b'; }
 function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -397,12 +401,27 @@ async function buildRowsFromReports(reports){
   }
   return [...dedupe.values()].sort((a,b)=>a.data-b.data);
 }
+async function ensureThreeMonthBaseLoaded(wait=true){
+  if(threeMonthBaseLoaded) return;
+  if(!threeMonthBasePromise){
+    threeMonthBasePromise = (async () => {
+      const recentReports = reportsMetaCache.filter(rep => {
+        const ref = getReportRefDate(rep);
+        return !ref || ref >= fastBaseStart;
+      });
+      rowsBase = await buildRowsFromReports(recentReports);
+      threeMonthBaseLoaded = true;
+    })();
+  }
+  if(wait) await threeMonthBasePromise;
+}
 async function ensureFullBaseLoaded(wait=true){
   if(fullBaseLoaded) return;
   if(!fullBasePromise){
     fullBasePromise = (async () => {
       rowsBase = await buildRowsFromReports(reportsMetaCache);
       fullBaseLoaded = true;
+      threeMonthBaseLoaded = true;
     })();
   }
   if(wait) await fullBasePromise;
@@ -414,15 +433,26 @@ async function loadBase(){
     .filter(r => r.status !== 'deletado' && r.tipo === 'financeiro')
     .sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
   const today = new Date();
-  fastBaseStart = new Date(today.getFullYear(), today.getMonth()-1, 1);
+  currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  fastBaseStart = new Date(today.getFullYear(), today.getMonth()-2, 1);
   const initialReports = reportsMetaCache.filter(rep => {
     const ref = getReportRefDate(rep);
-    return !ref || ref >= fastBaseStart;
+    return !ref || ref >= currentMonthStart;
   });
   rowsBase = await buildRowsFromReports(initialReports);
   applyPreset('mes_atual');
   await renderAll();
-  setTimeout(() => { ensureFullBaseLoaded(false).catch(err => console.error('Erro carregando base completa em segundo plano', err)); }, 80);
+  setTimeout(() => {
+    ensureThreeMonthBaseLoaded(false)
+      .then(() => ensureFullBaseLoaded(false))
+      .catch(err => console.error('Erro carregando bases em segundo plano', err));
+  }, 80);
+}
+function rangeNeedsThreeMonthBase(range){
+  if(threeMonthBaseLoaded || !fastBaseStart || !currentMonthStart) return false;
+  if(!range?.from) return true;
+  const from = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate());
+  return from < currentMonthStart && from >= fastBaseStart;
 }
 function rangeNeedsFullBase(range){
   if(fullBaseLoaded || !fastBaseStart) return false;
@@ -701,9 +731,23 @@ function renderDailySection(){
     datasets:[{label:'Pedidos',data:byDay.map(d=>d.pedidos),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.12)',fill:true,tension:.28,pointRadius:2}]
   });
 }
+function refreshVisibleCharts(){
+  clearTimeout(chartRefreshTimer);
+  chartRefreshTimer = setTimeout(() => {
+    const section = document.getElementById(`sec-${activeTab}`);
+    if(!section) return;
+    section.querySelectorAll('canvas').forEach(cv => {
+      const chart = charts[cv.id];
+      if(!chart) return;
+      try{ chart.resize(); chart.update('none'); }catch(e){}
+    });
+  }, 90);
+}
 async function renderAll(){
   const runId = ++renderRunId;
   const range = selectedRange();
+  if(rangeNeedsThreeMonthBase(range)) await ensureThreeMonthBaseLoaded(true);
+  if(runId !== renderRunId) return;
   if(rangeNeedsFullBase(range)) await ensureFullBaseLoaded(true);
   if(runId !== renderRunId) return;
   destroyCharts();
@@ -712,11 +756,13 @@ async function renderAll(){
   renderStoreSection();
   renderDailySection();
   showTab(activeTab);
+  refreshVisibleCharts();
 }
 function showTab(name){
   activeTab = name;
   document.querySelectorAll('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === name));
   document.querySelectorAll('.section').forEach(sec => sec.classList.toggle('active', sec.id === `sec-${name}`));
+  refreshVisibleCharts();
 }
 
 document.querySelectorAll('.preset-btn').forEach(btn => btn.addEventListener('click', () => {
@@ -733,7 +779,8 @@ document.getElementById('btnLimpar').addEventListener('click', () => {
   renderAll();
 });
 document.getElementById('btnProjecao').addEventListener('click', () => showTab('projecao'));
-document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
+document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => { showTab(btn.dataset.tab); refreshVisibleCharts(); }));
+window.addEventListener('resize', refreshVisibleCharts);
 document.addEventListener('click', e => {
   const pill = e.target.closest('.store-pill');
   if(!pill) return;
@@ -748,9 +795,9 @@ loadBase().catch(err => {
 </script>
 
 <style id="dash2-compare-patch-style">
-  .global-store-panel{margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .global-store-panel{margin:0 0 0 auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end;max-width:760px}
   .global-store-panel .label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#4b5d79;margin-right:4px}
-  .global-store-btn{height:40px;padding:0 14px;border-radius:999px;border:2px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer}
+  .global-store-btn{height:40px;padding:0 14px;border-radius:999px;border:2px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
   .global-store-btn:hover{transform:translateY(-1px)}
   .global-store-btn.active{color:#fff}
   .global-store-btn.compare{box-shadow:0 8px 18px rgba(15,23,42,.12)}
@@ -758,7 +805,7 @@ loadBase().catch(err => {
   .result-line-light{margin:16px 0;padding:12px 16px;border-radius:18px;background:#fff;border:1px solid #dbe5f1;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
   .result-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#f8fbff;border:1px solid #dbe5f1;font-size:12px;font-weight:700;color:#334155}
   .result-chip strong{color:#1f2937}
-  @media(max-width:760px){.global-store-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch}.global-store-panel .label{grid-column:1 / -1;margin-right:0}.global-store-btn{height:auto;min-height:44px;padding:10px 6px;border-radius:14px;line-height:1.2;text-align:center}.result-line-light{padding:14px 16px}.result-chip{width:100%;justify-content:space-between;border-radius:14px;padding:10px 12px}}
+  @media(max-width:760px){.tabs{overflow:visible;flex-wrap:wrap;padding-bottom:0}.tab{flex:1 1 calc(50% - 8px);text-align:center}.global-store-panel{margin:10px 0 0;width:100%;max-width:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch;justify-content:stretch}.global-store-panel .label{grid-column:1 / -1;margin-right:0}.global-store-btn{height:auto;min-height:44px;padding:10px 6px;border-radius:14px;line-height:1.2;text-align:center;white-space:normal}.result-line-light{padding:14px 16px}.result-chip{width:100%;justify-content:space-between;border-radius:14px;padding:10px 12px}}
 </style>
 <script id="dash2-compare-patch">
 (function(){
@@ -793,7 +840,7 @@ loadBase().catch(err => {
     panel.style.gridColumn = '1 / -1';
     panel.innerHTML = `<span class="label">Lojas</span>` +
       STORE_ORDER.map(store => `<button type="button" class="global-store-btn" data-store="${store}" style="border-color:${colorOf(store)};color:${colorOf(store)}">${store}</button>`).join('');
-    tabs.insertAdjacentElement('afterend', panel);
+    tabs.appendChild(panel);
     panel.addEventListener('click', (ev) => {
       const btn = ev.target.closest('.global-store-btn');
       if(!btn) return;
