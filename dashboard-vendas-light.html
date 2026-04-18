@@ -708,5 +708,282 @@ loadBase().catch(err => {
   document.getElementById('kpisGeral').innerHTML = '<div class="panel empty">Não foi possível carregar a base de uploads.</div>';
 });
 </script>
+
+<style id="dash2-compare-patch-style">
+  .global-store-panel{margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .global-store-panel .label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#4b5d79;margin-right:4px}
+  .global-store-btn{height:40px;padding:0 14px;border-radius:999px;border:2px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer}
+  .global-store-btn:hover{transform:translateY(-1px)}
+  .global-store-btn.active{color:#fff}
+  .global-store-btn.compare{box-shadow:0 8px 18px rgba(15,23,42,.12)}
+  .global-store-help{font-size:11px;font-weight:700;color:#64748b;margin-left:auto}
+  .result-line-light{margin:16px 0;padding:12px 16px;border-radius:18px;background:#fff;border:1px solid #dbe5f1;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .result-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#f8fbff;border:1px solid #dbe5f1;font-size:12px;font-weight:700;color:#334155}
+  .result-chip strong{color:#1f2937}
+  .result-chip.accent{background:#eef2ff;border-color:#c7d2fe}
+</style>
+<script id="dash2-compare-patch">
+(function(){
+  let selectedStoresPatch = [];
+  function cleanDay(date){ return new Date(date.getFullYear(), date.getMonth(), date.getDate()); }
+  function daysBetween(a,b){ if(!a || !b) return 0; return Math.round((cleanDay(b)-cleanDay(a))/86400000)+1; }
+  function fmtMonthYear(date){ return date.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^./,m=>m.toUpperCase()); }
+  function isWholeMonthRangePatch(range){
+    if(!range?.from || !range?.to) return false;
+    const from = cleanDay(range.from), to = cleanDay(range.to), last = new Date(to.getFullYear(), to.getMonth()+1, 0);
+    return from.getDate() === 1 && to.getDate() === last.getDate();
+  }
+  function periodModePatch(range){
+    const totalDays = daysBetween(range?.from, range?.to);
+    if(totalDays > 1 && totalDays <= 8) return 'day';
+    if(isWholeMonthRangePatch(range)) return 'month';
+    return 'day';
+  }
+  function periodInfoPatch(date, range){
+    if(periodModePatch(range) === 'month'){
+      const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+      return {key, label: fmtMonthYear(date)};
+    }
+    return {key: ymd(date), label: brDate(date)};
+  }
+  function ensureGlobalStorePanel(){
+    const toolbar = document.querySelector('.toolbar');
+    if(!toolbar || document.getElementById('globalStorePanelPatch')) return;
+    const panel = document.createElement('div');
+    panel.className = 'global-store-panel';
+    panel.id = 'globalStorePanelPatch';
+    panel.style.gridColumn = '1 / -1';
+    panel.innerHTML = `<span class="label">Lojas</span>` +
+      STORE_ORDER.map(store => `<button type="button" class="global-store-btn" data-store="${store}" style="border-color:${colorOf(store)};color:${colorOf(store)}">${store}</button>`).join('') +
+      `<span class="global-store-help">Ctrl/Cmd + clique compara 2 lojas</span>`;
+    toolbar.appendChild(panel);
+    panel.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('.global-store-btn');
+      if(!btn) return;
+      const store = btn.dataset.store;
+      const multi = ev.ctrlKey || ev.metaKey;
+      if(multi){
+        if(selectedStoresPatch.includes(store)) selectedStoresPatch = selectedStoresPatch.filter(s => s !== store);
+        else selectedStoresPatch = [...selectedStoresPatch.slice(-1), store];
+      }else{
+        selectedStoresPatch = selectedStoresPatch.length === 1 && selectedStoresPatch[0] === store ? [] : [store];
+      }
+      activeStore = selectedStoresPatch[0] || activeStore || STORE_ORDER[0];
+      syncGlobalStoreButtons();
+      renderAll();
+    });
+  }
+  function syncGlobalStoreButtons(){
+    document.querySelectorAll('#globalStorePanelPatch .global-store-btn').forEach(btn => {
+      const active = selectedStoresPatch.includes(btn.dataset.store);
+      btn.classList.toggle('active', active);
+      btn.classList.toggle('compare', active && selectedStoresPatch.length > 1);
+      btn.style.background = active ? colorOf(btn.dataset.store) : '#fff';
+      btn.style.color = active ? '#fff' : colorOf(btn.dataset.store);
+    });
+  }
+  function ensureResultLinePatch(){
+    const wrap = document.querySelector('.wrap');
+    const toolbar = document.querySelector('.toolbar');
+    if(!wrap || !toolbar || document.getElementById('resultLineLightPatch')) return;
+    const box = document.createElement('div');
+    box.className = 'result-line-light';
+    box.id = 'resultLineLightPatch';
+    toolbar.insertAdjacentElement('afterend', box);
+  }
+  function renderResultLinePatch(){
+    ensureResultLinePatch();
+    const box = document.getElementById('resultLineLightPatch');
+    if(!box) return;
+    const range = selectedRange();
+    const rows = filteredRows(range);
+    const validos = rows.filter(r => !r.cancelado);
+    const receita = validos.reduce((s,r)=>s+r.total,0);
+    const cancelados = rows.filter(r => r.cancelado);
+    const lojas = new Set(rows.map(r => r.loja)).size;
+    const lojasTxt = selectedStoresPatch.length ? selectedStoresPatch.join(' × ') : 'Todas';
+    box.innerHTML = [
+      `<span class="result-chip accent"><strong>Total das empresas</strong></span>`,
+      `<span class="result-chip">Período <strong>${periodLabel(range)}</strong></span>`,
+      `<span class="result-chip">Modo <strong>${periodModePatch(range)==='month'?'Mensal':'Diário'}</strong></span>`,
+      `<span class="result-chip">Lojas selecionadas <strong>${lojasTxt}</strong></span>`,
+      `<span class="result-chip">Receita <strong>${fmtMoney.format(receita)}</strong></span>`,
+      `<span class="result-chip">Pedidos válidos <strong>${fmtInt.format(validos.length)}</strong></span>`,
+      `<span class="result-chip">Cancelados <strong>${fmtInt.format(cancelados.length)}</strong></span>`,
+      `<span class="result-chip">Lojas <strong>${fmtInt.format(lojas)}</strong></span>`
+    ].join('');
+  }
+  const originalFilteredRows = filteredRows;
+  filteredRows = function(range = selectedRange()){
+    return originalFilteredRows(range).filter(r => !selectedStoresPatch.length || selectedStoresPatch.includes(r.loja));
+  };
+  function ensureComparePanelPatch(){
+    const geral = document.getElementById('sec-geral');
+    if(!geral || document.getElementById('comparePanelLightPatch')) return;
+    const panel = document.createElement('div');
+    panel.className = 'panel card';
+    panel.id = 'comparePanelLightPatch';
+    panel.style.marginBottom = '18px';
+    panel.innerHTML = '<h3>Comparação temporal em velas</h3><div class="chart tall"><canvas id="chartCompareLight"></canvas></div><div class="footer-note" id="compareLightFoot"></div>';
+    geral.insertBefore(panel, geral.querySelector('.panel.card'));
+  }
+  function candleSeriesPatch(rows, range){
+    const stores = selectedStoresPatch.length ? selectedStoresPatch : (activeStore ? [activeStore] : [STORE_ORDER[0]]);
+    const valid = rows.filter(r => !r.cancelado).filter(r => stores.includes(r.loja));
+    const map = new Map();
+    valid.forEach(r => {
+      const info = periodInfoPatch(r.data, range);
+      const key = `${info.key}||${r.loja}`;
+      if(!map.has(key)) map.set(key,{period:info.key,label:info.label,store:r.loja,pedidos:0,faturamento:0});
+      const o = map.get(key);
+      o.pedidos += 1;
+      o.faturamento += r.total;
+    });
+    const list = [...map.values()].sort((a,b)=>`${a.period}||${a.store}`.localeCompare(`${b.period}||${b.store}`));
+    const fatMax = Math.max(1, ...list.map(i=>i.faturamento));
+    const pedMax = Math.max(1, ...list.map(i=>i.pedidos));
+    const prev = new Map();
+    return list.map(item => {
+      const prevFat = prev.get(item.store) || item.faturamento;
+      prev.set(item.store, item.faturamento);
+      const a = item.pedidos / pedMax * 100;
+      const b = item.faturamento / fatMax * 100;
+      return {
+        label: stores.length > 1 ? `${item.label} · ${item.store}` : item.label,
+        range:[Math.min(a,b), Math.max(a,b)],
+        color: item.faturamento >= prevFat ? 'rgba(16,185,129,.65)' : 'rgba(239,68,68,.65)',
+        border: item.faturamento >= prevFat ? '#10b981' : '#ef4444',
+        pedidos:item.pedidos,
+        faturamento:item.faturamento,
+        mode: periodModePatch(range)
+      };
+    });
+  }
+  function aggregateRowsForSummaryPatch(rows, range){
+    const useStoreBreak = selectedStoresPatch.length > 1;
+    const map = new Map();
+    rows.forEach(r => {
+      const info = periodInfoPatch(r.data, range);
+      const key = `${info.key}||${useStoreBreak ? r.loja : 'all'}`;
+      if(!map.has(key)) map.set(key,{label: useStoreBreak ? `${info.label} — ${r.loja}` : info.label, sortKey:`${info.key}||${r.loja}`, pedidos:0, itens:0, entrega:0, descontos:0, receita:0, validos:0});
+      const o = map.get(key);
+      o.pedidos += 1;
+      if(r.cancelado) return;
+      o.validos += 1;
+      o.itens += r.itens;
+      o.entrega += r.entrega;
+      o.descontos += r.desconto;
+      o.receita += r.total;
+    });
+    return [...map.values()].sort((a,b)=>a.sortKey.localeCompare(b.sortKey));
+  }
+  function ensureSummaryHeadersPatch(){
+    const headRow = document.querySelector('#sec-geral thead tr');
+    if(!headRow) return;
+    headRow.innerHTML = '<th>Ranking</th><th>Loja</th><th>Pedidos</th><th>Valor Itens</th><th>Taxa Entrega</th><th>Descontos</th><th>Faturamento Total</th><th>Ticket Médio</th><th>Participação</th>';
+  }
+  const originalRenderGeral = renderGeral;
+  renderGeral = function(){
+    originalRenderGeral();
+    ensureSummaryHeadersPatch();
+    renderResultLinePatch();
+    ensureComparePanelPatch();
+    const range = selectedRange();
+    const rows = filteredRows(range);
+    const mode = periodModePatch(range);
+    const useGrouped = mode === 'month' || selectedStoresPatch.length > 1;
+    const list = useGrouped ? aggregateRowsForSummaryPatch(rows, range) : (() => {
+      const curr = summarize(rows);
+      return curr.stores.filter(s => !selectedStoresPatch.length || selectedStoresPatch.includes(s.loja)).map(s => ({label:s.loja,pedidos:s.pedidos,itens:s.faturamento + s.desconto - s.entrega,entrega:s.entrega,descontos:s.desconto,receita:s.faturamento,validos:s.pedidos})).sort((a,b)=>b.receita-a.receita);
+    })();
+    const totalReceita = list.reduce((s,r)=>s+r.receita,0);
+    document.getElementById('tbodyResumo').innerHTML = list.map((r,idx)=>`<tr>
+      <td><span class="badge flat">${idx+1}º</span></td>
+      <td><b style="color:${colorOf((selectedStoresPatch.find(s=>r.label.includes(s))||activeStore||STORE_ORDER[0]))}">${r.label}</b></td>
+      <td>${fmtInt.format(r.pedidos)}</td>
+      <td>${fmtMoney.format(r.itens||0)}</td>
+      <td>${fmtMoney.format(r.entrega||0)}</td>
+      <td>${fmtMoney.format(r.descontos||0)}</td>
+      <td>${fmtMoney.format(r.receita||0)}</td>
+      <td>${fmtMoney.format(r.validos ? (r.receita||0)/r.validos : 0)}</td>
+      <td>${totalReceita ? (((r.receita||0)/totalReceita)*100).toFixed(1).replace('.', ',') : '0,0'}%</td>
+    </tr>`).join('') || '<tr><td colspan="9" class="empty">Sem dados no período.</td></tr>';
+    document.getElementById('footResumo').textContent = mode === 'month' ? `Período exibido: ${periodLabel(range)} · Linhas agrupadas por mês.` : `Período exibido: ${periodLabel(range)}.`;
+
+    const series = candleSeriesPatch(rows, range);
+    if(series.length){
+      draw('chartCompareLight','bar',{
+        labels: series.map(s=>s.label),
+        datasets:[{label:'Vela comparativa',data:series.map(s=>s.range),backgroundColor:series.map(s=>s.color),borderColor:series.map(s=>s.border),borderWidth:2,borderRadius:4,borderSkipped:false,barPercentage:.72,categoryPercentage:.86}]
+      },{plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>{const s=series[ctx.dataIndex]; return [`Pedidos: ${fmtInt.format(s.pedidos)}`, `Faturamento: ${fmtMoney.format(s.faturamento)}`];}}}},scales:{x:{ticks:{color:'#64748b',maxRotation:35,minRotation:0},grid:{display:false}},y:{ticks:{color:'#64748b',callback:v=>`${v}%`},grid:{color:'#edf2f8'},title:{display:true,text:'Índice comparativo pedidos × faturamento',color:'#64748b'}}}});
+      document.getElementById('compareLightFoot').textContent = series[0].mode === 'month' ? 'Período fechado em meses: cada vela mostra pedidos e faturamento por mês.' : 'Recorte curto/semanal: cada vela mostra pedidos e faturamento por dia.';
+    }
+  };
+  const originalBuildStorePills = buildStorePills;
+  buildStorePills = function(){
+    originalBuildStorePills();
+    document.querySelectorAll('#storePills .store-pill').forEach(btn => {
+      const active = selectedStoresPatch.includes(btn.dataset.store) || (!selectedStoresPatch.length && btn.dataset.store === activeStore);
+      btn.classList.toggle('active', active);
+      btn.style.background = active ? colorOf(btn.dataset.store) : '#fff';
+      btn.style.color = active ? '#fff' : colorOf(btn.dataset.store);
+      btn.style.borderColor = colorOf(btn.dataset.store);
+    });
+  };
+  const originalRenderStoreSection = renderStoreSection;
+  renderStoreSection = function(){
+    buildStorePills();
+    const range = selectedRange();
+    const stores = selectedStoresPatch.length ? selectedStoresPatch : [activeStore || STORE_ORDER[0]];
+    const rows = filteredRows(range).filter(r => stores.includes(r.loja));
+    const summaryByStore = new Map();
+    stores.forEach(s => summaryByStore.set(s, summarize(rows.filter(r => r.loja === s)).stores.find(v => v.loja === s) || {loja:s,pedidos:0,faturamento:0,desconto:0,entrega:0}));
+    document.getElementById('kpisLoja').innerHTML = stores.map(store => {
+      const s = summaryByStore.get(store);
+      return `<div class="kpi blue"><div class="label">Loja</div><div class="value" style="font-size:22px;color:${colorOf(store)}">${store}</div><div class="sub"><span>${fmtInt.format(s.pedidos)} pedidos</span><span>${fmtMoney.format(s.faturamento)}</span></div></div>`;
+    }).join('');
+    const grouped = new Map();
+    rows.forEach(r => {
+      const info = periodInfoPatch(r.data, range);
+      const key = `${info.key}||${r.loja}`;
+      if(!grouped.has(key)) grouped.set(key,{label:info.label,loja:r.loja,pedidos:0,faturamento:0,desconto:0,entrega:0,data:r.data});
+      const o = grouped.get(key);
+      o.pedidos += 1; o.faturamento += r.total; o.desconto += r.desconto; o.entrega += r.entrega;
+    });
+    const list = [...grouped.values()].sort((a,b)=>`${a.label}||${a.loja}`.localeCompare(`${b.label}||${b.loja}`));
+    draw('chartLojaFat', stores.length > 1 ? 'line' : 'bar', {labels:[...new Set(list.map(i=>i.label))], datasets:stores.map(store => ({label:store,data:[...new Set(list.map(i=>i.label))].map(label => (list.find(i => i.label===label && i.loja===store) || {}).faturamento || 0),borderColor:colorOf(store),backgroundColor:colorOf(store)+'33',fill:stores.length===1,tension:.28,pointRadius:2,borderWidth:2}))}, {plugins:{legend:{display:true}}});
+    draw('chartLojaPed','line', {labels:[...new Set(list.map(i=>i.label))], datasets:stores.map(store => ({label:`${store} · pedidos`,data:[...new Set(list.map(i=>i.label))].map(label => (list.find(i => i.label===label && i.loja===store) || {}).pedidos || 0),borderColor:colorOf(store),backgroundColor:colorOf(store)+'22',fill:false,tension:.28,pointRadius:2,borderWidth:2}))});
+    document.getElementById('tbodyLojaDia').innerHTML = list.map(i => `<tr><td>${stores.length>1 ? `${i.label} — ${i.loja}` : i.label}</td><td>${fmtInt.format(i.pedidos)}</td><td>${fmtMoney.format(i.faturamento)}</td><td>${fmtMoney.format(i.pedidos ? i.faturamento/i.pedidos : 0)}</td><td>${fmtMoney.format(i.desconto)}</td><td>${fmtMoney.format(i.entrega)}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Sem dados para a loja neste período.</td></tr>';
+  };
+  document.addEventListener('click', e => {
+    const pill = e.target.closest('#storePills .store-pill');
+    if(!pill) return;
+    e.stopImmediatePropagation();
+    const store = pill.dataset.store;
+    const multi = e.ctrlKey || e.metaKey;
+    if(multi){
+      if(selectedStoresPatch.includes(store)) selectedStoresPatch = selectedStoresPatch.filter(s => s !== store);
+      else selectedStoresPatch = [...selectedStoresPatch.slice(-1), store];
+    }else{
+      selectedStoresPatch = selectedStoresPatch.length === 1 && selectedStoresPatch[0] === store ? [] : [store];
+    }
+    activeStore = selectedStoresPatch[0] || store;
+    syncGlobalStoreButtons();
+    renderAll();
+  }, true);
+  const originalLoadBase = loadBase;
+  loadBase = async function(){
+    await originalLoadBase();
+    ensureGlobalStorePanel();
+    ensureResultLinePatch();
+    ensureComparePanelPatch();
+    syncGlobalStoreButtons();
+    renderAll();
+  };
+  ensureGlobalStorePanel();
+  ensureResultLinePatch();
+})();
+</script>
+
 </body>
 </html>
