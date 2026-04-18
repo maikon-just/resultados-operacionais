@@ -77,18 +77,12 @@
     .finance-ranking-wrap{border-radius:18px;overflow:auto;background:#fff;border:1px solid #dde6f2}
     .finance-ranking-table{min-width:980px}
     .finance-ranking-table thead th{background:#37465c;color:#fff}
-    .finance-ranking-table tbody td{vertical-align:middle;background:#fff}
-    .finance-ranking-table tbody tr:nth-child(even) td{background:#fdfefe}
-    .finance-ranking-table tbody tr:hover td{background:#f7fbff}
-    .finance-ranking-table tbody td:nth-child(3),.finance-ranking-table tbody td:nth-child(8),.finance-ranking-table tbody td:nth-child(9){color:#334155;font-weight:800}
-    .finance-ranking-table tbody td:nth-child(4),.finance-ranking-table tbody td:nth-child(7){color:#57c271;font-weight:800}
-    .finance-ranking-table tbody td:nth-child(5){color:#4d8dff;font-weight:800}
-    .finance-ranking-table tbody td:nth-child(6){color:#ff4d4f;font-weight:800}
-    .rank-badge{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:999px;background:linear-gradient(180deg,#66a8ff 0%,#4f8ff5 100%);color:#fff;font-size:10px;font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 4px 10px rgba(79,143,245,.22)}
+    .finance-ranking-table tbody td{vertical-align:middle}
+    .rank-badge{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:#5b9cf6;color:#fff;font-size:10px;font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
     .store-name-strong{font-weight:800;color:#334155}
-    .money-green{color:#57c271;font-weight:800}
-    .money-blue{color:#4d8dff;font-weight:800}
-    .money-red{color:#ff4d4f;font-weight:800}
+    .money-green{color:#59c17a;font-weight:800}
+    .money-blue{color:#5b8def;font-weight:800}
+    .money-red{color:#ff5a52;font-weight:800}
     .money-dark{color:#334155;font-weight:800}
     .share-strong{font-weight:800;color:#1f2937}
     @media(max-width:1320px){.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2,.grid-3{grid-template-columns:1fr}.toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -268,6 +262,9 @@
 <script>
 const FIREBASE_URL = 'https://justburger-producao-e9b27-default-rtdb.firebaseio.com';
 const REPORTS_URL = FIREBASE_URL + '/relatorios_diarios.json';
+const CURRENT_MONTH_CACHE_URL = 'vendas-cache-mes-atual.json';
+const CURRENT_MONTH_LOCAL_CACHE_KEY = 'jb_dash_vendas_cache_mes_atual_v2';
+const CURRENT_MONTH_LOCAL_META_KEY = 'jb_dash_vendas_cache_mes_atual_meta_v2';
 const STORE_ORDER = ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi'];
 const STORE_COLORS = {
   'Burger Matriz':'#7c3aed',
@@ -294,6 +291,7 @@ let activeTab = 'geral';
 let activeStore = 'Burger Matriz';
 let activePreset = 'mes_atual';
 let reportsMetaCache = [];
+let reportsMetaPromise = null;
 let fullBaseLoaded = false;
 let fullBasePromise = null;
 let threeMonthBaseLoaded = false;
@@ -302,12 +300,21 @@ let fastBaseStart = null;
 let currentMonthStart = null;
 let renderRunId = 0;
 let chartRefreshTimer = null;
+let backgroundWarmupStarted = false;
 
 function colorOf(store){ return STORE_COLORS[store] || '#64748b'; }
 function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function brDate(d){ return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
 function shortDate(d){ return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
 function fmtPct(v){ return `${Number(v).toFixed(1)}%`; }
+function currentMonthKey(date = new Date()){
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+}
+function cacheBustedUrl(url){
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}`;
+  return `${url}${url.includes('?') ? '&' : '?'}v=${stamp}`;
+}
 function parseDateFlex(value){
   if(value == null || value === '') return null;
   if(value instanceof Date) return isNaN(value) ? null : value;
@@ -370,7 +377,24 @@ function normalizeStore(store='', code=''){
   if(s.includes('just burger') || s === 'burger' || s.includes('burger')) return 'Burger Matriz';
   return String(store || '').trim() || 'Sem loja informada';
 }
-function fetchJson(url){ return fetch(url,{cache:'no-store'}).then(r => { if(!r.ok) throw new Error('Falha ao ler base'); return r.json(); }); }
+function fetchJson(url){
+  return fetch(url,{cache:'no-store'}).then(r => {
+    if(!r.ok) throw new Error('Falha ao ler base');
+    return r.json();
+  });
+}
+async function ensureReportsMetaLoaded(){
+  if(reportsMetaPromise) return reportsMetaPromise;
+  reportsMetaPromise = (async () => {
+    const obj = await fetchJson(REPORTS_URL) || {};
+    reportsMetaCache = Object.entries(obj)
+      .map(([id,v]) => ({id,...v}))
+      .filter(r => r.status !== 'deletado' && r.tipo === 'financeiro')
+      .sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
+    return reportsMetaCache;
+  })();
+  return reportsMetaPromise;
+}
 async function fetchReportRows(rep){
   let parsed = {};
   try{ parsed = JSON.parse(rep.dados_json || '{}'); }catch(e){ parsed = {}; }
@@ -390,11 +414,87 @@ async function fetchReportRows(rep){
 function getReportRefDate(rep){
   return parseDateFlex(rep?.data_referencia) || (rep?.timestamp_upload ? new Date(rep.timestamp_upload) : null);
 }
-async function buildRowsFromReports(reports){
+async function mapWithConcurrency(list, limit, mapper){
+  const safeLimit = Math.max(1, Math.min(limit || 4, 8));
+  const results = new Array(list.length);
+  let cursor = 0;
+  async function worker(){
+    while(cursor < list.length){
+      const index = cursor++;
+      results[index] = await mapper(list[index], index);
+    }
+  }
+  await Promise.all(Array.from({length: Math.min(safeLimit, list.length)}, () => worker()));
+  return results;
+}
+function rowToCacheShape(row){
+  return {
+    p: row.pedido || '',
+    d: ymd(row.data),
+    l: row.loja,
+    i: Number(row.itens || 0),
+    e: Number(row.entrega || 0),
+    dc: Number(row.desconto || 0),
+    a: Number(row.acrescimo || 0),
+    t: Number(row.total || 0),
+    c: row.cancelado ? 1 : 0
+  };
+}
+function rowFromCacheShape(row){
+  const data = parseDateFlex(row?.d || row?.data);
+  if(!data) return null;
+  return {
+    pedido: row?.p || row?.pedido || '',
+    data,
+    loja: row?.l || row?.loja || 'Sem loja informada',
+    itens: Number(row?.i ?? row?.itens ?? 0),
+    entrega: Number(row?.e ?? row?.entrega ?? 0),
+    desconto: Number(row?.dc ?? row?.desconto ?? 0),
+    acrescimo: Number(row?.a ?? row?.acrescimo ?? 0),
+    total: Number(row?.t ?? row?.total ?? 0),
+    cancelado: Boolean(row?.c ?? row?.cancelado)
+  };
+}
+function saveCurrentMonthLocalCache(rows, meta = {}){
+  try{
+    const payload = rows.map(rowToCacheShape);
+    const monthKey = meta.month_key || currentMonthKey();
+    localStorage.setItem(CURRENT_MONTH_LOCAL_CACHE_KEY, JSON.stringify(payload));
+    localStorage.setItem(CURRENT_MONTH_LOCAL_META_KEY, JSON.stringify({
+      month_key: monthKey,
+      generated_at: meta.generated_at || new Date().toISOString(),
+      source: meta.source || 'browser'
+    }));
+  }catch(e){}
+}
+function loadCurrentMonthLocalCache(){
+  try{
+    const meta = JSON.parse(localStorage.getItem(CURRENT_MONTH_LOCAL_META_KEY) || 'null');
+    if(!meta || meta.month_key !== currentMonthKey()) return null;
+    const raw = JSON.parse(localStorage.getItem(CURRENT_MONTH_LOCAL_CACHE_KEY) || '[]');
+    const rows = Array.isArray(raw) ? raw.map(rowFromCacheShape).filter(Boolean) : [];
+    return rows.length ? {rows, meta} : null;
+  }catch(e){
+    return null;
+  }
+}
+async function loadCurrentMonthRemoteCache(){
+  try{
+    const payload = await fetchJson(cacheBustedUrl(CURRENT_MONTH_CACHE_URL));
+    if(!payload || payload.month_key !== currentMonthKey()) return null;
+    const rows = Array.isArray(payload.rows) ? payload.rows.map(rowFromCacheShape).filter(Boolean) : [];
+    if(!rows.length) return null;
+    saveCurrentMonthLocalCache(rows, {month_key: payload.month_key, generated_at: payload.generated_at, source: 'arquivo'});
+    return {rows, meta: payload};
+  }catch(e){
+    return null;
+  }
+}
+async function buildRowsFromReports(reports, concurrency = 6){
+  const reportRows = await mapWithConcurrency(reports, concurrency, async rep => ({ rep, rows: await fetchReportRows(rep) }));
   const dedupe = new Map();
-  for(const rep of reports){
-    const rows = await fetchReportRows(rep);
-    rows.forEach((row, idx) => {
+  reportRows.forEach(({rep, rows}) => {
+    (rows || []).forEach((row, idx) => {
       if(!hasFinanceSchema(row)) return;
       const data = parseDateFlex(row['Data da venda'] || row['Data'] || row['Data da Venda'] || rep.data_referencia);
       if(!data) return;
@@ -416,55 +516,49 @@ async function buildRowsFromReports(reports){
         cancelado: /^S$/i.test(normalizeStr(row['Está cancelado'] || row['Esta cancelado'] || row['Cancelado']))
       });
     });
-  }
+  });
   return [...dedupe.values()].sort((a,b)=>a.data-b.data);
 }
-async function ensureThreeMonthBaseLoaded(wait=true){
-  if(threeMonthBaseLoaded) return;
-  if(!threeMonthBasePromise){
-    threeMonthBasePromise = (async () => {
-      const recentReports = reportsMetaCache.filter(rep => {
-        const ref = getReportRefDate(rep);
-        return !ref || ref >= fastBaseStart;
-      });
-      rowsBase = await buildRowsFromReports(recentReports);
-      threeMonthBaseLoaded = true;
-    })();
-  }
-  if(wait) await threeMonthBasePromise;
-}
-async function ensureFullBaseLoaded(wait=true){
-  if(fullBaseLoaded) return;
-  if(!fullBasePromise){
-    fullBasePromise = (async () => {
-      rowsBase = await buildRowsFromReports(reportsMetaCache);
-      fullBaseLoaded = true;
-      threeMonthBaseLoaded = true;
-    })();
-  }
-  if(wait) await fullBasePromise;
-}
-async function loadBase(){
-  const obj = await fetchJson(REPORTS_URL) || {};
-  reportsMetaCache = Object.entries(obj)
-    .map(([id,v]) => ({id,...v}))
-    .filter(r => r.status !== 'deletado' && r.tipo === 'financeiro')
-    .sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
-  const today = new Date();
-  currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  fastBaseStart = new Date(today.getFullYear(), today.getMonth()-2, 1);
+async function loadCurrentMonthRowsFromFirebase(){
+  await ensureReportsMetaLoaded();
   const initialReports = reportsMetaCache.filter(rep => {
     const ref = getReportRefDate(rep);
     return !ref || ref >= currentMonthStart;
   });
-  rowsBase = await buildRowsFromReports(initialReports);
-  applyPreset('mes_atual');
-  await renderAll();
-  setTimeout(() => {
-    ensureThreeMonthBaseLoaded(false)
-      .then(() => ensureFullBaseLoaded(false))
-      .catch(err => console.error('Erro carregando bases em segundo plano', err));
-  }, 80);
+  const rows = await buildRowsFromReports(initialReports, 6);
+  saveCurrentMonthLocalCache(rows, {month_key: currentMonthKey(), generated_at: new Date().toISOString(), source: 'firebase'});
+  return rows;
+}
+async function ensureThreeMonthBaseLoaded(wait=true){
+  if(threeMonthBaseLoaded) return rowsBase;
+  if(!threeMonthBasePromise){
+    threeMonthBasePromise = (async () => {
+      await ensureReportsMetaLoaded();
+      const recentReports = reportsMetaCache.filter(rep => {
+        const ref = getReportRefDate(rep);
+        return !ref || ref >= fastBaseStart;
+      });
+      rowsBase = await buildRowsFromReports(recentReports, 6);
+      threeMonthBaseLoaded = true;
+      return rowsBase;
+    })();
+  }
+  if(wait) await threeMonthBasePromise;
+  return rowsBase;
+}
+async function ensureFullBaseLoaded(wait=true){
+  if(fullBaseLoaded) return rowsBase;
+  if(!fullBasePromise){
+    fullBasePromise = (async () => {
+      await ensureReportsMetaLoaded();
+      rowsBase = await buildRowsFromReports(reportsMetaCache, 6);
+      fullBaseLoaded = true;
+      threeMonthBaseLoaded = true;
+      return rowsBase;
+    })();
+  }
+  if(wait) await fullBasePromise;
+  return rowsBase;
 }
 function rangeNeedsThreeMonthBase(range){
   if(threeMonthBaseLoaded || !fastBaseStart || !currentMonthStart) return false;
@@ -520,6 +614,49 @@ function previousComparableRange(range){
   const prevTo = new Date(range.from); prevTo.setDate(prevTo.getDate() - 1); prevTo.setHours(23,59,59,999);
   const prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate() - (totalDays - 1)); prevFrom.setHours(0,0,0,0);
   return {from:prevFrom, to:prevTo};
+}
+async function warmBackgroundLoads(){
+  if(backgroundWarmupStarted) return;
+  backgroundWarmupStarted = true;
+  try{
+    await ensureThreeMonthBaseLoaded(false);
+    await ensureFullBaseLoaded(false);
+  }catch(err){
+    console.error('Erro carregando bases em segundo plano', err);
+  }
+}
+async function loadBase(){
+  const today = new Date();
+  currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  fastBaseStart = new Date(today.getFullYear(), today.getMonth()-2, 1);
+  applyPreset('mes_atual');
+
+  const metaTask = ensureReportsMetaLoaded();
+  const localCache = loadCurrentMonthLocalCache();
+  let renderedFast = false;
+
+  if(localCache?.rows?.length){
+    rowsBase = localCache.rows;
+    await renderAll();
+    renderedFast = true;
+  }
+
+  const remoteCache = await loadCurrentMonthRemoteCache();
+  if(remoteCache?.rows?.length){
+    const shouldRefresh = !renderedFast || remoteCache.rows.length !== (localCache?.rows?.length || 0) || remoteCache.meta?.generated_at !== localCache?.meta?.generated_at;
+    rowsBase = remoteCache.rows;
+    if(shouldRefresh) await renderAll();
+    renderedFast = true;
+  }
+
+  await metaTask;
+
+  if(!renderedFast){
+    rowsBase = await loadCurrentMonthRowsFromFirebase();
+    await renderAll();
+  }
+
+  setTimeout(() => { warmBackgroundLoads(); }, 80);
 }
 function summarize(rows){
   const map = new Map();
@@ -810,6 +947,7 @@ loadBase().catch(err => {
   console.error(err);
   document.getElementById('kpisGeral').innerHTML = '<div class="panel empty">Não foi possível carregar a base de uploads.</div>';
 });
+
 </script>
 
 <style id="dash2-compare-patch-style">
