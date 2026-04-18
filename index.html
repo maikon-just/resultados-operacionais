@@ -82,7 +82,7 @@
         </div>
       </div>
       <nav class="nav">
-        <button class="nav-btn active" data-page="resultados" data-title="Resultados Operacionais" data-description="Análise completa com Negociações, Cancelamentos, Qualidade e Cardápio.">
+        <button class="nav-btn" data-page="resultados" data-title="Resultados Operacionais" data-description="Análise completa com Negociações, Cancelamentos, Qualidade e Cardápio.">
           <span class="nav-icon">📊</span>
           <span class="nav-copy"><strong>Resultados</strong><span>Análise completa</span></span>
         </button>
@@ -90,13 +90,9 @@
           <span class="nav-icon">💰</span>
           <span class="nav-copy"><strong>Faturamento</strong><span>Resumo executivo</span></span>
         </button>
-        <button class="nav-btn" data-page="vendaslight" data-title="Vendas Light" data-description="Novo dashboard claro de vendas com datas, ontem, mês atual, mês anterior e projeção automática do mês.">
+        <button class="nav-btn active" data-page="vendaslight" data-title="Vendas Light" data-description="Novo dashboard claro de vendas com datas, ontem, mês atual, mês anterior e projeção automática do mês.">
           <span class="nav-icon">📈</span>
           <span class="nav-copy"><strong>Vendas Light</strong><span>Novo dashboard</span></span>
-        </button>
-        <button class="nav-btn" data-page="uploads" data-title="Uploads" data-description="Central única de envio para financeiro, motoboys, cancelamentos, negociações, qualidade e cardápio.">
-          <span class="nav-icon">📤</span>
-          <span class="nav-copy"><strong>Uploads</strong><span>Base única</span></span>
         </button>
       </nav>
     </aside>
@@ -105,16 +101,16 @@
         <div class="topbar-left">
           <button class="toggle" id="toggleSidebar" aria-label="Alternar menu lateral">☰</button>
           <div>
-            <h1 id="pageTitle">Resultados Operacionais</h1>
-            <p id="pageDescription">Análise completa com Negociações, Cancelamentos, Qualidade e Cardápio.</p>
+            <h1 id="pageTitle">Vendas Light</h1>
+            <p id="pageDescription">Novo dashboard claro de vendas com datas, ontem, mês atual, mês anterior e projeção automática do mês.</p>
           </div>
         </div>
         <div class="top-actions">
-          <a class="top-link" id="openCurrentPage" href="resultdos-operacionais.html" target="_blank" rel="noopener">Abrir página atual</a>
+          <a class="top-link" id="openCurrentPage" href="dashboard-vendas-light.html" target="_blank" rel="noopener">Abrir página atual</a>
         </div>
       </header>
       <section class="frame-wrap">
-        <iframe id="contentFrame" src="resultdos-operacionais.html" title="Resultados Operacionais"></iframe>
+        <iframe id="contentFrame" src="dashboard-vendas-light.html" title="Vendas Light"></iframe>
       </section>
     </main>
   </div>
@@ -123,8 +119,7 @@
     const pages = {
       resultados: { src: 'resultdos-operacionais.html', href: 'resultdos-operacionais.html' },
       faturamento: { src: 'faturamento.html', href: 'faturamento.html' },
-      vendaslight: { src: 'dashboard-vendas-light.html', href: 'dashboard-vendas-light.html' },
-      uploads: { src: 'uploads.html', href: 'uploads.html' }
+      vendaslight: { src: 'dashboard-vendas-light.html', href: 'dashboard-vendas-light.html' }
     };
     const sidebar = document.getElementById('sidebar');
     const main = document.getElementById('mainContent');
@@ -138,7 +133,7 @@
     }
 
     function loadPage(key){
-      const page = pages[key] || pages.resultados;
+      const page = pages[key] || pages.vendaslight;
       frame.src = page.src;
       openCurrentPage.href = page.href;
     }
@@ -162,6 +157,7 @@
     });
 
     syncLayout();
+    loadPage('vendaslight');
   </script>
 </body>
 </html>

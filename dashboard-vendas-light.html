@@ -938,10 +938,11 @@ loadBase().catch(err => {
     const rows = filteredRows(range).filter(r => stores.includes(r.loja));
     const summaryByStore = new Map();
     stores.forEach(s => summaryByStore.set(s, summarize(rows.filter(r => r.loja === s)).stores.find(v => v.loja === s) || {loja:s,pedidos:0,faturamento:0,desconto:0,entrega:0}));
-    document.getElementById('kpisLoja').innerHTML = stores.map(store => {
+    const totalPedidosSelecionados = [...summaryByStore.values()].reduce((sum, item) => sum + (item.pedidos || 0), 0);
+    document.getElementById('kpisLoja').innerHTML = [`<div class="kpi green"><div class="label">Quantidade de pedidos</div><div class="value">${fmtInt.format(totalPedidosSelecionados)}</div><div class="sub"><span>Lojas selecionadas</span><span>${stores.length === 1 ? stores[0] : `${stores.length} lojas`}</span></div></div>`].concat(stores.map(store => {
       const s = summaryByStore.get(store);
       return `<div class="kpi blue"><div class="label">Loja</div><div class="value" style="font-size:22px;color:${colorOf(store)}">${store}</div><div class="sub"><span>${fmtInt.format(s.pedidos)} pedidos</span><span>${fmtMoney.format(s.faturamento)}</span></div></div>`;
-    }).join('');
+    })).join('');
     const grouped = new Map();
     rows.forEach(r => {
       const info = periodInfoPatch(r.data, range);
