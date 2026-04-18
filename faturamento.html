@@ -20,6 +20,9 @@
     .header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:14px}
     .header h1{margin:0;font-size:32px;line-height:1.02;font-weight:800;letter-spacing:-.03em;color:#1e293b}
     .header p{margin:8px 0 0;color:var(--muted);font-size:14px;font-weight:600}
+    .header-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .module-link{display:inline-flex;align-items:center;justify-content:center;height:42px;padding:0 16px;border-radius:12px;border:1px solid #cfe0ff;background:linear-gradient(135deg,#ecf3ff 0%,#f8fbff 100%);color:#285ea8;font:800 13px Montserrat,system-ui,sans-serif;text-decoration:none;box-shadow:0 6px 16px rgba(102,126,234,.12)}
+    .module-link:hover{transform:translateY(-1px);filter:brightness(1.02)}
     .pill{display:none!important}
     .panel{background:#ffffff;border:1px solid var(--line);border-radius:18px;backdrop-filter:none;box-shadow:var(--shadow)}
     .filters-sticky{position:sticky;top:0;z-index:40;margin-bottom:18px;padding-top:4px;background:linear-gradient(180deg, rgba(245,247,250,.96) 0%, rgba(245,247,250,.82) 72%, rgba(245,247,250,0) 100%)}
@@ -96,7 +99,9 @@
         <h1>Faturamento</h1>
         <p>Resultado financeiro consolidado por loja, com abertura padrão no mês atual, todas as lojas e status em todos.</p>
       </div>
-      
+      <div class="header-actions">
+        <a class="module-link" href="dashboard-vendas-light.html">Abrir novo dashboard light</a>
+      </div>
     </div>
 
     <div class="filters-sticky">
