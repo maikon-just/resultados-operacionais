@@ -73,6 +73,18 @@
     .badge.flat{background:#f1f5f9;color:#475569;border:1px solid #d8e2ee}
     .empty{padding:30px;text-align:center;font-weight:800;color:#64748b}
     .footer-note{margin-top:10px;font-size:12px;font-weight:700;color:#64748b}
+    .finance-ranking-card h3{margin-bottom:12px}
+    .finance-ranking-wrap{border-radius:18px;overflow:auto;background:#fff;border:1px solid #dde6f2}
+    .finance-ranking-table{min-width:980px}
+    .finance-ranking-table thead th{background:#37465c;color:#fff}
+    .finance-ranking-table tbody td{vertical-align:middle}
+    .rank-badge{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:#5b9cf6;color:#fff;font-size:10px;font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+    .store-name-strong{font-weight:800;color:#334155}
+    .money-green{color:#59c17a;font-weight:800}
+    .money-blue{color:#5b8def;font-weight:800}
+    .money-red{color:#ff5a52;font-weight:800}
+    .money-dark{color:#334155;font-weight:800}
+    .share-strong{font-weight:800;color:#1f2937}
     @media(max-width:1320px){.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2,.grid-3{grid-template-columns:1fr}.toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:760px){.hero h1{font-size:24px}.wrap{padding:14px 12px 26px}.toolbar{grid-template-columns:1fr}.kpi-row{grid-template-columns:1fr}.chart,.chart.sm,.chart.tall{height:250px}.tabs{overflow:visible;flex-wrap:wrap;padding-bottom:0}.tab{flex:1 1 calc(50% - 8px);text-align:center}.preset-group,.action-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}.preset-btn,.btn{width:100%;padding:0 8px}.field-center{align-items:stretch;text-align:left}}
   </style>
@@ -144,10 +156,10 @@
           <div class="chart sm"><canvas id="chartEntregaLoja"></canvas></div>
         </div>
       </div>
-      <div class="panel card">
-        <h3>Resumo por loja</h3>
-        <div class="table-wrap">
-          <table>
+      <div class="panel card finance-ranking-card">
+        <h3>Ranking Financeiro por Loja</h3>
+        <div class="table-wrap finance-ranking-wrap">
+          <table class="finance-ranking-table">
             <thead>
               <tr>
                 <th>Loja</th>
@@ -981,15 +993,15 @@ loadBase().catch(err => {
     })();
     const totalReceita = list.reduce((s,r)=>s+r.receita,0);
     document.getElementById('tbodyResumo').innerHTML = list.map((r,idx)=>`<tr>
-      <td><span class="badge flat">${idx+1}º</span></td>
-      <td><b style="color:${colorOf((selectedStoresPatch.find(s=>r.label.includes(s))||activeStore||STORE_ORDER[0]))}">${r.label}</b></td>
-      <td>${fmtInt.format(r.pedidos)}</td>
-      <td>${fmtMoney.format(r.itens||0)}</td>
-      <td>${fmtMoney.format(r.entrega||0)}</td>
-      <td>${fmtMoney.format(r.descontos||0)}</td>
-      <td>${fmtMoney.format(r.receita||0)}</td>
-      <td>${fmtMoney.format(r.validos ? (r.receita||0)/r.validos : 0)}</td>
-      <td>${totalReceita ? (((r.receita||0)/totalReceita)*100).toFixed(1).replace('.', ',') : '0,0'}%</td>
+      <td><span class="rank-badge">${idx+1}º</span></td>
+      <td><span class="store-name-strong">${r.label}</span></td>
+      <td><span class="money-dark">${fmtInt.format(r.pedidos)}</span></td>
+      <td><span class="money-green">${fmtMoney.format(r.itens||0)}</span></td>
+      <td><span class="money-blue">${fmtMoney.format(r.entrega||0)}</span></td>
+      <td><span class="money-red">${fmtMoney.format(r.descontos||0)}</span></td>
+      <td><span class="money-green">${fmtMoney.format(r.receita||0)}</span></td>
+      <td><span class="money-dark">${fmtMoney.format(r.validos ? (r.receita||0)/r.validos : 0)}</span></td>
+      <td><span class="share-strong">${totalReceita ? (((r.receita||0)/totalReceita)*100).toFixed(1).replace('.', ',') : '0,0'}%</span></td>
     </tr>`).join('') || '<tr><td colspan="9" class="empty">Sem dados no período.</td></tr>';
     document.getElementById('footResumo').textContent = mode === 'month' ? `Período exibido: ${periodLabel(range)} · Linhas agrupadas por mês.` : `Período exibido: ${periodLabel(range)}.`;
 
