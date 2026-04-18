@@ -41,16 +41,16 @@
     .nav-copy{display:flex;flex-direction:column;gap:3px;transition:opacity .2s ease}
     .nav-copy strong{font-size:.95rem}
     .nav-copy span{font-size:.74rem;color:rgba(255,255,255,.58)}
-    .main{width:100%;margin-left:var(--sidebar-expanded);padding:22px;transition:margin-left .25s ease}
+    .main{width:100%;margin-left:var(--sidebar-expanded);padding:16px;transition:margin-left .25s ease}
     .main.sidebar-collapsed{margin-left:var(--sidebar-collapsed)}
-    .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 22px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.86);border-radius:22px;box-shadow:var(--shadow);margin-bottom:18px}
+    .topbar{display:flex;justify-content:flex-start;align-items:center;gap:10px;padding:6px 0 12px;background:transparent;border:0;box-shadow:none;margin-bottom:0}
     .topbar-left{display:flex;gap:14px;align-items:center}
     .toggle{width:46px;height:46px;border-radius:14px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:1.15rem;box-shadow:0 8px 20px rgba(15,23,42,.08)}
     .topbar h1{margin:0 0 4px;font-size:1.5rem}
     .topbar p{margin:0;color:var(--muted);font-size:.94rem}
-    .top-actions{display:flex;gap:10px;flex-wrap:wrap}
-    .top-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));padding:12px 16px;border-radius:14px;font-weight:700;box-shadow:0 10px 22px rgba(95,143,255,.22)}
-    .frame-wrap{height:calc(100vh - 122px);min-height:740px;padding:14px;border-radius:24px;background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.88);box-shadow:var(--shadow)}
+    .top-actions{display:none}
+    .top-link{display:none}
+    .frame-wrap{height:calc(100vh - 42px);min-height:740px;padding:10px;border-radius:24px;background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.88);box-shadow:var(--shadow)}
     iframe{width:100%;height:100%;border:0;border-radius:18px;background:#fff}
     .sidebar-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.34);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:15}
     @media (max-width:960px){
@@ -59,8 +59,8 @@
       .sidebar.collapsed{transform:translateX(-100%);width:min(90vw,320px)}
       .sidebar.collapsed .brand-copy,.sidebar.collapsed .nav-copy{opacity:1;pointer-events:auto}
       .sidebar-backdrop.active{opacity:1;pointer-events:auto}
-      .main,.main.sidebar-collapsed{margin-left:0;padding:14px}
-      .topbar{flex-direction:column;align-items:stretch}
+      .main,.main.sidebar-collapsed{margin-left:0;padding:12px}
+      .topbar{padding:2px 0 10px}
       .topbar-left{align-items:flex-start}
     }
     @media (max-width:640px){
@@ -100,13 +100,6 @@
       <header class="topbar">
         <div class="topbar-left">
           <button class="toggle" id="toggleSidebar" aria-label="Alternar menu lateral">☰</button>
-          <div>
-            <h1 id="pageTitle">Vendas Light</h1>
-            <p id="pageDescription">Novo dashboard claro de vendas com datas, ontem, mês atual, mês anterior e projeção automática do mês.</p>
-          </div>
-        </div>
-        <div class="top-actions">
-          <a class="top-link" id="openCurrentPage" href="dashboard-vendas-light.html" target="_blank" rel="noopener">Abrir página atual</a>
         </div>
       </header>
       <section class="frame-wrap">
@@ -123,9 +116,6 @@
     const sidebar = document.getElementById('sidebar');
     const main = document.getElementById('mainContent');
     const frame = document.getElementById('contentFrame');
-    const pageTitle = document.getElementById('pageTitle');
-    const pageDescription = document.getElementById('pageDescription');
-    const openCurrentPage = document.getElementById('openCurrentPage');
     const sidebarBackdrop = document.getElementById('sidebarBackdrop');
 
     function isMobileLayout(){
@@ -148,14 +138,12 @@
     function loadPage(key){
       const page = pages[key] || pages.vendaslight;
       frame.src = page.src;
-      openCurrentPage.href = page.href;
+
     }
 
     function setActive(btn){
       document.querySelectorAll('.nav-btn').forEach(node => node.classList.remove('active'));
       btn.classList.add('active');
-      pageTitle.textContent = btn.dataset.title;
-      pageDescription.textContent = btn.dataset.description;
       document.title = `Just Dashboards · ${btn.dataset.title}`;
       loadPage(btn.dataset.page);
       closeSidebarOnMobile();

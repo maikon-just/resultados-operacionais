@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Vendas Light</title>
+  <title>Dashboard de Vendas</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
@@ -16,31 +16,31 @@
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0}
-    body{font-family:'Montserrat',system-ui,sans-serif;background:linear-gradient(180deg,#f8fbff 0%,#f3f7fc 100%);color:var(--text)}
+    body{font-family:'Montserrat',system-ui,sans-serif;background:linear-gradient(180deg,#f8fbff 0%,#f3f7fc 100%);color:var(--text);overflow-x:hidden}
     .bg{position:fixed;inset:0;pointer-events:none;background:
       radial-gradient(circle at 10% 12%, rgba(91,141,239,.10), transparent 26%),
       radial-gradient(circle at 88% 8%, rgba(122,155,248,.08), transparent 20%),
       radial-gradient(circle at 76% 72%, rgba(34,197,94,.07), transparent 18%)}
-    .wrap{position:relative;z-index:1;max-width:1580px;margin:0 auto;padding:20px 16px 38px}
+    .wrap{position:relative;z-index:1;max-width:1580px;margin:0 auto;padding:12px 16px 38px}
     .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
-    .hero{background:linear-gradient(135deg,#dcecff 0%,#eef5ff 52%,#f9fbff 100%);border:1px solid var(--line2);border-radius:24px;padding:20px 22px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
-    .hero h1{margin:0;font-size:30px;line-height:1.04;font-weight:800;letter-spacing:-.03em;color:#16325c}
-    .hero p{margin:8px 0 0;font-size:13px;font-weight:700;color:#5b6b85}
-    .live{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#ebfff1;color:#127a37;border:1px solid #bbebc8;font-size:12px;font-weight:800;white-space:nowrap}
+    .hero{background:linear-gradient(135deg,#dcecff 0%,#eef5ff 52%,#f9fbff 100%);border:1px solid var(--line2);border-radius:24px;padding:18px 22px;box-shadow:var(--shadow);display:flex;justify-content:flex-start;align-items:center;gap:12px;flex-wrap:wrap}
+    .hero h1{margin:0;font-size:28px;line-height:1.04;font-weight:800;letter-spacing:-.03em;color:#16325c}
+    .hero p{display:none}
+    .live{display:none}
     .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-    .toolbar{margin-top:16px;padding:14px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;align-items:end}
-    .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+    .toolbar{margin-top:16px;padding:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:center}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:0}.field-center{align-items:center;text-align:center}
     .field label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#4b5d79}
     .field input{height:42px;border:1px solid #d6e2f1;border-radius:12px;padding:0 12px;background:#fbfdff;color:#0f172a;font:700 13px Montserrat,system-ui,sans-serif;outline:none}
     .field input:focus{border-color:#95b7ff;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
-    .preset-group,.action-group{display:flex;gap:8px;flex-wrap:wrap}
-    .preset-btn,.btn{height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;transition:.15s ease}
+    .preset-group,.action-group{display:grid;grid-template-columns:repeat(3,minmax(0,180px));justify-content:center;gap:8px;width:100%}
+    .preset-btn,.btn{height:42px;width:100%;padding:0 12px;border-radius:12px;border:1px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;transition:.15s ease}
     .preset-btn:hover,.btn:hover{transform:translateY(-1px);filter:brightness(1.01)}
     .preset-btn.active{background:#eef4ff;border-color:#bfd4fb;color:#2355b7;box-shadow:0 8px 18px rgba(37,99,235,.10)}
     .btn.primary{background:linear-gradient(135deg,#5f91ee 0%,#7ba0f8 100%);border-color:#6d97ef;color:#fff;box-shadow:0 8px 20px rgba(95,145,238,.20)}
     .btn.secondary{background:#f8fbff;color:#34517c}
     .btn.proj{background:linear-gradient(135deg,#10b981 0%,#34d399 100%);border-color:#10b981;color:#fff;box-shadow:0 8px 20px rgba(16,185,129,.20)}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 12px;align-items:flex-start}
     .tab{padding:11px 16px;border-radius:999px;border:1px solid #d8e3f2;background:#fff;color:#526581;font-size:12px;font-weight:800;cursor:pointer}
     .tab.active{background:#18355f;color:#fff;border-color:#18355f;box-shadow:0 10px 20px rgba(24,53,95,.18)}
     .section{display:none}
@@ -73,8 +73,8 @@
     .badge.flat{background:#f1f5f9;color:#475569;border:1px solid #d8e2ee}
     .empty{padding:30px;text-align:center;font-weight:800;color:#64748b}
     .footer-note{margin-top:10px;font-size:12px;font-weight:700;color:#64748b}
-    @media(max-width:1320px){.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2,.grid-3{grid-template-columns:1fr}.toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:760px){.hero h1{font-size:24px}.wrap{padding:14px 12px 26px}.toolbar{grid-template-columns:1fr}.kpi-row{grid-template-columns:1fr}.chart,.chart.sm,.chart.tall{height:250px}.tabs{overflow:auto;flex-wrap:nowrap;padding-bottom:4px}}
+    @media(max-width:1320px){.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2,.grid-3{grid-template-columns:1fr}.toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.preset-group,.action-group{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media(max-width:760px){.hero h1{font-size:24px}.wrap{padding:10px 12px 26px}.toolbar{grid-template-columns:1fr}.kpi-row{grid-template-columns:1fr}.chart,.chart.sm,.chart.tall{height:250px}.tabs{overflow:visible;flex-wrap:wrap;padding-bottom:0}.tab{flex:1 1 calc(50% - 8px);text-align:center}.preset-group,.action-group{grid-template-columns:repeat(3,minmax(0,1fr))}.field-center{align-items:stretch;text-align:left}}
   </style>
 </head>
 <body>
@@ -82,14 +82,14 @@
   <div class="wrap">
     <div class="hero">
       <div>
-        <h1>📊 Dashboard de Vendas Light — Grupo AHAM / JUST</h1>
-        <p>Mesma base de uploads, nomes de lojas corrigidos e visual claro inspirado no dashboard enviado.</p>
+        <h1>📊 Dashboard de Vendas</h1>
+        <p></p>
       </div>
-      <div class="live">🟢 Atualizado pela base de uploads</div>
+      <div class="live"></div>
     </div>
 
     <div class="panel toolbar">
-      <div class="field" style="grid-column:span 2">
+      <div class="field field-center" style="grid-column:1 / -1">
         <label>Períodos rápidos</label>
         <div class="preset-group">
           <button class="preset-btn active" data-preset="mes_atual">Mês atual</button>
@@ -105,7 +105,7 @@
         <label>Até</label>
         <input type="date" id="dataFim">
       </div>
-      <div class="field" style="grid-column:span 3">
+      <div class="field field-center" style="grid-column:1 / -1">
         <label>Ações</label>
         <div class="action-group">
           <button class="btn primary" id="btnAplicar">Aplicar período</button>
@@ -748,21 +748,21 @@ loadBase().catch(err => {
 </script>
 
 <style id="dash2-compare-patch-style">
-  .global-store-panel{margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .global-store-panel .label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#4b5d79;margin-right:4px}
-  .global-store-btn{height:40px;padding:0 14px;border-radius:999px;border:2px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer}
+  .global-store-panel{margin:0 0 18px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:stretch;max-width:940px}
+  .global-store-panel .label{grid-column:1 / -1;font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#4b5d79}
+  .global-store-btn{min-height:44px;padding:10px 12px;border-radius:14px;border:2px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;line-height:1.2;text-align:center}
   .global-store-btn:hover{transform:translateY(-1px)}
   .global-store-btn.active{color:#fff}
   .global-store-btn.compare{box-shadow:0 8px 18px rgba(15,23,42,.12)}
-  .global-store-help{font-size:11px;font-weight:700;color:#64748b;margin-left:auto}
-  .result-line-light{margin:16px 0;padding:12px 16px;border-radius:18px;background:#fff;border:1px solid #dbe5f1;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-  .result-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#f8fbff;border:1px solid #dbe5f1;font-size:12px;font-weight:700;color:#334155}
+  #storePills{display:none !important}
+  .result-line-light{margin:16px 0;padding:14px 16px;border-radius:18px;background:#fff;border:1px solid #dbe5f1;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .result-chip{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;flex:1 1 calc(33.333% - 10px);min-width:210px;padding:10px 12px;border-radius:14px;background:#f8fbff;border:1px solid #dbe5f1;font-size:12px;font-weight:700;color:#334155}
   .result-chip strong{color:#1f2937}
-  .result-chip.accent{background:#eef2ff;border-color:#c7d2fe}
+  @media(max-width:760px){.global-store-panel{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.global-store-btn{padding:10px 6px;font-size:11px}.result-chip{flex:1 1 100%;min-width:0}}
 </style>
 <script id="dash2-compare-patch">
 (function(){
-  let selectedStoresPatch = [];
+  let selectedStoresPatch = [activeStore || STORE_ORDER[0]];
   function cleanDay(date){ return new Date(date.getFullYear(), date.getMonth(), date.getDate()); }
   function daysBetween(a,b){ if(!a || !b) return 0; return Math.round((cleanDay(b)-cleanDay(a))/86400000)+1; }
   function fmtMonthYear(date){ return date.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^./,m=>m.toUpperCase()); }
@@ -785,16 +785,15 @@ loadBase().catch(err => {
     return {key: ymd(date), label: brDate(date)};
   }
   function ensureGlobalStorePanel(){
-    const toolbar = document.querySelector('.toolbar');
-    if(!toolbar || document.getElementById('globalStorePanelPatch')) return;
+    const tabs = document.querySelector('.tabs');
+    if(!tabs || document.getElementById('globalStorePanelPatch')) return;
     const panel = document.createElement('div');
     panel.className = 'global-store-panel';
     panel.id = 'globalStorePanelPatch';
     panel.style.gridColumn = '1 / -1';
     panel.innerHTML = `<span class="label">Lojas</span>` +
-      STORE_ORDER.map(store => `<button type="button" class="global-store-btn" data-store="${store}" style="border-color:${colorOf(store)};color:${colorOf(store)}">${store}</button>`).join('') +
-      `<span class="global-store-help">Ctrl/Cmd + clique compara 2 lojas</span>`;
-    toolbar.appendChild(panel);
+      STORE_ORDER.map(store => `<button type="button" class="global-store-btn" data-store="${store}" style="border-color:${colorOf(store)};color:${colorOf(store)}">${store}</button>`).join('');
+    tabs.insertAdjacentElement('afterend', panel);
     panel.addEventListener('click', (ev) => {
       const btn = ev.target.closest('.global-store-btn');
       if(!btn) return;
@@ -804,7 +803,7 @@ loadBase().catch(err => {
         if(selectedStoresPatch.includes(store)) selectedStoresPatch = selectedStoresPatch.filter(s => s !== store);
         else selectedStoresPatch = [...selectedStoresPatch.slice(-1), store];
       }else{
-        selectedStoresPatch = selectedStoresPatch.length === 1 && selectedStoresPatch[0] === store ? [] : [store];
+        selectedStoresPatch = [store];
       }
       activeStore = selectedStoresPatch[0] || activeStore || STORE_ORDER[0];
       syncGlobalStoreButtons();
@@ -839,12 +838,11 @@ loadBase().catch(err => {
     const receita = validos.reduce((s,r)=>s+r.total,0);
     const cancelados = rows.filter(r => r.cancelado);
     const lojas = new Set(rows.map(r => r.loja)).size;
-    const lojasTxt = selectedStoresPatch.length ? selectedStoresPatch.join(' × ') : 'Todas';
+    const lojasTxt = selectedStoresPatch.length ? selectedStoresPatch.join(' × ') : (activeStore || 'Todas');
     box.innerHTML = [
-      `<span class="result-chip accent"><strong>Total das empresas</strong></span>`,
       `<span class="result-chip">Período <strong>${periodLabel(range)}</strong></span>`,
       `<span class="result-chip">Modo <strong>${periodModePatch(range)==='month'?'Mensal':'Diário'}</strong></span>`,
-      `<span class="result-chip">Lojas selecionadas <strong>${lojasTxt}</strong></span>`,
+      `<span class="result-chip">Loja selecionada <strong>${lojasTxt}</strong></span>`,
       `<span class="result-chip">Receita <strong>${fmtMoney.format(receita)}</strong></span>`,
       `<span class="result-chip">Pedidos válidos <strong>${fmtInt.format(validos.length)}</strong></span>`,
       `<span class="result-chip">Cancelados <strong>${fmtInt.format(cancelados.length)}</strong></span>`,
