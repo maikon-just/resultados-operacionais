@@ -190,7 +190,7 @@ async function main(){
 
   const target = path.resolve(process.cwd(), OUTPUT_FILE);
   await fs.mkdir(path.dirname(target), { recursive: true });
-  await fs.writeFile(target, JSON.stringify(payload), 'utf-8');
+  await fs.writeFile(target, JSON.stringify(payload, null, 2), 'utf-8');
   console.log(`Arquivo gerado: ${target}`);
   console.log(`Linhas: ${rows.length}`);
   console.log(`Lojas: ${storesCovered.join(', ')}`);
