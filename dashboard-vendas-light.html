@@ -275,6 +275,11 @@ let charts = {};
 let activeTab = 'geral';
 let activeStore = 'Burger Matriz';
 let activePreset = 'mes_atual';
+let reportsMetaCache = [];
+let fullBaseLoaded = false;
+let fullBasePromise = null;
+let fastBaseStart = null;
+let renderRunId = 0;
 
 function colorOf(store){ return STORE_COLORS[store] || '#64748b'; }
 function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -360,12 +365,10 @@ async function fetchReportRows(rep){
   }
   return rows;
 }
-async function loadBase(){
-  const obj = await fetchJson(REPORTS_URL) || {};
-  const reports = Object.entries(obj)
-    .map(([id,v]) => ({id,...v}))
-    .filter(r => r.status !== 'deletado' && r.tipo === 'financeiro')
-    .sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
+function getReportRefDate(rep){
+  return parseDateFlex(rep?.data_referencia) || (rep?.timestamp_upload ? new Date(rep.timestamp_upload) : null);
+}
+async function buildRowsFromReports(reports){
   const dedupe = new Map();
   for(const rep of reports){
     const rows = await fetchReportRows(rep);
@@ -392,9 +395,40 @@ async function loadBase(){
       });
     });
   }
-  rowsBase = [...dedupe.values()].sort((a,b)=>a.data-b.data);
+  return [...dedupe.values()].sort((a,b)=>a.data-b.data);
+}
+async function ensureFullBaseLoaded(wait=true){
+  if(fullBaseLoaded) return;
+  if(!fullBasePromise){
+    fullBasePromise = (async () => {
+      rowsBase = await buildRowsFromReports(reportsMetaCache);
+      fullBaseLoaded = true;
+    })();
+  }
+  if(wait) await fullBasePromise;
+}
+async function loadBase(){
+  const obj = await fetchJson(REPORTS_URL) || {};
+  reportsMetaCache = Object.entries(obj)
+    .map(([id,v]) => ({id,...v}))
+    .filter(r => r.status !== 'deletado' && r.tipo === 'financeiro')
+    .sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
+  const today = new Date();
+  fastBaseStart = new Date(today.getFullYear(), today.getMonth()-1, 1);
+  const initialReports = reportsMetaCache.filter(rep => {
+    const ref = getReportRefDate(rep);
+    return !ref || ref >= fastBaseStart;
+  });
+  rowsBase = await buildRowsFromReports(initialReports);
   applyPreset('mes_atual');
-  renderAll();
+  await renderAll();
+  setTimeout(() => { ensureFullBaseLoaded(false).catch(err => console.error('Erro carregando base completa em segundo plano', err)); }, 80);
+}
+function rangeNeedsFullBase(range){
+  if(fullBaseLoaded || !fastBaseStart) return false;
+  if(!range?.from) return true;
+  const from = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate());
+  return from < fastBaseStart;
 }
 function getPresetRange(name){
   const now = new Date();
@@ -667,7 +701,11 @@ function renderDailySection(){
     datasets:[{label:'Pedidos',data:byDay.map(d=>d.pedidos),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.12)',fill:true,tension:.28,pointRadius:2}]
   });
 }
-function renderAll(){
+async function renderAll(){
+  const runId = ++renderRunId;
+  const range = selectedRange();
+  if(rangeNeedsFullBase(range)) await ensureFullBaseLoaded(true);
+  if(runId !== renderRunId) return;
   destroyCharts();
   renderGeral();
   renderProjection();

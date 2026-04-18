@@ -52,17 +52,20 @@
     .top-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));padding:12px 16px;border-radius:14px;font-weight:700;box-shadow:0 10px 22px rgba(95,143,255,.22)}
     .frame-wrap{height:calc(100vh - 122px);min-height:740px;padding:14px;border-radius:24px;background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.88);box-shadow:var(--shadow)}
     iframe{width:100%;height:100%;border:0;border-radius:18px;background:#fff}
+    .sidebar-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.34);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:15}
     @media (max-width:960px){
-      .sidebar{transform:translateX(0)}
-      .sidebar.collapsed{transform:translateX(calc(-100% + 86px));width:var(--sidebar-expanded)}
+      .sidebar{width:min(90vw,320px);transform:translateX(-100%);box-shadow:0 20px 50px rgba(15,23,42,.24)}
+      .sidebar.open{transform:translateX(0)}
+      .sidebar.collapsed{transform:translateX(-100%);width:min(90vw,320px)}
       .sidebar.collapsed .brand-copy,.sidebar.collapsed .nav-copy{opacity:1;pointer-events:auto}
-      .main,.main.sidebar-collapsed{margin-left:86px}
+      .sidebar-backdrop.active{opacity:1;pointer-events:auto}
+      .main,.main.sidebar-collapsed{margin-left:0;padding:14px}
       .topbar{flex-direction:column;align-items:stretch}
       .topbar-left{align-items:flex-start}
     }
     @media (max-width:640px){
       .sidebar{width:min(90vw,280px)}
-      .sidebar.collapsed{transform:translateX(-100%);width:min(90vw,280px)}
+      .sidebar.collapsed{width:min(90vw,280px)}
       .main,.main.sidebar-collapsed{margin-left:0;padding:14px}
       .frame-wrap{min-height:72vh}
       .topbar h1{font-size:1.18rem}
@@ -96,6 +99,7 @@
         </button>
       </nav>
     </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
     <main class="main" id="mainContent">
       <header class="topbar">
         <div class="topbar-left">
@@ -127,9 +131,23 @@
     const pageTitle = document.getElementById('pageTitle');
     const pageDescription = document.getElementById('pageDescription');
     const openCurrentPage = document.getElementById('openCurrentPage');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+    function isMobileLayout(){
+      return window.matchMedia('(max-width: 960px)').matches;
+    }
 
     function syncLayout(){
-      main.classList.toggle('sidebar-collapsed', sidebar.classList.contains('collapsed'));
+      const collapsed = sidebar.classList.contains('collapsed');
+      main.classList.toggle('sidebar-collapsed', collapsed && !isMobileLayout());
+      sidebar.classList.toggle('open', isMobileLayout() && !collapsed);
+      sidebarBackdrop.classList.toggle('active', isMobileLayout() && !collapsed);
+    }
+
+    function closeSidebarOnMobile(){
+      if(!isMobileLayout()) return;
+      sidebar.classList.add('collapsed');
+      syncLayout();
     }
 
     function loadPage(key){
@@ -145,6 +163,7 @@
       pageDescription.textContent = btn.dataset.description;
       document.title = `Just Dashboards · ${btn.dataset.title}`;
       loadPage(btn.dataset.page);
+      closeSidebarOnMobile();
     }
 
     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -155,6 +174,8 @@
       sidebar.classList.toggle('collapsed');
       syncLayout();
     });
+    sidebarBackdrop.addEventListener('click', closeSidebarOnMobile);
+    window.addEventListener('resize', syncLayout);
 
     syncLayout();
     loadPage('vendaslight');
