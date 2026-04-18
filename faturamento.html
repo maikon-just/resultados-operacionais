@@ -256,7 +256,19 @@ function brDay(d){return `${String(d.getDate()).padStart(2,'0')}/${String(d.getM
 function moneyNumber(v){
   if(v==null || v==='') return 0;
   if(typeof v === 'number') return isFinite(v) ? v : 0;
-  const s = String(v).replace(/\./g,'').replace(',', '.').replace(/[^0-9.-]/g,'');
+  let s = String(v).trim().replace(/\s+/g,'').replace(/R\$/g,'');
+  if(!s) return 0;
+  const hasComma = s.includes(',');
+  const hasDot = s.includes('.');
+  if(hasComma && hasDot){
+    if(s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g,'').replace(',', '.');
+    else s = s.replace(/,/g,'');
+  }else if(hasComma){
+    s = s.replace(/\./g,'').replace(',', '.');
+  }else{
+    s = s.replace(/,/g,'');
+  }
+  s = s.replace(/[^0-9.-]/g,'');
   const n = Number(s);
   return isFinite(n) ? n : 0;
 }
@@ -279,16 +291,22 @@ function normalizePayment(p=''){
   return s;
 }
 const LOJA_CODIGO_MAP = {
-  '21870':'Burger Matriz'
+  '21870':'Burger Matriz',
+  'aa6576e8-574e-42c5-8d38-0d7df31f3fcc':'Burger ABC',
+  '8432b620-27ea-48fb-bf3b-a0b76bbf3516':'Burger GRU',
+  '510cb9b9-a4dc-4962-a70f-cc01b0e4bdc8':'Aham Forneria',
+  '1eb0ccfe-ba7e-43ad-9a23-06c4ea7a823a':'Aham Forneria',
+  'fe4e06bd-2f30-410a-97ef-b21eba59f3e4':'Aham Sushi',
+  '20215':'Aham Sushi'
 };
 function mapCompany(store='', code=''){
   const cod = String(code||'').trim();
   if(LOJA_CODIGO_MAP[cod]) return LOJA_CODIGO_MAP[cod];
   const s = String(store||'').toLowerCase().trim();
   if(!s) return 'Sem empresa';
-  if(s.includes('zona leste') || s.includes('matriz')) return 'Burger Matriz';
-  if(/(^|\s)abc(\s|$)/.test(s) || s.includes('santo andré') || s.includes('sao bernardo') || s.includes('são bernardo') || s.includes('são caetano')) return 'Burger ABC';
+  if(/(^|\s)abc(\s|$)/.test(s) || s.includes('santo andré') || s.includes('santo andre') || s.includes('sao bernardo') || s.includes('são bernardo') || s.includes('são caetano')) return 'Burger ABC';
   if(s.includes('gru') || s.includes('guarulhos')) return 'Burger GRU';
+  if(s.includes('zona leste') || s.includes('matriz')) return 'Burger Matriz';
   if(s.includes('gourmet')) return 'Gourmet';
   if(s.includes('forneria') || s.includes('esfiha')) return 'Aham Forneria';
   if(s.includes('sushi')) return 'Aham Sushi';
@@ -300,14 +318,26 @@ function normalizeStore(store='', code=''){
   if(LOJA_CODIGO_MAP[cod]) return LOJA_CODIGO_MAP[cod];
   const s = String(store||'').toLowerCase().trim();
   if(!s) return 'Sem loja informada';
-  if(s.includes('zona leste') || s.includes('matriz') || s.includes('just burger') || s === 'burger') return 'Burger Matriz';
-  if(/(^|\s)abc(\s|$)/.test(s) || s.includes('santo andré') || s.includes('sao bernardo') || s.includes('são bernardo') || s.includes('são caetano')) return 'Burger ABC';
+  if(/(^|\s)abc(\s|$)/.test(s) || s.includes('santo andré') || s.includes('santo andre') || s.includes('sao bernardo') || s.includes('são bernardo') || s.includes('são caetano')) return 'Burger ABC';
   if(s.includes('gru') || s.includes('guarulhos')) return 'Burger GRU';
+  if(s.includes('zona leste') || s.includes('matriz')) return 'Burger Matriz';
   if(s.includes('gourmet')) return 'Gourmet';
   if(s.includes('forneria') || s.includes('esfiha')) return 'Aham Forneria';
   if(s.includes('sushi')) return 'Aham Sushi';
+  if(s.includes('just burger') || s === 'burger') return 'Burger Matriz';
   if(s.includes('burger')) return 'Burger Matriz';
   return String(store||'').trim() || 'Sem loja informada';
+}
+function hasFinanceSchema(row){
+  if(!row || typeof row !== 'object') return false;
+  const keys = Object.keys(row);
+  const hasDate = ['Data da venda','Data','Data da Venda'].some(k => keys.includes(k));
+  const hasStore = ['Código da loja','Codigo da loja','Cód. loja','Nome da loja','Loja'].some(k => keys.includes(k));
+  const hasMoney = ['Itens','Entrega','Desconto','Total'].some(k => keys.includes(k));
+  return hasDate && hasStore && hasMoney;
+}
+function reportStoreHint(rep={}){
+  return normalizeStr(rep.loja_arquivo || rep.chave_loja_arquivo || rep.nome_arquivo || '');
 }
 function rangeFromPreset(preset){
   const today = new Date();
@@ -388,13 +418,15 @@ async function carregarBase(forceAll=false){
   for(const rep of reportsMeta){
     const {rows} = await fetchReportRows(rep);
     rows.forEach((row, idx) => {
-      const data = parseDateFlex(row['Data da venda'] || row['Data'] || row['Data da Venda']);
+      if(!hasFinanceSchema(row)) return;
+      const data = parseDateFlex(row['Data da venda'] || row['Data'] || row['Data da Venda'] || rep.data_referencia);
       if(!data) return;
       const code = row['Código da loja'] || row['Codigo da loja'] || row['Cód. loja'] || '';
       const lojaOriginal = normalizeStr(row['Nome da loja'] || row['Loja'] || '');
-      const loja = normalizeStore(lojaOriginal, code);
-      const empresa = mapCompany(loja, code);
-      if(!lojaOriginal || loja === 'Sem loja informada' || empresa === 'Sem loja informada'){
+      const lojaHint = reportStoreHint(rep);
+      const loja = normalizeStore(lojaOriginal || lojaHint, code);
+      const empresa = mapCompany(lojaOriginal || lojaHint || loja, code);
+      if(loja === 'Sem loja informada' || empresa === 'Sem empresa'){
         excludedNoStore++;
         return;
       }
