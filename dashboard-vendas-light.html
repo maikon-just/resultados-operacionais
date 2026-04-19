@@ -1798,17 +1798,19 @@ window.__jbAutoInitDisabled = true;
     .preset-group,.action-group{display:flex !important;flex-wrap:nowrap !important;gap:8px !important}
   }
   @media (max-width:760px){
-    .toolbar{display:grid !important;grid-template-columns:repeat(6,minmax(0,1fr)) !important;gap:10px !important;overflow:visible !important;padding:10px !important}
+    .toolbar{display:grid !important;grid-template-columns:repeat(6,minmax(0,1fr)) !important;grid-template-rows:auto auto auto !important;gap:8px !important;overflow:visible !important;padding:10px !important}
     .toolbar .field{width:auto !important;min-width:0 !important}
-    .toolbar .field label{font-size:10px !important;line-height:1.05 !important}
+    .toolbar .field label{font-size:10px !important;line-height:1.05 !important;margin-bottom:2px !important}
     .toolbar .field:nth-child(1){grid-column:1 / -1;grid-row:1}
-    .toolbar .field:nth-child(2){grid-column:1 / -1;grid-row:2}
-    .toolbar .field:nth-child(3){grid-column:1 / -1;grid-row:3}
-    .toolbar .field:nth-child(4){grid-column:1 / -1;grid-row:4}
-    .preset-group,.action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:8px !important;width:100% !important;align-items:stretch !important}
+    .toolbar .field:nth-child(2){grid-column:1 / 4;grid-row:2}
+    .toolbar .field:nth-child(3){grid-column:4 / 7;grid-row:2}
+    .toolbar .field:nth-child(4){grid-column:1 / -1;grid-row:3}
+    .preset-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:6px !important;width:100% !important;align-items:stretch !important}
+    .action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:6px !important;width:100% !important;align-items:stretch !important}
     .preset-group > *, .action-group > *{width:100% !important;min-width:0 !important}
-    .preset-btn,.btn,.field input{height:42px !important;padding:0 8px !important;font-size:11px !important}
-    .field input{font-weight:700 !important}
+    .preset-btn{height:38px !important;padding:0 6px !important;font-size:10px !important;letter-spacing:-.1px !important;border-radius:10px !important}
+    .btn{height:40px !important;padding:0 6px !important;font-size:10px !important;letter-spacing:-.1px !important;border-radius:10px !important}
+    .field input{height:40px !important;padding:0 10px !important;font-size:11px !important;font-weight:700 !important}
     #storeButtonsTopFix .store-grid{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:10px !important}
     #storeButtonsTopFix .store-btn{width:100% !important;min-height:44px !important;padding:8px 6px !important;white-space:normal !important;line-height:1.1 !important;text-align:center !important}
     #kpisGeral{grid-template-columns:1fr !important;gap:10px !important}
@@ -2406,6 +2408,282 @@ window.__jbAutoInitDisabled = true;
   window.renderProjection = function(){ return loadAndRender({ scroll:false }); };
   window.renderStoreSection = function(){ return loadAndRender({ scroll:false }); };
   window.renderDailySection = function(){ return loadAndRender({ scroll:false }); };
+  window.showTab = function(){ showGeneralOnly(); };
+})();
+</script>
+
+
+<script id="jb-live-indexed-query-v2">
+(async function(){
+  if(window.__jbLiveIndexedQueryV2Loaded) return;
+  window.__jbLiveIndexedQueryV2Loaded = true;
+
+  const STATIC_INDEX_ROOT = 'data/vendas-index';
+  const FIREBASE_INDEX_ROOT = 'vendas_indexadas';
+  const STORES = (typeof STORE_ORDER !== 'undefined' && Array.isArray(STORE_ORDER) && STORE_ORDER.length)
+    ? STORE_ORDER.slice()
+    : ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi'];
+  const STORE_SLUG = Object.fromEntries(STORES.map(name => [name, String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')]));
+  const cache = new Map();
+  let selectedStore = null;
+  let renderToken = 0;
+
+  function ymdSafe(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function brDateSafe(d){ return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
+  function parseInputDate(value, end=false){ if(!value) return null; const d = new Date(value + (end ? 'T23:59:59' : 'T00:00:00')); return Number.isNaN(d.getTime()) ? null : d; }
+  function monthKeyOf(date){ return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`; }
+  function monthsBetween(from,to){
+    if(!from || !to) return [];
+    const out=[]; let y=from.getFullYear(), m=from.getMonth(); const ey=to.getFullYear(), em=to.getMonth();
+    while(y < ey || (y === ey && m <= em)){
+      out.push(`${y}-${String(m+1).padStart(2,'0')}`);
+      m += 1; if(m > 11){ m = 0; y += 1; }
+    }
+    return out;
+  }
+  function selectedRange(){ return { from: parseInputDate(document.getElementById('dataInicio')?.value), to: parseInputDate(document.getElementById('dataFim')?.value, true) }; }
+  function currentMonthRange(){ const now=new Date(); const today=new Date(now.getFullYear(),now.getMonth(),now.getDate()); return {from:new Date(today.getFullYear(),today.getMonth(),1), to:today}; }
+  function previousMonthRange(){ const now=new Date(); return { from:new Date(now.getFullYear(), now.getMonth()-1, 1), to:new Date(now.getFullYear(), now.getMonth(), 0, 23,59,59,999) }; }
+  function yesterdayRange(){ const now=new Date(); const d=new Date(now.getFullYear(), now.getMonth(), now.getDate()-1); return {from:d, to:new Date(d.getFullYear(),d.getMonth(),d.getDate(),23,59,59,999)}; }
+  function projectionRange(){ const now=new Date(); const today=new Date(now.getFullYear(), now.getMonth(), now.getDate()); const y=new Date(today); y.setDate(y.getDate()-1); return { from:new Date(today.getFullYear(),today.getMonth(),1), to:new Date(y.getFullYear(), y.getMonth(), y.getDate(),23,59,59,999) }; }
+  function previousComparableRange(range){
+    if(!range?.from || !range?.to) return {from:null,to:null};
+    const prevFromLast = new Date(range.from.getFullYear(), range.from.getMonth(), 0).getDate();
+    const prevToLast = new Date(range.to.getFullYear(), range.to.getMonth(), 0).getDate();
+    const prevFrom = new Date(range.from.getFullYear(), range.from.getMonth()-1, Math.min(range.from.getDate(), prevFromLast));
+    const prevTo = new Date(range.to.getFullYear(), range.to.getMonth()-1, Math.min(range.to.getDate(), prevToLast), 23,59,59,999);
+    prevFrom.setHours(0,0,0,0);
+    return {from:prevFrom, to:prevTo};
+  }
+  function periodLabel(range){ if(!range?.from || !range?.to) return 'Todos os dados'; return `${brDateSafe(range.from)} até ${brDateSafe(range.to)}`; }
+  function setDateRange(from, to, preset=null){
+    const fromEl=document.getElementById('dataInicio'); const toEl=document.getElementById('dataFim');
+    if(fromEl) fromEl.value = ymdSafe(from);
+    if(toEl) toEl.value = ymdSafe(to);
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.toggle('active', !!preset && btn.dataset.preset === preset));
+    window.activePreset = preset || 'custom';
+  }
+  function normalizePackedRow(row, fallbackStore=''){
+    const data = row?.d ? new Date(row.d + 'T12:00:00') : (row?.data ? new Date(row.data) : null);
+    if(!data || Number.isNaN(data.getTime())) return null;
+    return {
+      pedido: String(row?.p ?? row?.pedido ?? ''),
+      data,
+      loja: String(row?.l ?? row?.loja ?? fallbackStore ?? ''),
+      itens: Number(row?.i ?? row?.itens ?? 0),
+      entrega: Number(row?.e ?? row?.entrega ?? 0),
+      desconto: Number(row?.dc ?? row?.desconto ?? 0),
+      acrescimo: Number(row?.a ?? row?.acrescimo ?? 0),
+      total: Number(row?.t ?? row?.total ?? 0),
+      cancelado: Boolean(row?.c ?? row?.cancelado)
+    };
+  }
+  function dedupeRows(rows){
+    const map = new Map();
+    (rows || []).forEach(r => { if(r?.data && !Number.isNaN(r.data.getTime())) map.set(`${r.pedido || ''}||${r.loja || ''}||${ymdSafe(r.data)}`, r); });
+    return [...map.values()].sort((a,b)=>a.data-b.data || String(a.loja).localeCompare(String(b.loja)));
+  }
+  async function fetchJsonCached(url){
+    if(cache.has(url)) return cache.get(url);
+    const p = fetch(url, {cache:'no-store'}).then(async res => { if(!res.ok) throw new Error(String(res.status)); return res.json(); }).catch(() => null);
+    cache.set(url, p); return p;
+  }
+  async function firebaseGet(path){
+    if(!window.fbDB_v2) return null;
+    const key = `fb:${path}`;
+    if(cache.has(key)) return cache.get(key);
+    const p = window.fbDB_v2.ref(path).once('value').then(snap => snap.val()).catch(() => null);
+    cache.set(key, p); return p;
+  }
+  async function loadMonthFromFirebase(monthKey, storeName=null){
+    if(!window.fbDB_v2) return [];
+    if(storeName){
+      const slug = STORE_SLUG[storeName];
+      const payload = await firebaseGet(`${FIREBASE_INDEX_ROOT}/companies/${slug}/months/${monthKey}`);
+      const rowsObj = payload?.rows || {};
+      const rows = Object.values(rowsObj).map(row => normalizePackedRow(row, storeName)).filter(Boolean);
+      return rows;
+    }
+    const payload = await firebaseGet(`${FIREBASE_INDEX_ROOT}/months/${monthKey}`);
+    const rowsObj = payload?.rows || {};
+    const rows = Object.values(rowsObj).map(row => normalizePackedRow(row)).filter(Boolean);
+    return rows;
+  }
+  async function loadMonthFromStatic(monthKey, storeName=null){
+    let url = null;
+    if(storeName){
+      url = `${STATIC_INDEX_ROOT}/stores/${STORE_SLUG[storeName]}/${monthKey}.json`;
+    }else{
+      url = `${STATIC_INDEX_ROOT}/months/${monthKey}.json`;
+    }
+    const payload = await fetchJsonCached(url);
+    const rows = Array.isArray(payload?.rows) ? payload.rows.map(row => normalizePackedRow(row, storeName || '')).filter(Boolean) : [];
+    return rows;
+  }
+  async function loadRowsForRange(range, storeName=null){
+    const compare = previousComparableRange(range);
+    const months = [...new Set([...(monthsBetween(range.from, range.to)), ...(monthsBetween(compare.from, compare.to))])];
+    let all=[];
+    for(const mk of months){
+      let part = await loadMonthFromFirebase(mk, storeName);
+      if(!part.length) part = await loadMonthFromStatic(mk, storeName);
+      all.push(...part);
+    }
+    return dedupeRows(all);
+  }
+  function filterRows(rows, range, storeName=null){
+    return (rows || []).filter(r => {
+      if(r.cancelado) return false;
+      if(range?.from && r.data < range.from) return false;
+      if(range?.to && r.data > range.to) return false;
+      if(storeName && r.loja !== storeName) return false;
+      return true;
+    });
+  }
+  function summarizeRows(rows){
+    const map = new Map();
+    (rows || []).forEach(r => {
+      if(r.cancelado) return;
+      const curr = map.get(r.loja) || {loja:r.loja,pedidos:0,faturamento:0,desconto:0,entrega:0};
+      curr.pedidos += 1; curr.faturamento += Number(r.total || 0); curr.desconto += Number(r.desconto || 0); curr.entrega += Number(r.entrega || 0);
+      map.set(r.loja, curr);
+    });
+    const stores = STORES.map(loja => map.get(loja) || {loja,pedidos:0,faturamento:0,desconto:0,entrega:0});
+    const pedidos = stores.reduce((s,r)=>s+r.pedidos,0);
+    const faturamento = stores.reduce((s,r)=>s+r.faturamento,0);
+    const desconto = stores.reduce((s,r)=>s+r.desconto,0);
+    const entrega = stores.reduce((s,r)=>s+r.entrega,0);
+    return {stores,pedidos,faturamento,desconto,entrega,ticket: pedidos ? faturamento/pedidos : 0};
+  }
+  function compareBadge(current, previous){
+    if(!previous) return '<span class="badge flat">sem base</span>';
+    const delta = ((current / previous) - 1) * 100;
+    if(!isFinite(delta) || Math.abs(delta) < 0.05) return '<span class="badge flat">estável</span>';
+    return delta >= 0 ? `<span class="badge up">▲ ${fmtPct(Math.abs(delta))}</span>` : `<span class="badge down">▼ ${fmtPct(Math.abs(delta))}</span>`;
+  }
+  function projectionCard(range, currentRevenue, previousRevenue){
+    if(!range?.from || !range?.to) return { label:'Projeção de faturamento mensal', value:'—', sub:'sem período', compare:'<span class="badge flat">sem base</span>' };
+    const monthLast = new Date(range.from.getFullYear(), range.from.getMonth()+1, 0).getDate();
+    const elapsed = Math.max(1, Math.round((new Date(range.to.getFullYear(), range.to.getMonth(), range.to.getDate()) - new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate()))/86400000)+1);
+    const projected = elapsed ? (currentRevenue / elapsed) * monthLast : 0;
+    return { label:'Projeção de faturamento mensal', value: fmtMoney.format(projected), sub:`${elapsed} de ${monthLast} dias`, compare: compareBadge(currentRevenue, previousRevenue) };
+  }
+  function ensureStoreButtons(){
+    let host=document.getElementById('storeButtonsTopFix');
+    if(!host){
+      host=document.createElement('div'); host.id='storeButtonsTopFix'; host.innerHTML='<div class="store-grid"></div>';
+      document.querySelector('.toolbar')?.insertAdjacentElement('afterend', host);
+    }
+    const grid=host.querySelector('.store-grid');
+    if(!grid) return;
+    grid.innerHTML = STORES.map(store => {
+      const c = typeof colorOf === 'function' ? colorOf(store) : '#33507c';
+      const active = selectedStore === store;
+      const style = active ? `background:${c};border-color:${c};color:#fff;` : `background:#fff;border-color:${c};color:${c};`;
+      return `<button type="button" class="store-btn ${active ? 'active' : ''}" data-live-store="${store}" style="${style}">${store}</button>`;
+    }).join('');
+    grid.querySelectorAll('[data-live-store]').forEach(btn => btn.addEventListener('click', async ev => {
+      ev.preventDefault();
+      const store = btn.dataset.liveStore;
+      selectedStore = (selectedStore === store) ? null : store;
+      window.__jbSelectedStore = selectedStore;
+      ensureStoreButtons();
+      await loadAndRender(true);
+    }, true));
+  }
+  function showGeneralOnly(){
+    document.getElementById('resultLineLightPatch')?.remove();
+    const geral=document.getElementById('sec-geral');
+    const proj=document.getElementById('sec-projecao');
+    const diario=document.getElementById('sec-diario');
+    const lojas=document.getElementById('sec-lojas');
+    if(geral){geral.style.display='block'; geral.classList.add('active');}
+    if(proj){proj.style.display='none'; proj.classList.remove('active');}
+    if(diario){diario.style.display='none'; diario.classList.remove('active');}
+    if(lojas){lojas.style.display='none'; lojas.classList.remove('active');}
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab.dataset.tab === 'geral'));
+  }
+  function resizeChartsSafe(){
+    clearTimeout(window.__jbLiveChartsTimer);
+    window.__jbLiveChartsTimer = setTimeout(() => { try{ Object.values(charts || {}).forEach(ch => { try{ ch.resize(); ch.update('none'); }catch(e){} }); }catch(e){} }, 50);
+  }
+  function renderDashboard(rows, range){
+    const currentRows = filterRows(rows, range, selectedStore);
+    const prevRows = filterRows(rows, previousComparableRange(range), selectedStore);
+    const curr = summarizeRows(currentRows);
+    const prev = summarizeRows(prevRows);
+    const proj = projectionCard(range, curr.faturamento, prev.faturamento);
+    const labelStore = selectedStore || 'Todas as lojas';
+    document.getElementById('kpisGeral').innerHTML = `
+      <div class="kpi green"><div class="label">Faturamento total</div><div class="value">${fmtMoney.format(curr.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${compareBadge(curr.faturamento, prev.faturamento)}</span></div></div>
+      <div class="kpi blue"><div class="label">Total de pedidos</div><div class="value">${fmtInt.format(curr.pedidos)}</div><div class="sub"><span>${labelStore}</span><span>${compareBadge(curr.pedidos, prev.pedidos)}</span></div></div>
+      <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(curr.ticket)}</div><div class="sub"><span>Por pedido</span><span>${compareBadge(curr.ticket, prev.ticket)}</span></div></div>
+      <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(curr.desconto)}</div><div class="sub"><span>${curr.faturamento ? fmtPct(curr.desconto/curr.faturamento*100) : '0,0%'}</span><span>${compareBadge(curr.desconto, prev.desconto)}</span></div></div>
+      <div class="kpi purple"><div class="label">${proj.label}</div><div class="value">${proj.value}</div><div class="sub"><span>${proj.sub}</span><span>${proj.compare}</span></div></div>`;
+    const stores = summarizeRows(currentRows).stores.filter(s => selectedStore ? s.loja === selectedStore : (s.pedidos>0 || s.faturamento>0 || s.desconto>0 || s.entrega>0));
+    if(typeof destroyCharts === 'function') destroyCharts();
+    draw('chartFatLoja','bar',{labels:stores.map(s=>s.loja),datasets:[{label:'Faturamento',data:stores.map(s=>s.faturamento),backgroundColor:stores.map(s=>(typeof colorOf==='function'?colorOf(s.loja):'#5b8def')+'cc'),borderColor:stores.map(s=>typeof colorOf==='function'?colorOf(s.loja):'#5b8def'),borderWidth:1.5,borderRadius:8}]},{plugins:{legend:{display:false}}});
+    draw('chartPedLoja','bar',{labels:stores.map(s=>s.loja),datasets:[{label:'Pedidos',data:stores.map(s=>s.pedidos),backgroundColor:stores.map(s=>(typeof colorOf==='function'?colorOf(s.loja):'#5b8def')+'aa'),borderColor:stores.map(s=>typeof colorOf==='function'?colorOf(s.loja):'#5b8def'),borderWidth:1.5,borderRadius:8}]},{plugins:{legend:{display:false}}});
+    draw('chartDescLoja','bar',{labels:stores.map(s=>s.loja),datasets:[{label:'Descontos',data:stores.map(s=>s.desconto),backgroundColor:stores.map(s=>(typeof colorOf==='function'?colorOf(s.loja):'#ef4444')+'aa'),borderColor:stores.map(s=>typeof colorOf==='function'?colorOf(s.loja):'#ef4444'),borderWidth:1.5,borderRadius:8}]},{plugins:{legend:{display:false}}});
+    draw('chartEntregaLoja','bar',{labels:stores.map(s=>s.loja),datasets:[{label:'Entrega',data:stores.map(s=>s.entrega),backgroundColor:stores.map(s=>(typeof colorOf==='function'?colorOf(s.loja):'#7c3aed')+'99'),borderColor:stores.map(s=>typeof colorOf==='function'?colorOf(s.loja):'#7c3aed'),borderWidth:1.5,borderRadius:8}]},{plugins:{legend:{display:false}}});
+    const prevMap = new Map(summarizeRows(prevRows).stores.map(s => [s.loja, s]));
+    const head = document.querySelector('#sec-geral thead tr');
+    if(head) head.innerHTML = '<th>Loja</th><th>Pedidos</th><th>Faturamento</th><th>Ticket Médio</th><th>Descontos</th><th>Entrega</th><th>% vs período anterior</th>';
+    document.getElementById('tbodyResumo').innerHTML = stores.map(store => {
+      const base = prevMap.get(store.loja) || {faturamento:0};
+      return `<tr><td><span class="store-name-strong">${store.loja}</span></td><td>${fmtInt.format(store.pedidos)}</td><td><span class="money-green">${fmtMoney.format(store.faturamento)}</span></td><td>${fmtMoney.format(store.pedidos ? store.faturamento/store.pedidos : 0)}</td><td><span class="money-red">${fmtMoney.format(store.desconto)}</span></td><td><span class="money-blue">${fmtMoney.format(store.entrega)}</span></td><td>${compareBadge(store.faturamento, base.faturamento)}</td></tr>`;
+    }).join('') || '<tr><td colspan="7" class="empty">Sem dados no período selecionado.</td></tr>';
+    const foot=document.getElementById('footResumo');
+    if(foot) foot.textContent = `${labelStore} · período fixo até você alterar os filtros e clicar em aplicar.`;
+  }
+  async function loadAndRender(scrollToButtons=false){
+    const token = ++renderToken;
+    const range = selectedRange();
+    if(!range?.from || !range?.to) return;
+    const rows = await loadRowsForRange(range, selectedStore || null);
+    if(token !== renderToken) return;
+    window.rowsBase = rows;
+    showGeneralOnly();
+    ensureStoreButtons();
+    renderDashboard(rows, range);
+    resizeChartsSafe();
+    if(scrollToButtons){ document.getElementById('storeButtonsTopFix')?.scrollIntoView({behavior:'smooth', block:'start'}); }
+  }
+  function cloneAndReplace(el){ if(!el) return null; const clone = el.cloneNode(true); el.replaceWith(clone); return clone; }
+  function bindControls(){
+    const btnAplicar = cloneAndReplace(document.getElementById('btnAplicar'));
+    const btnLimpar = cloneAndReplace(document.getElementById('btnLimpar'));
+    const btnProjecao = cloneAndReplace(document.getElementById('btnProjecao'));
+    const dataInicio = cloneAndReplace(document.getElementById('dataInicio'));
+    const dataFim = cloneAndReplace(document.getElementById('dataFim'));
+    const presetButtons = [...document.querySelectorAll('.preset-btn')].map(cloneAndReplace);
+    document.querySelectorAll('.tab').forEach(tab => { const t = cloneAndReplace(tab); t.addEventListener('click', ev => { ev.preventDefault(); showGeneralOnly(); }, true); });
+    presetButtons.forEach(btn => btn.addEventListener('click', ev => {
+      ev.preventDefault();
+      if(btn.dataset.preset === 'mes_atual'){ const r=currentMonthRange(); setDateRange(r.from,r.to,'mes_atual'); }
+      if(btn.dataset.preset === 'mes_anterior'){ const r=previousMonthRange(); setDateRange(r.from,r.to,'mes_anterior'); }
+      if(btn.dataset.preset === 'ontem'){ const r=yesterdayRange(); setDateRange(r.from,r.to,'ontem'); }
+    }, true));
+    btnAplicar?.addEventListener('click', async ev => { ev.preventDefault(); await loadAndRender(true); }, true);
+    btnLimpar?.addEventListener('click', async ev => { ev.preventDefault(); const r=currentMonthRange(); setDateRange(r.from,r.to,'mes_atual'); await loadAndRender(true); }, true);
+    btnProjecao?.addEventListener('click', async ev => { ev.preventDefault(); const r=projectionRange(); setDateRange(r.from,r.to,null); await loadAndRender(true); }, true);
+    dataInicio?.addEventListener('change', () => {
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active')); window.activePreset='custom';
+      const from = parseInputDate(dataInicio.value); const to = parseInputDate(dataFim?.value, true);
+      if(from && (!to || from.getMonth() !== to.getMonth() || from.getFullYear() !== to.getFullYear())) dataFim.value = ymdSafe(new Date(from.getFullYear(), from.getMonth()+1, 0));
+    });
+    dataFim?.addEventListener('change', () => { document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active')); window.activePreset='custom'; });
+  }
+  showGeneralOnly();
+  ensureStoreButtons();
+  bindControls();
+  const start = currentMonthRange();
+  setDateRange(start.from, start.to, 'mes_atual');
+  await loadAndRender(false);
+  window.renderAll = async function(){ return loadAndRender(false); };
+  window.renderProjection = async function(){ return loadAndRender(false); };
+  window.renderStoreSection = async function(){ return loadAndRender(false); };
+  window.renderDailySection = async function(){ return loadAndRender(false); };
   window.showTab = function(){ showGeneralOnly(); };
 })();
 </script>
