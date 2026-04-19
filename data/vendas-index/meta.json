@@ -1,0 +1,58 @@
+{
+  "version": 2,
+  "generated_at": "2026-04-18T05:40:04.701Z",
+  "source": "current-month-cache-bootstrap",
+  "row_count": 6257,
+  "stores": [
+    {
+      "name": "Burger Matriz",
+      "slug": "burger-matriz"
+    },
+    {
+      "name": "Burger ABC",
+      "slug": "burger-abc"
+    },
+    {
+      "name": "Burger GRU",
+      "slug": "burger-gru"
+    },
+    {
+      "name": "Gourmet",
+      "slug": "gourmet"
+    },
+    {
+      "name": "Aham Forneria",
+      "slug": "aham-forneria"
+    },
+    {
+      "name": "Aham Sushi",
+      "slug": "aham-sushi"
+    }
+  ],
+  "months_available": [
+    "2026-04"
+  ],
+  "latest_month": "2026-04",
+  "previous_month": null,
+  "files": {
+    "all_months": {
+      "2026-04": "data/vendas-index/months/2026-04.json"
+    },
+    "by_store": {
+      "burger-matriz": {
+        "2026-04": "data/vendas-index/stores/burger-matriz/2026-04.json"
+      },
+      "burger-abc": {},
+      "burger-gru": {},
+      "gourmet": {
+        "2026-04": "data/vendas-index/stores/gourmet/2026-04.json"
+      },
+      "aham-forneria": {},
+      "aham-sushi": {}
+    },
+    "current": {
+      "current_all": "data/vendas-index/current/current-all.json",
+      "previous_all": "data/vendas-index/current/previous-all.json"
+    }
+  }
+}
