@@ -15,14 +15,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
         with:
-          node-version: '20'
+          python-version: '3.12'
 
       - name: Gerar índices mensais por loja
         run: |
-          node scripts/build-vendas-indexes.mjs data/vendas-index
+          python3 scripts/build-vendas-indexes.py data/vendas-index
 
       - name: Commitar atualização
         run: |
