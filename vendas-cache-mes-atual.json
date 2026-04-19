@@ -1,14 +1,13 @@
 {
-  "generated_at": "2026-04-19T17:09:16.137Z",
+  "generated_at": "2026-04-19T17:23:09.791Z",
   "month_key": "2026-04",
   "period_start": "2026-04-01",
-  "period_end": "2026-04-30",
-  "source": "firebase-relatorios_diarios",
+  "period_end": "2026-04-17",
+  "source": "data-vendas-index/current",
   "row_count": 6257,
   "stores_covered": [
     "Burger Matriz",
-    "Gourmet",
-    "Just Chicken Frango no Pote"
+    "Gourmet"
   ],
   "rows": [
     {

@@ -6,7 +6,7 @@
   "row_count": 1,
   "period_start": "2026-04-01",
   "period_end": "2026-04-01",
-  "generated_at": "2026-04-18T05:40:04.701Z",
+  "generated_at": "2026-04-19T17:23:09.839Z",
   "aggregates": {
     "by_store": [
       {
@@ -33,9 +33,9 @@
       {
         "loja": "Gourmet",
         "pedidos": 1,
-        "faturamento": 12.0,
-        "desconto": 3.0,
-        "entrega": 0.0
+        "faturamento": 12,
+        "desconto": 3,
+        "entrega": 0
       },
       {
         "loja": "Aham Forneria",
@@ -56,17 +56,17 @@
       {
         "data": "2026-04-01",
         "pedidos": 1,
-        "faturamento": 12.0,
-        "desconto": 3.0,
-        "entrega": 0.0
+        "faturamento": 12,
+        "desconto": 3,
+        "entrega": 0
       }
     ],
     "totals": {
       "pedidos": 1,
-      "faturamento": 12.0,
-      "desconto": 3.0,
-      "entrega": 0.0,
-      "ticket": 12.0
+      "faturamento": 12,
+      "desconto": 3,
+      "entrega": 0,
+      "ticket": 12
     }
   },
   "rows": [
@@ -74,11 +74,11 @@
       "p": "1",
       "d": "2026-04-01",
       "l": "Gourmet",
-      "i": 15.0,
-      "e": 0.0,
-      "dc": 3.0,
-      "a": 0.0,
-      "t": 12.0,
+      "i": 15,
+      "e": 0,
+      "dc": 3,
+      "a": 0,
+      "t": 12,
       "c": 0
     }
   ]
