@@ -33,8 +33,8 @@
     .field label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#4b5d79}
     .field input{height:42px;border:1px solid #d6e2f1;border-radius:12px;padding:0 12px;background:#fbfdff;color:#0f172a;font:700 13px Montserrat,system-ui,sans-serif;outline:none}
     .field input:focus{border-color:#95b7ff;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
-    .preset-group,.action-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%}
-    .preset-btn,.btn{display:inline-flex;align-items:center;justify-content:center;min-height:72px;height:auto;padding:12px 14px;border-radius:24px;border:2px solid #d6e2f1;background:#fff;color:#33507c;font:800 14px/1.12 Montserrat,system-ui,sans-serif;cursor:pointer;transition:.15s ease;text-align:center;white-space:normal}
+    .preset-group,.action-group{display:flex;gap:8px;flex-wrap:wrap}
+    .preset-btn,.btn{height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;transition:.15s ease}
     .preset-btn:hover,.btn:hover{transform:translateY(-1px);filter:brightness(1.01)}
     .preset-btn.active{background:#eef4ff;border-color:#bfd4fb;color:#2355b7;box-shadow:0 8px 18px rgba(37,99,235,.10)}
     .btn.primary{background:linear-gradient(135deg,#5f91ee 0%,#7ba0f8 100%);border-color:#6d97ef;color:#fff;box-shadow:0 8px 20px rgba(95,145,238,.20)}
@@ -86,7 +86,7 @@
     .money-dark{color:#334155;font-weight:800}
     .share-strong{font-weight:800;color:#1f2937}
     @media(max-width:1320px){.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2,.grid-3{grid-template-columns:1fr}.toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:760px){.hero h1{font-size:24px}.wrap{padding:14px 12px 26px}.toolbar{grid-template-columns:1fr}.kpi-row{grid-template-columns:1fr}.chart,.chart.sm,.chart.tall{height:250px}.tabs{overflow:visible;flex-wrap:wrap;padding-bottom:0}.tab{flex:1 1 calc(50% - 8px);text-align:center}.preset-group,.action-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%}.preset-btn,.btn{width:100%;min-height:64px;height:auto;padding:10px 8px;font-size:12px;line-height:1.1}.field-center{align-items:stretch;text-align:left}}
+    @media(max-width:760px){.hero h1{font-size:24px}.wrap{padding:14px 12px 26px}.toolbar{grid-template-columns:1fr}.kpi-row{grid-template-columns:1fr}.chart,.chart.sm,.chart.tall{height:250px}.tabs{overflow:visible;flex-wrap:wrap;padding-bottom:0}.tab{flex:1 1 calc(50% - 8px);text-align:center}.preset-group,.action-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}.preset-btn,.btn{width:100%;padding:0 8px}.field-center{align-items:stretch;text-align:left}}
   </style>
 </head>
 <body>
@@ -1251,8 +1251,8 @@ window.__jbAutoInitDisabled = true;
   .toolbar .field:nth-child(2),
   .toolbar .field:nth-child(3){width:150px}
   .toolbar .field:nth-child(4){flex:1 0 420px}
-  .preset-group,.action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%}
-  .preset-btn,.btn{display:inline-flex;align-items:center;justify-content:center;flex:1 1 0;min-width:0;min-height:72px;height:auto;padding:12px 14px;border-radius:24px;text-align:center;white-space:normal;line-height:1.12}
+  .preset-group,.action-group{display:flex !important;flex-wrap:nowrap !important;gap:8px;width:100%}
+  .preset-btn,.btn{flex:1 1 0;min-width:0}
 
   .store-top-shell{margin:10px 0 12px}
   .store-filter-row{
@@ -1315,9 +1315,8 @@ window.__jbAutoInitDisabled = true;
     .toolbar .field:nth-child(2){grid-column:1 / span 3;width:auto}
     .toolbar .field:nth-child(3){grid-column:4 / span 3;width:auto}
     .toolbar .field:nth-child(4){grid-column:1 / -1;flex:unset}
-    .preset-group,.action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%}
-    .field input,.preset-btn,.btn{font-size:11px}
-    .preset-btn,.btn{min-height:64px;height:auto;padding:10px 8px;line-height:1.1;border-radius:22px}
+    .preset-group,.action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
+    .field input,.preset-btn,.btn{height:40px;padding:0 8px;font-size:11px}
     .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
     .kpi-row .kpi:first-child{grid-column:span 2}
     #kpisLoja{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -1796,7 +1795,7 @@ window.__jbAutoInitDisabled = true;
     .toolbar .field:nth-child(1){flex:0 0 340px !important}
     .toolbar .field:nth-child(2),.toolbar .field:nth-child(3){flex:0 0 170px !important}
     .toolbar .field:nth-child(4){flex:1 0 430px !important}
-    .preset-group,.action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:12px !important;width:100% !important;align-items:stretch !important}
+    .preset-group,.action-group{display:flex !important;flex-wrap:nowrap !important;gap:8px !important}
   }
   @media (max-width:760px){
     .toolbar{display:grid !important;grid-template-columns:repeat(6,minmax(0,1fr)) !important;gap:10px !important;overflow:visible !important;padding:10px !important}
@@ -1806,10 +1805,9 @@ window.__jbAutoInitDisabled = true;
     .toolbar .field:nth-child(2){grid-column:1 / -1;grid-row:2}
     .toolbar .field:nth-child(3){grid-column:1 / -1;grid-row:3}
     .toolbar .field:nth-child(4){grid-column:1 / -1;grid-row:4}
-    .preset-group,.action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:10px !important;width:100% !important;align-items:stretch !important}
+    .preset-group,.action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:8px !important;width:100% !important;align-items:stretch !important}
     .preset-group > *, .action-group > *{width:100% !important;min-width:0 !important}
-    .preset-btn,.btn{min-height:64px !important;height:auto !important;padding:10px 8px !important;font-size:11px !important;line-height:1.1 !important;border-radius:22px !important;white-space:normal !important;text-align:center !important}
-    .field input{height:42px !important;padding:0 8px !important;font-size:11px !important}
+    .preset-btn,.btn,.field input{height:42px !important;padding:0 8px !important;font-size:11px !important}
     .field input{font-weight:700 !important}
     #storeButtonsTopFix .store-grid{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:10px !important}
     #storeButtonsTopFix .store-btn{width:100% !important;min-height:44px !important;padding:8px 6px !important;white-space:normal !important;line-height:1.1 !important;text-align:center !important}
@@ -1986,5 +1984,431 @@ window.__jbAutoInitDisabled = true;
   setTimeout(function(){ renderEverything(false); }, 120);
 })();
 </script>
+
+<style id="jb-indexed-query-style">
+  #storeButtonsTopFix{display:block !important}
+  #storeButtonsTopFix .store-grid{display:flex;flex-wrap:wrap;gap:8px}
+  #storeButtonsTopFix .store-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:16px;border:2px solid #d6e2f1;background:#fff;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;white-space:nowrap;transition:.15s ease}
+  #storeButtonsTopFix .store-btn.active{color:#fff !important;box-shadow:0 10px 18px rgba(15,23,42,.12)}
+  #storeButtonsTopFix .store-btn:hover{transform:translateY(-1px)}
+  #kpisLoja,#sec-lojas,#resultLineLightPatch{display:none !important}
+  @media(max-width:760px){
+    #storeButtonsTopFix .store-grid{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:10px !important}
+    #storeButtonsTopFix .store-btn{width:100% !important;min-height:44px !important;padding:8px 6px !important;white-space:normal !important;line-height:1.1 !important;text-align:center !important}
+  }
+</style>
+<script id="jb-indexed-query-script">
+(async function(){
+  if(window.__jbIndexedQueryLoaded) return;
+  window.__jbIndexedQueryLoaded = true;
+
+  const INDEX_ROOT = 'data/vendas-index';
+  const STORES = (typeof STORE_ORDER !== 'undefined' && Array.isArray(STORE_ORDER) && STORE_ORDER.length)
+    ? STORE_ORDER.slice()
+    : ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi'];
+  const STORE_SLUG = Object.fromEntries(STORES.map(name => [name, String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')]));
+  const memoryCache = new Map();
+  let metaCache = null;
+  let appliedStore = window.__jbSelectedStore || null;
+  let pendingStore = appliedStore;
+  let latestRenderToken = 0;
+
+  function brDateSafe(d){ return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
+  function ymdSafe(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function monthKeyOf(date){ return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`; }
+  function monthStart(monthKey){ const [y,m] = String(monthKey).split('-').map(Number); return new Date(y, m - 1, 1); }
+  function monthEnd(monthKey){ const [y,m] = String(monthKey).split('-').map(Number); return new Date(y, m, 0, 23, 59, 59, 999); }
+  function parseDateInput(value, end=false){
+    if(!value) return null;
+    const d = new Date(String(value) + (end ? 'T23:59:59' : 'T00:00:00'));
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  function selectedRangeSafe(){
+    return {
+      from: parseDateInput(document.getElementById('dataInicio')?.value),
+      to: parseDateInput(document.getElementById('dataFim')?.value, true)
+    };
+  }
+  function currentMonthRange(){
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return { from: new Date(today.getFullYear(), today.getMonth(), 1), to: today };
+  }
+  function previousMonthRange(){
+    const now = new Date();
+    return { from: new Date(now.getFullYear(), now.getMonth()-1, 1), to: new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999) };
+  }
+  function yesterdayRange(){
+    const now = new Date();
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate()-1);
+    return { from: d, to: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999) };
+  }
+  function projectionMonthRange(){
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const y = new Date(today); y.setDate(y.getDate()-1);
+    return { from: new Date(today.getFullYear(), today.getMonth(), 1), to: new Date(y.getFullYear(), y.getMonth(), y.getDate(), 23, 59, 59, 999) };
+  }
+  function monthsBetween(from, to){
+    if(!from || !to) return [];
+    const list = [];
+    let y = from.getFullYear(), m = from.getMonth();
+    const ey = to.getFullYear(), em = to.getMonth();
+    while(y < ey || (y === ey && m <= em)){
+      list.push(`${y}-${String(m+1).padStart(2,'0')}`);
+      m += 1;
+      if(m > 11){ m = 0; y += 1; }
+    }
+    return list;
+  }
+  function previousComparableRange(range){
+    if(!range?.from || !range?.to) return { from:null, to:null };
+    const prevFromLast = new Date(range.from.getFullYear(), range.from.getMonth(), 0).getDate();
+    const prevToLast = new Date(range.to.getFullYear(), range.to.getMonth(), 0).getDate();
+    const prevFrom = new Date(range.from.getFullYear(), range.from.getMonth()-1, Math.min(range.from.getDate(), prevFromLast));
+    const prevTo = new Date(range.to.getFullYear(), range.to.getMonth()-1, Math.min(range.to.getDate(), prevToLast), 23, 59, 59, 999);
+    prevFrom.setHours(0,0,0,0);
+    return { from: prevFrom, to: prevTo };
+  }
+  function periodLabel(range){
+    if(!range?.from || !range?.to) return 'Todos os dados';
+    return `${brDateSafe(range.from)} até ${brDateSafe(range.to)}`;
+  }
+  function normalizePackedRow(row){
+    const data = row?.d ? new Date(row.d + 'T12:00:00') : (row?.data ? new Date(row.data) : null);
+    if(!data || Number.isNaN(data.getTime())) return null;
+    return {
+      pedido: String(row?.p ?? row?.pedido ?? ''),
+      data,
+      loja: String(row?.l ?? row?.loja ?? ''),
+      itens: Number(row?.i ?? row?.itens ?? 0),
+      entrega: Number(row?.e ?? row?.entrega ?? 0),
+      desconto: Number(row?.dc ?? row?.desconto ?? 0),
+      acrescimo: Number(row?.a ?? row?.acrescimo ?? 0),
+      total: Number(row?.t ?? row?.total ?? 0),
+      cancelado: Boolean(row?.c ?? row?.cancelado)
+    };
+  }
+  function dedupeRows(rows){
+    const map = new Map();
+    (rows || []).forEach(row => {
+      if(!row || !row.data || Number.isNaN(row.data.getTime())) return;
+      map.set(`${row.pedido || ''}||${row.loja || ''}||${ymdSafe(row.data)}`, row);
+    });
+    return [...map.values()].sort((a,b) => a.data - b.data || String(a.loja).localeCompare(String(b.loja)));
+  }
+  async function fetchJsonCached(url){
+    if(memoryCache.has(url)) return memoryCache.get(url);
+    const promise = fetch(url, { cache:'no-store' }).then(async response => {
+      if(!response.ok) throw new Error(`Falha ao ler ${url}: ${response.status}`);
+      return response.json();
+    }).catch(() => null);
+    memoryCache.set(url, promise);
+    return promise;
+  }
+  async function loadMeta(){
+    if(metaCache) return metaCache;
+    metaCache = await fetchJsonCached(`${INDEX_ROOT}/meta.json`);
+    return metaCache;
+  }
+  function ensureStoreHost(){
+    let host = document.getElementById('storeButtonsTopFix');
+    if(!host){
+      host = document.createElement('div');
+      host.id = 'storeButtonsTopFix';
+      host.innerHTML = '<div class="store-grid"></div>';
+      document.querySelector('.toolbar')?.insertAdjacentElement('afterend', host);
+    }
+    return host;
+  }
+  function paintStoreButtons(){
+    const host = ensureStoreHost();
+    const grid = host.querySelector('.store-grid');
+    if(!grid) return;
+    grid.innerHTML = STORES.map(store => {
+      const color = typeof colorOf === 'function' ? colorOf(store) : '#33507c';
+      const active = appliedStore === store;
+      const style = active ? `background:${color};border-color:${color};color:#fff;` : `background:#fff;border-color:${color};color:${color};`;
+      return `<button type="button" class="store-btn ${active ? 'active' : ''}" data-store-index="${store}" style="${style}">${store}</button>`;
+    }).join('');
+    grid.querySelectorAll('[data-store-index]').forEach(btn => btn.addEventListener('click', async ev => {
+      ev.preventDefault();
+      const store = btn.dataset.storeIndex;
+      appliedStore = appliedStore === store ? null : store;
+      pendingStore = appliedStore;
+      window.__jbSelectedStore = appliedStore;
+      paintStoreButtons();
+      await loadAndRender({ scroll:true });
+    }));
+  }
+  function showGeneralOnly(){
+    document.getElementById('resultLineLightPatch')?.remove();
+    const geral = document.getElementById('sec-geral');
+    const proj = document.getElementById('sec-projecao');
+    const lojas = document.getElementById('sec-lojas');
+    const diario = document.getElementById('sec-diario');
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab.dataset.tab === 'geral'));
+    if(geral){ geral.classList.add('active'); geral.style.display = 'block'; }
+    if(proj){ proj.style.display = 'none'; proj.classList.remove('active'); }
+    if(lojas){ lojas.style.display = 'none'; lojas.classList.remove('active'); }
+    if(diario){ diario.style.display = 'none'; diario.classList.remove('active'); }
+  }
+  function setDateRange(from, to, activePreset = null){
+    const fromEl = document.getElementById('dataInicio');
+    const toEl = document.getElementById('dataFim');
+    if(fromEl) fromEl.value = ymdSafe(from);
+    if(toEl) toEl.value = ymdSafe(to);
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.toggle('active', !!activePreset && btn.dataset.preset === activePreset));
+    window.activePreset = activePreset || 'custom';
+  }
+  function filterRows(range, storeName){
+    return (window.rowsBase || []).filter(row => {
+      if(row.cancelado) return false;
+      if(range?.from && row.data < range.from) return false;
+      if(range?.to && row.data > range.to) return false;
+      if(storeName && row.loja !== storeName) return false;
+      return true;
+    });
+  }
+  function summarizeRows(rows){
+    const byStore = new Map();
+    (rows || []).forEach(row => {
+      if(row.cancelado) return;
+      const current = byStore.get(row.loja) || { loja: row.loja, pedidos:0, faturamento:0, desconto:0, entrega:0 };
+      current.pedidos += 1;
+      current.faturamento += Number(row.total || 0);
+      current.desconto += Number(row.desconto || 0);
+      current.entrega += Number(row.entrega || 0);
+      byStore.set(row.loja, current);
+    });
+    const stores = STORES.map(loja => byStore.get(loja) || { loja, pedidos:0, faturamento:0, desconto:0, entrega:0 });
+    const pedidos = stores.reduce((sum,row) => sum + row.pedidos, 0);
+    const faturamento = Number(stores.reduce((sum,row) => sum + row.faturamento, 0).toFixed(2));
+    const desconto = Number(stores.reduce((sum,row) => sum + row.desconto, 0).toFixed(2));
+    const entrega = Number(stores.reduce((sum,row) => sum + row.entrega, 0).toFixed(2));
+    return {
+      stores,
+      pedidos,
+      faturamento,
+      desconto,
+      entrega,
+      ticket: pedidos ? faturamento / pedidos : 0
+    };
+  }
+  function compareBadge(current, previous){
+    if(!previous) return '<span class="badge flat">sem base</span>';
+    const delta = ((current / previous) - 1) * 100;
+    if(!isFinite(delta) || Math.abs(delta) < 0.05) return '<span class="badge flat">estável</span>';
+    return delta >= 0
+      ? `<span class="badge up">▲ ${fmtPct(Math.abs(delta))}</span>`
+      : `<span class="badge down">▼ ${fmtPct(Math.abs(delta))}</span>`;
+  }
+  function projectionCard(range, currentRevenue, previousRevenue){
+    if(!range?.from || !range?.to) return { label:'Projeção do mês', value:'—', sub:'Período inválido', compare:'<span class="badge flat">sem base</span>' };
+    const lastDay = new Date(range.from.getFullYear(), range.from.getMonth()+1, 0).getDate();
+    const elapsed = Math.max(1, Math.round((new Date(range.to.getFullYear(), range.to.getMonth(), range.to.getDate()) - new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate())) / 86400000) + 1);
+    const projected = elapsed ? currentRevenue / elapsed * lastDay : 0;
+    return {
+      label: 'Projeção de faturamento mensal',
+      value: fmtMoney.format(projected),
+      sub: `${elapsed} de ${lastDay} dias no período`,
+      compare: compareBadge(currentRevenue, previousRevenue)
+    };
+  }
+  async function loadMonthRows(monthKey, storeName = null){
+    const meta = await loadMeta();
+    if(!meta || !monthKey) return [];
+    let rel = null;
+    if(storeName){
+      const slug = STORE_SLUG[storeName];
+      rel = meta?.files?.by_store?.[slug]?.[monthKey] || `${INDEX_ROOT}/stores/${slug}/${monthKey}.json`;
+    } else {
+      rel = meta?.files?.all_months?.[monthKey] || `${INDEX_ROOT}/months/${monthKey}.json`;
+    }
+    const payload = await fetchJsonCached(rel);
+    return Array.isArray(payload?.rows) ? payload.rows.map(normalizePackedRow).filter(Boolean) : [];
+  }
+  async function loadInitialRows(){
+    const meta = await loadMeta();
+    if(!meta) return [];
+    const currentPayload = await fetchJsonCached(meta?.files?.current?.current_all || `${INDEX_ROOT}/current/current-all.json`);
+    const previousPayload = await fetchJsonCached(meta?.files?.current?.previous_all || `${INDEX_ROOT}/current/previous-all.json`);
+    const rows = [
+      ...(Array.isArray(currentPayload?.rows) ? currentPayload.rows : []),
+      ...(Array.isArray(previousPayload?.rows) ? previousPayload.rows : [])
+    ].map(normalizePackedRow).filter(Boolean);
+    window.rowsBase = dedupeRows(rows);
+    return window.rowsBase;
+  }
+  async function ensureRangeLoaded(range, storeName = null){
+    const compare = previousComparableRange(range);
+    const neededMonths = [...new Set([
+      ...monthsBetween(range?.from, range?.to),
+      ...monthsBetween(compare?.from, compare?.to)
+    ])];
+    const rows = [];
+    for(const mk of neededMonths){
+      const part = await loadMonthRows(mk, storeName);
+      rows.push(...part);
+    }
+    window.rowsBase = dedupeRows(rows);
+    return window.rowsBase;
+  }
+  function resizeChartsSafe(){
+    clearTimeout(window.__jbIndexedResizeTimer);
+    window.__jbIndexedResizeTimer = setTimeout(() => {
+      try{
+        Object.values(charts || {}).forEach(chart => { try { chart.resize(); chart.update('none'); } catch(err){} });
+      }catch(err){}
+    }, 60);
+  }
+  function renderSummary(range){
+    const currentRows = filterRows(range, appliedStore);
+    const previousRows = filterRows(previousComparableRange(range), appliedStore);
+    const current = summarizeRows(currentRows);
+    const previous = summarizeRows(previousRows);
+    const projection = projectionCard(range, current.faturamento, previous.faturamento);
+    const subtitleStore = appliedStore || 'Todas as lojas';
+
+    document.getElementById('kpisGeral').innerHTML = `
+      <div class="kpi green"><div class="label">Faturamento total</div><div class="value">${fmtMoney.format(current.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${compareBadge(current.faturamento, previous.faturamento)}</span></div></div>
+      <div class="kpi blue"><div class="label">Total de pedidos</div><div class="value">${fmtInt.format(current.pedidos)}</div><div class="sub"><span>${subtitleStore}</span><span>${compareBadge(current.pedidos, previous.pedidos)}</span></div></div>
+      <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(current.ticket)}</div><div class="sub"><span>Por pedido</span><span>${compareBadge(current.ticket, previous.ticket)}</span></div></div>
+      <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(current.desconto)}</div><div class="sub"><span>${current.faturamento ? fmtPct(current.desconto/current.faturamento*100) : '0,0%'}</span><span>${compareBadge(current.desconto, previous.desconto)}</span></div></div>
+      <div class="kpi purple"><div class="label">${projection.label}</div><div class="value">${projection.value}</div><div class="sub"><span>${projection.sub}</span><span>${projection.compare}</span></div></div>`;
+
+    const stores = summarizeRows(currentRows).stores.filter(store => appliedStore ? store.loja === appliedStore : (store.pedidos > 0 || store.faturamento > 0 || store.desconto > 0 || store.entrega > 0));
+    if(typeof destroyCharts === 'function') destroyCharts();
+    draw('chartFatLoja','bar',{labels:stores.map(s=>s.loja),datasets:[{label:'Faturamento',data:stores.map(s=>s.faturamento),backgroundColor:stores.map(s=>(typeof colorOf === 'function' ? colorOf(s.loja) : '#5b8def') + 'cc'),borderColor:stores.map(s=>typeof colorOf === 'function' ? colorOf(s.loja) : '#5b8def'),borderWidth:1.5,borderRadius:8}]},{plugins:{legend:{display:false}}});
+    draw('chartPedLoja','bar',{labels:stores.map(s=>s.loja),datasets:[{label:'Pedidos',data:stores.map(s=>s.pedidos),backgroundColor:stores.map(s=>(typeof colorOf === 'function' ? colorOf(s.loja) : '#5b8def') + 'aa'),borderColor:stores.map(s=>typeof colorOf === 'function' ? colorOf(s.loja) : '#5b8def'),borderWidth:1.5,borderRadius:8}]},{plugins:{legend:{display:false}}});
+    draw('chartDescLoja','bar',{labels:stores.map(s=>s.loja),datasets:[{label:'Descontos',data:stores.map(s=>s.desconto),backgroundColor:stores.map(s=>(typeof colorOf === 'function' ? colorOf(s.loja) : '#ef4444') + 'aa'),borderColor:stores.map(s=>typeof colorOf === 'function' ? colorOf(s.loja) : '#ef4444'),borderWidth:1.5,borderRadius:8}]},{plugins:{legend:{display:false}}});
+    draw('chartEntregaLoja','bar',{labels:stores.map(s=>s.loja),datasets:[{label:'Entrega',data:stores.map(s=>s.entrega),backgroundColor:stores.map(s=>(typeof colorOf === 'function' ? colorOf(s.loja) : '#7c3aed') + '99'),borderColor:stores.map(s=>typeof colorOf === 'function' ? colorOf(s.loja) : '#7c3aed'),borderWidth:1.5,borderRadius:8}]},{plugins:{legend:{display:false}}});
+
+    const previousMap = new Map(summarizeRows(previousRows).stores.map(store => [store.loja, store]));
+    const head = document.querySelector('#sec-geral thead tr');
+    if(head) head.innerHTML = '<th>Loja</th><th>Pedidos</th><th>Faturamento</th><th>Ticket Médio</th><th>Descontos</th><th>Entrega</th><th>% vs período anterior</th>';
+    document.getElementById('tbodyResumo').innerHTML = stores.map(store => {
+      const base = previousMap.get(store.loja) || { faturamento:0 };
+      return `<tr><td><span class="store-name-strong">${store.loja}</span></td><td>${fmtInt.format(store.pedidos)}</td><td><span class="money-green">${fmtMoney.format(store.faturamento)}</span></td><td>${fmtMoney.format(store.pedidos ? store.faturamento/store.pedidos : 0)}</td><td><span class="money-red">${fmtMoney.format(store.desconto)}</span></td><td><span class="money-blue">${fmtMoney.format(store.entrega)}</span></td><td>${compareBadge(store.faturamento, base.faturamento)}</td></tr>`;
+    }).join('') || '<tr><td colspan="7" class="empty">Sem dados no período selecionado.</td></tr>';
+    const foot = document.getElementById('footResumo');
+    if(foot) foot.textContent = `${subtitleStore} · consulta indexada por mês/loja · comparação com faixa equivalente do mês anterior.`;
+  }
+  async function loadAndRender(options = {}){
+    const token = ++latestRenderToken;
+    const range = selectedRangeSafe();
+    if(!range?.from || !range?.to) return;
+    await ensureRangeLoaded(range, appliedStore || null);
+    if(token !== latestRenderToken) return;
+    showGeneralOnly();
+    paintStoreButtons();
+    renderSummary(range);
+    resizeChartsSafe();
+    if(options.scroll){
+      document.getElementById('storeButtonsTopFix')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+  }
+  function cloneAndReplace(element){
+    if(!element) return null;
+    const clone = element.cloneNode(true);
+    element.replaceWith(clone);
+    return clone;
+  }
+  function bindControls(){
+    const btnAplicar = cloneAndReplace(document.getElementById('btnAplicar'));
+    const btnLimpar = cloneAndReplace(document.getElementById('btnLimpar'));
+    const btnProjecao = cloneAndReplace(document.getElementById('btnProjecao'));
+    const dataInicio = cloneAndReplace(document.getElementById('dataInicio'));
+    const dataFim = cloneAndReplace(document.getElementById('dataFim'));
+    const presetButtons = [...document.querySelectorAll('.preset-btn')].map(cloneAndReplace);
+    document.querySelectorAll('.tab').forEach(tab => {
+      const clone = cloneAndReplace(tab);
+      clone.addEventListener('click', ev => {
+        ev.preventDefault();
+        showGeneralOnly();
+      }, true);
+    });
+
+    btnAplicar?.addEventListener('click', async ev => {
+      ev.preventDefault();
+      appliedStore = pendingStore;
+      window.__jbSelectedStore = appliedStore;
+      await loadAndRender({ scroll:true });
+    }, true);
+
+    btnLimpar?.addEventListener('click', async ev => {
+      ev.preventDefault();
+      const range = currentMonthRange();
+      setDateRange(range.from, range.to, 'mes_atual');
+      await loadAndRender({ scroll:true });
+    }, true);
+
+    btnProjecao?.addEventListener('click', async ev => {
+      ev.preventDefault();
+      appliedStore = pendingStore;
+      window.__jbSelectedStore = appliedStore;
+      const range = projectionMonthRange();
+      setDateRange(range.from, range.to, null);
+      await loadAndRender({ scroll:true });
+    }, true);
+
+    presetButtons.forEach(btn => btn?.addEventListener('click', ev => {
+      ev.preventDefault();
+      const preset = btn.dataset.preset;
+      if(preset === 'mes_atual'){
+        const range = currentMonthRange();
+        setDateRange(range.from, range.to, 'mes_atual');
+      } else if(preset === 'mes_anterior'){
+        const range = previousMonthRange();
+        setDateRange(range.from, range.to, 'mes_anterior');
+      } else if(preset === 'ontem'){
+        const range = yesterdayRange();
+        setDateRange(range.from, range.to, 'ontem');
+      }
+    }, true));
+
+    dataInicio?.addEventListener('change', () => {
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+      const from = parseDateInput(dataInicio.value);
+      const to = parseDateInput(dataFim?.value, true);
+      if(from && (!to || from.getMonth() !== to.getMonth() || from.getFullYear() !== to.getFullYear())){
+        dataFim.value = ymdSafe(new Date(from.getFullYear(), from.getMonth()+1, 0));
+      }
+      window.activePreset = 'custom';
+    });
+    dataFim?.addEventListener('change', () => {
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+      window.activePreset = 'custom';
+    });
+  }
+
+  const meta = await loadMeta();
+  const initialMonth = meta?.latest_month || monthKeyOf(new Date());
+  const initialRange = currentMonthRange();
+  if(initialMonth && initialMonth !== monthKeyOf(new Date())){
+    setDateRange(monthStart(initialMonth), monthEnd(initialMonth), null);
+  } else {
+    setDateRange(initialRange.from, initialRange.to, 'mes_atual');
+  }
+
+  showGeneralOnly();
+  paintStoreButtons();
+  bindControls();
+  await loadInitialRows();
+  await loadAndRender({ scroll:false });
+
+  window.loadBase = async function(){
+    return ensureRangeLoaded(selectedRangeSafe(), appliedStore || null);
+  };
+  window.renderAll = async function(){
+    return loadAndRender({ scroll:false });
+  };
+  window.renderProjection = function(){ return loadAndRender({ scroll:false }); };
+  window.renderStoreSection = function(){ return loadAndRender({ scroll:false }); };
+  window.renderDailySection = function(){ return loadAndRender({ scroll:false }); };
+  window.showTab = function(){ showGeneralOnly(); };
+})();
+</script>
+
 </body>
 </html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload de Faturamento Indexado</title>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://maikon-just.github.io/just-burger-producao/js/firebase_v2.js?v=20260418"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#f6f8fc; --bg2:#eef4ff; --card:#ffffff; --line:#dbe5f1; --line2:#c9d8ee;
+      --text:#1e293b; --muted:#64748b; --brand:#5b8def; --brand2:#7a9bf8;
+      --green:#16a34a; --red:#ef4444; --yellow:#d97706; --blue:#2563eb; --purple:#7c3aed;
+      --shadow:0 16px 38px rgba(15,23,42,.08); --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{font-family:'Montserrat',system-ui,sans-serif;background:linear-gradient(180deg,#f8fbff 0%,#f3f7fc 100%);color:var(--text)}
+    .bg{position:fixed;inset:0;pointer-events:none;background:
+      radial-gradient(circle at 10% 12%, rgba(91,141,239,.10), transparent 26%),
+      radial-gradient(circle at 88% 8%, rgba(122,155,248,.08), transparent 20%),
+      radial-gradient(circle at 76% 72%, rgba(34,197,94,.07), transparent 18%)}
+    .wrap{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:20px 16px 38px}
+    .hero{background:linear-gradient(135deg,#dcecff 0%,#eef5ff 52%,#f9fbff 100%);border:1px solid var(--line2);border-radius:24px;padding:20px 22px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+    .hero h1{margin:0;font-size:30px;line-height:1.04;font-weight:800;letter-spacing:-.03em;color:#16325c}
+    .hero p{margin:8px 0 0;color:#4b5d79;font-weight:600}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
+    .panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .panel h2{margin:0 0 14px;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#334155}
+    .company-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .company-card{border:2px solid #d6e2f1;border-radius:18px;background:#fff;padding:12px;cursor:pointer;transition:.15s ease;min-height:88px;display:flex;flex-direction:column;justify-content:center;gap:6px}
+    .company-card:hover{transform:translateY(-1px)}
+    .company-card.active{color:#fff;box-shadow:0 12px 22px rgba(15,23,42,.12)}
+    .company-title{font-size:13px;font-weight:800}
+    .company-sub{font-size:11px;font-weight:700;opacity:.88}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+    .field label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#4b5d79}
+    .field input,.field textarea,.field select{width:100%;min-height:44px;border:1px solid #d6e2f1;border-radius:12px;padding:10px 12px;background:#fbfdff;color:#0f172a;font:700 13px Montserrat,system-ui,sans-serif;outline:none}
+    .field textarea{min-height:96px;resize:vertical}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .btn{height:44px;padding:0 16px;border-radius:12px;border:1px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;transition:.15s ease}
+    .btn.primary{background:linear-gradient(135deg,#5f91ee 0%,#7ba0f8 100%);border-color:#6d97ef;color:#fff;box-shadow:0 8px 20px rgba(95,145,238,.20)}
+    .btn.success{background:linear-gradient(135deg,#10b981 0%,#34d399 100%);border-color:#10b981;color:#fff;box-shadow:0 8px 20px rgba(16,185,129,.20)}
+    .btn:hover{transform:translateY(-1px)}
+    .dropzone{border:2px dashed #bfd4fb;border-radius:18px;padding:18px;background:#f8fbff}
+    .dropzone strong{display:block;margin-bottom:8px;color:#16325c}
+    .muted{color:var(--muted);font-size:12px;font-weight:600}
+    .kpi-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .kpi{padding:14px;border-radius:16px;border:1px solid #d9e5f4;background:linear-gradient(180deg,#fff 0%,#fbfdff 100%)}
+    .kpi .label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#64748b;margin-bottom:8px}
+    .kpi .value{font-size:26px;font-weight:800;line-height:1.02;letter-spacing:-.03em;color:#0f172a}
+    .kpi .sub{margin-top:8px;font-size:12px;font-weight:700;color:#64748b}
+    .log{border:1px solid #dbe5f1;border-radius:16px;background:#fbfdff;max-height:360px;overflow:auto;padding:12px;font-size:12px;font-weight:600;line-height:1.55;white-space:pre-wrap}
+    .tag{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800;background:#eef4ff;border:1px solid #dbe5f1;color:#334155}
+    .stack{display:flex;gap:8px;flex-wrap:wrap}
+    @media(max-width:960px){.grid{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:760px){.wrap{padding:14px 12px 26px}.hero h1{font-size:24px}.company-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid,.kpi-row{grid-template-columns:1fr}.actions{display:grid;grid-template-columns:1fr 1fr}.btn{width:100%}}
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>📥 Upload de Faturamento Indexado</h1>
+        <p>Importa arquivos diários para uma base única no Firebase, separada por empresa e mês, sem duplicar linhas.</p>
+      </div>
+      <div class="stack">
+        <span class="tag">Base única</span>
+        <span class="tag">Deduplicação por chave</span>
+        <span class="tag">Consulta por empresa + mês</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Empresa e ingestão</h2>
+        <div id="companyGrid" class="company-grid"></div>
+        <div class="form-grid" style="margin-top:14px">
+          <div class="field">
+            <label>Nome exibido</label>
+            <input id="displayName" type="text" placeholder="Nome visual da empresa" />
+          </div>
+          <div class="field">
+            <label>Mês de consulta</label>
+            <input id="searchMonth" type="month" />
+          </div>
+        </div>
+        <div class="dropzone" style="margin-top:14px">
+          <strong>Arquivos de faturamento</strong>
+          <div class="muted">Selecione XLSX, XLS, CSV ou TXT. A leitura é local no navegador; o upload envia somente linhas normalizadas.</div>
+          <div class="field" style="margin-top:10px">
+            <input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.txt" multiple />
+          </div>
+          <div id="fileList" class="muted" style="margin-top:8px">Nenhum arquivo selecionado.</div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="btnBuscar">Buscar mês/empresa</button>
+          <button class="btn success" id="btnImportar">Importar arquivos</button>
+        </div>
+        <div class="muted" style="margin-top:10px">Trocar o nome exibido não muda a chave de busca. A consulta só roda quando você clicar em <strong>Buscar mês/empresa</strong>.</div>
+      </section>
+
+      <section class="panel">
+        <h2>Resumo da base indexada</h2>
+        <div class="kpi-row" id="summaryCards">
+          <div class="kpi"><div class="label">Empresa selecionada</div><div class="value" id="sumEmpresa">—</div><div class="sub">chave de busca fixa</div></div>
+          <div class="kpi"><div class="label">Mês consultado</div><div class="value" id="sumMes">—</div><div class="sub">sem consulta ainda</div></div>
+          <div class="kpi"><div class="label">Linhas encontradas</div><div class="value" id="sumLinhas">0</div><div class="sub">na base indexada</div></div>
+          <div class="kpi"><div class="label">Última atualização</div><div class="value" id="sumAtualizado" style="font-size:18px">—</div><div class="sub">metadados da empresa</div></div>
+        </div>
+        <div class="panel" style="margin-top:14px;padding:14px;border-radius:16px;background:#f8fbff">
+          <div style="font-size:12px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Log</div>
+          <div id="log" class="log">Pronto para buscar/importar.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const COMPANY_ORDER = [
+      { key:'burger-matriz', source:'Burger Matriz', color:'#7c3aed' },
+      { key:'burger-abc', source:'Burger ABC', color:'#f97316' },
+      { key:'burger-gru', source:'Burger GRU', color:'#eab308' },
+      { key:'gourmet', source:'Gourmet', color:'#0ea5e9' },
+      { key:'aham-forneria', source:'Aham Forneria', color:'#16a34a' },
+      { key:'aham-sushi', source:'Aham Sushi', color:'#e11d48' }
+    ];
+    const INDEX_ROOT = 'vendas_indexadas';
+    let selectedCompany = COMPANY_ORDER[0];
+
+    function qs(id){ return document.getElementById(id); }
+    function nowMonthValue(){
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    }
+    function ymd(d){
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    function slugify(v=''){
+      return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    }
+    function moneyNumber(v){
+      if(v == null || v === '') return 0;
+      if(typeof v === 'number') return Number.isFinite(v) ? v : 0;
+      let s = String(v).trim().replace(/\s+/g,'').replace(/R\$/g,'');
+      if(!s) return 0;
+      const hasComma = s.includes(',');
+      const hasDot = s.includes('.');
+      if(hasComma && hasDot){
+        if(s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g,'').replace(',', '.');
+        else s = s.replace(/,/g,'');
+      } else if(hasComma){
+        s = s.replace(/\./g,'').replace(',', '.');
+      } else {
+        s = s.replace(/,/g,'');
+      }
+      s = s.replace(/[^0-9.-]/g,'');
+      const n = Number(s);
+      return Number.isFinite(n) ? n : 0;
+    }
+    function parseDateFlex(value){
+      if(value == null || value === '') return null;
+      if(value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+      if(typeof value === 'number'){
+        const epoch = new Date(Math.round((value - 25569) * 86400 * 1000));
+        return Number.isNaN(epoch.getTime()) ? null : epoch;
+      }
+      const s = String(value).trim();
+      let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+      if(m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+      m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if(m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      m = s.match(/^(\d{2})-(\d{2})-(\d{4})/);
+      if(m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+      const d = new Date(s);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    function detectDate(row){
+      return parseDateFlex(row['Data da venda'] || row['Data'] || row['Data da Venda'] || row['data'] || row['date']);
+    }
+    function hashString(str){
+      let h = 2166136261;
+      for(let i = 0; i < str.length; i += 1){
+        h ^= str.charCodeAt(i);
+        h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+      }
+      return (h >>> 0).toString(36);
+    }
+    function monthKey(date){
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+    }
+    function appendLog(msg){
+      const ts = new Date().toLocaleString('pt-BR');
+      qs('log').textContent = `[${ts}] ${msg}\n` + qs('log').textContent;
+    }
+    function setSummary({ empresa='—', mes='—', linhas='0', atualizado='—' } = {}){
+      qs('sumEmpresa').textContent = empresa;
+      qs('sumMes').textContent = mes;
+      qs('sumLinhas').textContent = linhas;
+      qs('sumAtualizado').textContent = atualizado;
+    }
+    function renderCompanies(){
+      qs('companyGrid').innerHTML = COMPANY_ORDER.map(company => {
+        const active = selectedCompany.key === company.key;
+        const style = active ? `background:${company.color};border-color:${company.color};color:#fff;` : `background:#fff;border-color:${company.color};color:${company.color};`;
+        return `<button type="button" class="company-card ${active ? 'active' : ''}" data-company="${company.key}" style="${style}"><span class="company-title">${company.source}</span><span class="company-sub">chave ${company.key}</span></button>`;
+      }).join('');
+      qs('companyGrid').querySelectorAll('[data-company]').forEach(btn => btn.addEventListener('click', () => {
+        selectedCompany = COMPANY_ORDER.find(item => item.key === btn.dataset.company) || COMPANY_ORDER[0];
+        qs('displayName').value = selectedCompany.source;
+        renderCompanies();
+        setSummary({ empresa: selectedCompany.source, mes: qs('searchMonth').value || '—', linhas: qs('sumLinhas').textContent, atualizado: qs('sumAtualizado').textContent });
+      }));
+    }
+    function readWorkbookRows(file, data){
+      const wb = XLSX.read(data, { type: 'array' });
+      const rows = [];
+      for(const name of wb.SheetNames){
+        const sheet = wb.Sheets[name];
+        rows.push(...XLSX.utils.sheet_to_json(sheet, { defval:'' }));
+      }
+      return rows;
+    }
+    async function parseFiles(files){
+      const normalized = [];
+      for(const file of files){
+        const ext = (file.name.split('.').pop() || '').toLowerCase();
+        let rows = [];
+        if(ext === 'csv' || ext === 'txt'){
+          const text = await file.text();
+          const wb = XLSX.read(text, { type:'string' });
+          for(const name of wb.SheetNames){
+            rows.push(...XLSX.utils.sheet_to_json(wb.Sheets[name], { defval:'' }));
+          }
+        } else {
+          const data = await file.arrayBuffer();
+          rows = readWorkbookRows(file, data);
+        }
+        appendLog(`${file.name}: ${rows.length} linhas lidas.`);
+        rows.forEach((row, index) => {
+          const dataVenda = detectDate(row);
+          if(!dataVenda) return;
+          const pedido = row['Id do pedido no parceiro'] || row['Número do pedido no parceiro'] || row['Pedido'] || `${file.name}_${index}`;
+          const keyBase = [selectedCompany.key, ymd(dataVenda), pedido, moneyNumber(row['Total'])].join('|');
+          normalized.push({
+            rowKey: hashString(keyBase),
+            monthKey: monthKey(dataVenda),
+            row: {
+              p: String(pedido),
+              d: ymd(dataVenda),
+              l: selectedCompany.source,
+              i: Number(moneyNumber(row['Itens']).toFixed(2)),
+              e: Number(moneyNumber(row['Entrega']).toFixed(2)),
+              dc: Number(moneyNumber(row['Desconto']).toFixed(2)),
+              a: Number(moneyNumber(row['Acréscimo'] || row['Acrescimo']).toFixed(2)),
+              t: Number(moneyNumber(row['Total']).toFixed(2)),
+              c: /^S$/i.test(String(row['Está cancelado'] || row['Esta cancelado'] || row['Cancelado'] || '').trim()) ? 1 : 0
+            }
+          });
+        });
+      }
+      return normalized;
+    }
+    async function buscarEmpresaMes(){
+      const month = qs('searchMonth').value || nowMonthValue();
+      const companyKey = selectedCompany.key;
+      const ref = fbDB_v2.ref(`${INDEX_ROOT}/companies/${companyKey}/months/${month}`);
+      const snap = await ref.once('value');
+      const payload = snap.val() || {};
+      const rowCount = Object.keys(payload.rows || {}).length;
+      const updatedAt = payload.updated_at ? new Date(payload.updated_at).toLocaleString('pt-BR') : 'sem atualização';
+      setSummary({ empresa: qs('displayName').value || selectedCompany.source, mes: month, linhas: String(rowCount), atualizado: updatedAt });
+      appendLog(`Consulta executada para ${companyKey} em ${month}: ${rowCount} linhas.`);
+    }
+    async function importarArquivos(){
+      const files = [...(qs('fileInput').files || [])];
+      if(!files.length){
+        appendLog('Selecione pelo menos um arquivo antes de importar.');
+        return;
+      }
+      const displayName = (qs('displayName').value || selectedCompany.source).trim();
+      const rows = await parseFiles(files);
+      if(!rows.length){
+        appendLog('Nenhuma linha válida foi encontrada nos arquivos.');
+        return;
+      }
+      const updates = {};
+      const monthsTouched = new Set();
+      rows.forEach(item => {
+        monthsTouched.add(item.monthKey);
+        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/source_name`] = selectedCompany.source;
+        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/display_name`] = displayName;
+        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/updated_at`] = Date.now();
+        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${item.monthKey}/updated_at`] = Date.now();
+        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${item.monthKey}/rows/${item.rowKey}`] = item.row;
+        updates[`${INDEX_ROOT}/months/${item.monthKey}/updated_at`] = Date.now();
+        updates[`${INDEX_ROOT}/months/${item.monthKey}/rows/${selectedCompany.key}_${item.rowKey}`] = item.row;
+        updates[`${INDEX_ROOT}/months/${item.monthKey}/companies/${selectedCompany.key}`] = {
+          source_name: selectedCompany.source,
+          display_name: displayName,
+          updated_at: Date.now()
+        };
+        updates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}`] = {
+          source_name: selectedCompany.source,
+          display_name: displayName,
+          updated_at: Date.now()
+        };
+        updates[`${INDEX_ROOT}/meta/months/${item.monthKey}`] = {
+          updated_at: Date.now()
+        };
+      });
+      const uploadId = `${selectedCompany.key}_${Date.now()}`;
+      updates[`${INDEX_ROOT}/uploads/${uploadId}`] = {
+        company_key: selectedCompany.key,
+        source_name: selectedCompany.source,
+        display_name: displayName,
+        file_count: files.length,
+        row_count: rows.length,
+        months: [...monthsTouched],
+        created_at: Date.now()
+      };
+      updates[`${INDEX_ROOT}/meta/last_upload`] = {
+        company_key: selectedCompany.key,
+        display_name: displayName,
+        file_count: files.length,
+        row_count: rows.length,
+        months: [...monthsTouched],
+        updated_at: Date.now()
+      };
+
+      await fbDB_v2.ref().update(updates);
+      appendLog(`Upload concluído: ${rows.length} linhas normalizadas em ${monthsTouched.size} mês(es). Duplicatas não se acumulam porque a chave é determinística.`);
+      await buscarEmpresaMes();
+    }
+
+    qs('searchMonth').value = nowMonthValue();
+    qs('displayName').value = selectedCompany.source;
+    renderCompanies();
+    setSummary({ empresa: selectedCompany.source, mes: qs('searchMonth').value, linhas:'0', atualizado:'—' });
+
+    qs('fileInput').addEventListener('change', () => {
+      const files = [...(qs('fileInput').files || [])];
+      qs('fileList').textContent = files.length ? files.map(file => `${file.name} (${Math.round(file.size/1024)} KB)`).join(' · ') : 'Nenhum arquivo selecionado.';
+    });
+    qs('btnBuscar').addEventListener('click', buscarEmpresaMes);
+    qs('btnImportar').addEventListener('click', importarArquivos);
+  </script>
+</body>
+</html>
