@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "month_key": null,
+  "scope": "all",
+  "row_count": 0,
+  "generated_at": "2026-04-18T05:40:04.701Z",
+  "aggregates": {
+    "by_store": [],
+    "by_day": [],
+    "totals": {
+      "pedidos": 0,
+      "faturamento": 0,
+      "desconto": 0,
+      "entrega": 0,
+      "ticket": 0
+    }
+  },
+  "rows": []
+}
