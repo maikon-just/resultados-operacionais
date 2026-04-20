@@ -26,7 +26,7 @@
       radial-gradient(circle at 76% 72%, rgba(34,197,94,.07), transparent 18%)}
     .wrap{position:relative;z-index:1;max-width:1580px;margin:0 auto;padding:20px 28px 38px}
     /* tabelas agrupadas side-by-side */
-    .tables-group{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+    .tables-group{display:flex;flex-direction:column;gap:16px;margin-bottom:18px}
     .hero{background:linear-gradient(135deg,#dcecff 0%,#eef5ff 52%,#f9fbff 100%);border:1px solid var(--line2);border-radius:24px;padding:20px 22px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
     .hero h1{margin:0;font-size:30px;line-height:1.04;font-weight:800;letter-spacing:-.03em;color:#16325c}
     .hero p{display:none}
@@ -83,7 +83,7 @@
     .card h3{margin:0 0 14px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#334155}
     .chart{height:320px}.chart.sm{height:260px}.chart.tall{height:360px}
     .table-wrap{overflow:auto;border-radius:16px;border:1px solid #dbe5f1;background:#fff}
-    table{width:100%;border-collapse:separate;border-spacing:0;min-width:930px}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:700px}
     th,td{padding:13px 14px;border-bottom:1px solid #e7eef7;font-size:13px;white-space:nowrap}
     th{position:sticky;top:0;background:#334155;color:#fff;text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;font-weight:800}
     td{font-weight:600;color:#1f2937;background:#fff}
@@ -100,7 +100,7 @@
     .footer-note{margin-top:10px;font-size:12px;font-weight:700;color:#64748b}
     .finance-ranking-card h3{margin-bottom:12px}
     .finance-ranking-wrap{border-radius:18px;overflow:auto;background:#fff;border:1px solid #dde6f2}
-    .finance-ranking-table{min-width:980px}
+    .finance-ranking-table{min-width:700px}
     .finance-ranking-table thead th{background:#37465c;color:#fff}
     .finance-ranking-table tbody td{vertical-align:middle}
     .rank-badge{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:#5b9cf6;color:#fff;font-size:10px;font-weight:800}
@@ -129,12 +129,12 @@
       .kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}
       .grid-2,.grid-3{grid-template-columns:1fr}
       .toolbar{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-      .tables-group{grid-template-columns:1fr}
     }
     @media(max-width:760px){
       .hero h1{font-size:22px}
       .wrap{padding:12px 14px 24px}
-      .tables-group{grid-template-columns:1fr}
+      /* tabelas: scroll interno, sem empurrar página */
+      .table-wrap,.finance-ranking-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
       /* toolbar: 1 coluna, cada field ocupa linha inteira */
       .toolbar{grid-template-columns:1fr!important;gap:10px}
       /* preset: 3 botões por linha */
@@ -321,7 +321,6 @@
     </div>
 
     <!-- ── Por loja ── -->
-    <div class="store-pills" id="storePills"></div>
     <div class="grid-2">
       <div class="panel card">
         <h3>Faturamento diário da loja</h3>
@@ -775,15 +774,18 @@
   /* ── Render: por loja ───────────────────────────────────── */
   function renderLojas(allRows, range){
     const store = activeStore || storesList[0];
-    // pills
-    document.getElementById('storePills').innerHTML = storesList.map(s=>{
-      const col=colorOf(s), active=s===store;
-      const style=active?`background:${col};border-color:${col};color:#fff`:`border-color:${col};color:${col}`;
-      return `<button class="store-pill${active?' active':''}" data-store="${s}" style="${style}">${s}</button>`;
-    }).join('');
-    document.querySelectorAll('.store-pill').forEach(btn=>btn.addEventListener('click',()=>{
-      activeStore=btn.dataset.store; renderAll(selectedRange());
-    }));
+    // pills (storePills foi removido do HTML; filtro de loja fica no storeButtonsArea do topo)
+    const _sp = document.getElementById('storePills');
+    if(_sp){
+      _sp.innerHTML = storesList.map(s=>{
+        const col=colorOf(s), active=s===store;
+        const style=active?`background:${col};border-color:${col};color:#fff`:`border-color:${col};color:${col}`;
+        return `<button class="store-pill${active?' active':''}" data-store="${s}" style="${style}">${s}</button>`;
+      }).join('');
+      _sp.querySelectorAll('.store-pill').forEach(btn=>btn.addEventListener('click',()=>{
+        activeStore=btn.dataset.store; renderAll(selectedRange());
+      }));
+    }
 
     const storeRows = filterRows(allRows, range, store);
     const prevRows  = filterRows(allRows, prevComparableRange(range), store);
