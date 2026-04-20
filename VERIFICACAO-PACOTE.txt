@@ -1,0 +1,23 @@
+VERIFICACAO DO PACOTE JB DASHBOARD VENDAS INDEXADO
+
+Meses indexados: 2025-01, 2025-02, 2025-03, 2025-04, 2025-05, 2025-06, 2025-07, 2025-08, 2025-09, 2025-10, 2025-11, 2025-12, 2026-01, 2026-02, 2026-03, 2026-04
+Linhas unicas: 168961
+Relatorios processados: 12
+
+Arquivos criticos:
+- OK dashboard-vendas-light.html
+- OK upload-vendas-indexado.html
+- OK scripts/build-vendas-indexes.py
+- OK .github/workflows/update-vendas-indexes.yml
+- OK data/vendas-index/meta.json
+- OK vendas-cache-mes-atual.json
+
+Checks de sintaxe: OK para dashboard inline JS, upload inline JS e builder Python.
+
+Ajustes implementados:
+- Carregamento inicial no mes atual
+- Troca de lojas preservando periodo aplicado
+- Consulta por intervalo usando indices mensais
+- Upload para base persistente indexada no Firebase
+- Workflow ajustado para builder Python otimizado
+- Layout mobile da toolbar reorganizado em 3 linhas

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import json
-import math
 import sqlite3
 import sys
 import urllib.request
@@ -10,31 +9,36 @@ from pathlib import Path
 
 FIREBASE_URL = 'https://justburger-producao-e9b27-default-rtdb.firebaseio.com'
 REPORTS_URL = f'{FIREBASE_URL}/relatorios_diarios.json'
+INDEXED_COMPANIES_URL = f'{FIREBASE_URL}/vendas_indexadas/companies.json?shallow=true'
 OUTPUT_ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('data/vendas-index')
-PACKAGE_ROOT = OUTPUT_ROOT.parent.parent if OUTPUT_ROOT.parts[-2:] == ('data','vendas-index') else Path('.')
-STORE_ORDER = ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi']
+PACKAGE_ROOT = OUTPUT_ROOT.parent.parent if OUTPUT_ROOT.parts[-2:] == ('data', 'vendas-index') else Path('.')
+DEFAULT_STORE_ORDER = ['Burger Matriz', 'Burger ABC', 'Burger GRU', 'Gourmet', 'Aham Forneria', 'Aham Sushi']
 LOJA_CODIGO_MAP = {
-    '21870':'Burger Matriz',
-    'aa6576e8-574e-42c5-8d38-0d7df31f3fcc':'Burger ABC',
-    '8432b620-27ea-48fb-bf3b-a0b76bbf3516':'Burger GRU',
-    '510cb9b9-a4dc-4962-a70f-cc01b0e4bdc8':'Aham Forneria',
-    '1eb0ccfe-ba7e-43ad-9a23-06c4ea7a823a':'Aham Forneria',
-    'fe4e06bd-2f30-410a-97ef-b21eba59f3e4':'Aham Sushi',
-    '20215':'Aham Sushi'
+    '21870': 'Burger Matriz',
+    'aa6576e8-574e-42c5-8d38-0d7df31f3fcc': 'Burger ABC',
+    '8432b620-27ea-48fb-bf3b-a0b76bbf3516': 'Burger GRU',
+    '510cb9b9-a4dc-4962-a70f-cc01b0e4bdc8': 'Aham Forneria',
+    '1eb0ccfe-ba7e-43ad-9a23-06c4ea7a823a': 'Aham Forneria',
+    'fe4e06bd-2f30-410a-97ef-b21eba59f3e4': 'Aham Sushi',
+    '20215': 'Aham Sushi'
 }
+
 
 def fetch_json(url: str):
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req, timeout=300) as resp:
         return json.loads(resp.read().decode('utf-8'))
 
+
 def slugify(v=''):
-    import unicodedata, re
+    import unicodedata
+    import re
     s = unicodedata.normalize('NFD', str(v or ''))
     s = ''.join(ch for ch in s if unicodedata.category(ch) != 'Mn')
     s = s.lower()
     s = re.sub(r'[^a-z0-9]+', '-', s).strip('-')
     return s
+
 
 def parse_date_flex(value):
     if value is None or value == '':
@@ -52,6 +56,7 @@ def parse_date_flex(value):
         return datetime.fromisoformat(s.replace('Z', '+00:00')).replace(tzinfo=None)
     except Exception:
         return None
+
 
 def money_number(v):
     if v is None or v == '':
@@ -78,8 +83,10 @@ def money_number(v):
     except Exception:
         return 0.0
 
+
 def normalize_str(v):
     return str(v or '').strip()
+
 
 def has_finance_schema(row):
     if not isinstance(row, dict):
@@ -89,6 +96,7 @@ def has_finance_schema(row):
     has_store = any(k in keys for k in ['Código da loja', 'Codigo da loja', 'Cód. loja', 'Nome da loja', 'Loja'])
     has_money = any(k in keys for k in ['Itens', 'Entrega', 'Desconto', 'Total'])
     return has_date and has_store and has_money
+
 
 def normalize_store(store='', code=''):
     cod = str(code or '').strip()
@@ -113,8 +121,10 @@ def normalize_store(store='', code=''):
         return 'Burger Matriz'
     return str(store or '').strip() or 'Sem loja informada'
 
+
 def report_store_hint(rep):
     return normalize_str(rep.get('loja_arquivo') or rep.get('chave_loja_arquivo') or rep.get('nome_arquivo') or '')
+
 
 def fetch_report_rows(rep):
     parsed = {}
@@ -136,11 +146,33 @@ def fetch_report_rows(rep):
             rows.extend((chunk or {}).get('rows') or [])
     return rows
 
+
+def normalize_packed_row(row, fallback_store=''):
+    data = parse_date_flex(row.get('d') or row.get('data'))
+    if not data:
+        return None
+    loja = normalize_store(row.get('l') or row.get('loja') or fallback_store or '')
+    if loja == 'Sem loja informada':
+        return None
+    return {
+        'pedido': str(row.get('p') or row.get('pedido') or ''),
+        'data': data,
+        'loja': loja,
+        'itens': money_number(row.get('i') if row.get('i') is not None else row.get('itens')),
+        'entrega': money_number(row.get('e') if row.get('e') is not None else row.get('entrega')),
+        'desconto': money_number(row.get('dc') if row.get('dc') is not None else row.get('desconto')),
+        'acrescimo': money_number(row.get('a') if row.get('a') is not None else row.get('acrescimo')),
+        'total': money_number(row.get('t') if row.get('t') is not None else row.get('total')),
+        'cancelado': bool(row.get('c') if row.get('c') is not None else row.get('cancelado')),
+    }
+
+
 def write_json(target: Path, payload):
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(payload, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
 
-def summarize_sql(conn, month_key=None, store=None):
+
+def summarize_sql(conn, store_order, month_key=None, store=None):
     params = []
     where = ['cancelado=0']
     if month_key is not None:
@@ -150,9 +182,12 @@ def summarize_sql(conn, month_key=None, store=None):
         where.append('loja=?')
         params.append(store)
     where_sql = ' where ' + ' and '.join(where)
-    by_store = {name:{'loja':name,'pedidos':0,'faturamento':0.0,'desconto':0.0,'entrega':0.0} for name in STORE_ORDER}
-    cur = conn.execute(f'''select loja, count(*) as pedidos, round(sum(total),2), round(sum(desconto),2), round(sum(entrega),2)
-                           from rows {where_sql} group by loja order by loja''', params)
+    by_store = {name: {'loja': name, 'pedidos': 0, 'faturamento': 0.0, 'desconto': 0.0, 'entrega': 0.0} for name in store_order}
+    cur = conn.execute(
+        f'''select loja, count(*) as pedidos, round(sum(total),2), round(sum(desconto),2), round(sum(entrega),2)
+            from rows {where_sql} group by loja order by loja''',
+        params,
+    )
     for loja, pedidos, faturamento, desconto, entrega in cur.fetchall():
         by_store[loja] = {
             'loja': loja,
@@ -161,9 +196,12 @@ def summarize_sql(conn, month_key=None, store=None):
             'desconto': float(desconto or 0),
             'entrega': float(entrega or 0),
         }
-    stores = [by_store[name] for name in STORE_ORDER]
-    cur = conn.execute(f'''select data, count(*) as pedidos, round(sum(total),2), round(sum(desconto),2), round(sum(entrega),2)
-                           from rows {where_sql} group by data order by data''', params)
+    stores = [by_store[name] for name in store_order]
+    cur = conn.execute(
+        f'''select data, count(*) as pedidos, round(sum(total),2), round(sum(desconto),2), round(sum(entrega),2)
+            from rows {where_sql} group by data order by data''',
+        params,
+    )
     by_day = [
         {'data': data, 'pedidos': int(p or 0), 'faturamento': float(f or 0), 'desconto': float(d or 0), 'entrega': float(e or 0)}
         for data, p, f, d, e in cur.fetchall()
@@ -176,6 +214,7 @@ def summarize_sql(conn, month_key=None, store=None):
     }
     totals['ticket'] = round(totals['faturamento'] / totals['pedidos'], 2) if totals['pedidos'] else 0.0
     return {'by_store': stores, 'by_day': by_day, 'totals': totals}
+
 
 def export_rows(conn, month_key, store=None):
     params = [month_key]
@@ -199,6 +238,108 @@ def export_rows(conn, month_key, store=None):
             'c': 1 if cancelado else 0,
         })
     return rows
+
+
+def insert_row(conn, row_obj):
+    data = row_obj['data']
+    data_ymd = f'{data.year:04d}-{data.month:02d}-{data.day:02d}'
+    month_key = f'{data.year:04d}-{data.month:02d}'
+    dedupe_key = f"{row_obj['pedido']}||{row_obj['loja']}||{data_ymd}"
+    conn.execute(
+        'insert or replace into rows values (?,?,?,?,?,?,?,?,?,?,?)',
+        (
+            dedupe_key,
+            row_obj['pedido'],
+            data_ymd,
+            month_key,
+            row_obj['loja'],
+            row_obj['itens'],
+            row_obj['entrega'],
+            row_obj['desconto'],
+            row_obj['acrescimo'],
+            row_obj['total'],
+            1 if row_obj['cancelado'] else 0,
+        ),
+    )
+
+
+def load_indexed_company_slugs():
+    obj = fetch_json(INDEXED_COMPANIES_URL)
+    if not obj or obj == 'null':
+        return []
+    if isinstance(obj, dict):
+        return [slug for slug, value in obj.items() if value]
+    return []
+
+
+def load_indexed_rows_into_db(conn):
+    inserted = 0
+    company_slugs = load_indexed_company_slugs()
+    if not company_slugs:
+        return inserted
+    for idx, slug in enumerate(company_slugs, 1):
+        node = fetch_json(f'{FIREBASE_URL}/vendas_indexadas/companies/{slug}.json') or {}
+        display_name = normalize_store(node.get('display_name') or node.get('source_name') or slug)
+        months = node.get('months') or {}
+        batch_count = 0
+        for month_key, month_node in months.items():
+            rows_obj = (month_node or {}).get('rows') or {}
+            for packed in rows_obj.values():
+                row_obj = normalize_packed_row(packed, display_name)
+                if not row_obj:
+                    continue
+                insert_row(conn, row_obj)
+                inserted += 1
+                batch_count += 1
+                if batch_count >= 5000:
+                    conn.commit()
+                    batch_count = 0
+        conn.commit()
+        print(f'Base indexada {idx}/{len(company_slugs)}: {slug}')
+    return inserted
+
+
+def load_legacy_rows_into_db(conn):
+    reports_obj = fetch_json(REPORTS_URL) or {}
+    reports = [dict({'id': rid}, **value) for rid, value in reports_obj.items() if isinstance(value, dict)]
+    reports = [r for r in reports if r.get('status') != 'deletado' and r.get('tipo') == 'financeiro']
+    reports.sort(key=lambda r: r.get('timestamp_upload') or 0)
+    inserted = 0
+    for idx, rep in enumerate(reports, 1):
+        rows = fetch_report_rows(rep)
+        batch = 0
+        for row_idx, row in enumerate(rows):
+            if not has_finance_schema(row):
+                continue
+            data = parse_date_flex(row.get('Data da venda') or row.get('Data') or row.get('Data da Venda') or rep.get('data_referencia'))
+            if not data:
+                continue
+            code = row.get('Código da loja') or row.get('Codigo da loja') or row.get('Cód. loja') or ''
+            loja_original = normalize_str(row.get('Nome da loja') or row.get('Loja') or report_store_hint(rep))
+            loja = normalize_store(loja_original, code)
+            if loja == 'Sem loja informada':
+                continue
+            row_obj = {
+                'pedido': str(row.get('Id do pedido no parceiro') or row.get('Número do pedido no parceiro') or row.get('Pedido') or f"{rep['id']}_{row_idx}"),
+                'data': data,
+                'loja': loja,
+                'itens': money_number(row.get('Itens')),
+                'entrega': money_number(row.get('Entrega')),
+                'desconto': money_number(row.get('Desconto')),
+                'acrescimo': money_number(row.get('Acréscimo') or row.get('Acrescimo')),
+                'total': money_number(row.get('Total')),
+                'cancelado': str(row.get('Está cancelado') or row.get('Esta cancelado') or row.get('Cancelado') or '').strip().upper() == 'S',
+            }
+            insert_row(conn, row_obj)
+            inserted += 1
+            batch += 1
+            if batch >= 5000:
+                conn.commit()
+                batch = 0
+        conn.commit()
+        print(f'Relatório legado {idx}/{len(reports)}: {rep.get("nome_arquivo") or rep["id"]}')
+    return inserted, len(reports)
+
 
 def main():
     OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
@@ -228,52 +369,12 @@ def main():
     conn.execute('create index idx_rows_month_store on rows(month_key, loja)')
     conn.execute('create index idx_rows_data on rows(data)')
 
-    reports_obj = fetch_json(REPORTS_URL) or {}
-    reports = [dict({'id': rid}, **value) for rid, value in reports_obj.items() if isinstance(value, dict)]
-    reports = [r for r in reports if r.get('status') != 'deletado' and r.get('tipo') == 'financeiro']
-    reports.sort(key=lambda r: r.get('timestamp_upload') or 0)
+    indexed_inserted = load_indexed_rows_into_db(conn)
+    legacy_inserted, report_count = load_legacy_rows_into_db(conn)
+    conn.commit()
 
-    inserted = 0
-    for idx, rep in enumerate(reports, 1):
-        rows = fetch_report_rows(rep)
-        batch = []
-        for row_idx, row in enumerate(rows):
-            if not has_finance_schema(row):
-                continue
-            data = parse_date_flex(row.get('Data da venda') or row.get('Data') or row.get('Data da Venda') or rep.get('data_referencia'))
-            if not data:
-                continue
-            code = row.get('Código da loja') or row.get('Codigo da loja') or row.get('Cód. loja') or ''
-            loja_original = normalize_str(row.get('Nome da loja') or row.get('Loja') or report_store_hint(rep))
-            loja = normalize_store(loja_original, code)
-            if loja == 'Sem loja informada':
-                continue
-            pedido_key = row.get('Id do pedido no parceiro') or row.get('Número do pedido no parceiro') or row.get('Pedido') or f"{rep['id']}_{row_idx}"
-            data_ymd = f'{data.year:04d}-{data.month:02d}-{data.day:02d}'
-            month_key = f'{data.year:04d}-{data.month:02d}'
-            dedupe_key = f"{pedido_key}||{loja}||{data_ymd}"
-            batch.append((
-                dedupe_key,
-                str(pedido_key),
-                data_ymd,
-                month_key,
-                loja,
-                money_number(row.get('Itens')),
-                money_number(row.get('Entrega')),
-                money_number(row.get('Desconto')),
-                money_number(row.get('Acréscimo') or row.get('Acrescimo')),
-                money_number(row.get('Total')),
-                1 if str(row.get('Está cancelado') or row.get('Esta cancelado') or row.get('Cancelado') or '').strip().upper() == 'S' else 0,
-            ))
-            if len(batch) >= 5000:
-                conn.executemany('insert or replace into rows values (?,?,?,?,?,?,?,?,?,?,?)', batch)
-                inserted += len(batch)
-                batch = []
-        if batch:
-            conn.executemany('insert or replace into rows values (?,?,?,?,?,?,?,?,?,?,?)', batch)
-            inserted += len(batch)
-        conn.commit()
-        print(f'Processado {idx}/{len(reports)}: {rep.get("nome_arquivo") or rep["id"]}')
+    store_names = [row[0] for row in conn.execute('select distinct loja from rows order by loja').fetchall() if row[0]]
+    store_order = DEFAULT_STORE_ORDER + [name for name in store_names if name not in DEFAULT_STORE_ORDER]
 
     months_available = [row[0] for row in conn.execute('select distinct month_key from rows order by month_key').fetchall()]
     latest_month = months_available[-1] if months_available else None
@@ -287,35 +388,35 @@ def main():
 
     files_all_months = {}
     files_by_store = defaultdict(dict)
-    store_slugs = {name: slugify(name) for name in STORE_ORDER}
-    generated_at = datetime.utcnow().isoformat() + 'Z'
+    store_slugs = {name: slugify(name) for name in store_order}
+    generated_at = datetime.now().isoformat() + 'Z'
 
     for mk in months_available:
         row_count = conn.execute('select count(*) from rows where month_key=?', (mk,)).fetchone()[0]
         period_start = conn.execute('select min(data) from rows where month_key=?', (mk,)).fetchone()[0] or f'{mk}-01'
         period_end = conn.execute('select max(data) from rows where month_key=?', (mk,)).fetchone()[0] or f'{mk}-31'
         all_payload = {
-            'version': 4,
+            'version': 5,
             'month_key': mk,
             'scope': 'all',
             'row_count': row_count,
             'period_start': period_start,
             'period_end': period_end,
             'generated_at': generated_at,
-            'aggregates': summarize_sql(conn, month_key=mk),
+            'aggregates': summarize_sql(conn, store_order, month_key=mk),
             'rows': export_rows(conn, mk),
         }
         files_all_months[mk] = f'data/vendas-index/months/{mk}.json'
         write_json(OUTPUT_ROOT / 'months' / f'{mk}.json', all_payload)
 
-        for store in STORE_ORDER:
+        for store in store_order:
             store_count = conn.execute('select count(*) from rows where month_key=? and loja=?', (mk, store)).fetchone()[0]
             if not store_count:
                 continue
             slug = store_slugs[store]
             files_by_store[slug][mk] = f'data/vendas-index/stores/{slug}/{mk}.json'
             store_payload = {
-                'version': 4,
+                'version': 5,
                 'month_key': mk,
                 'scope': 'store',
                 'store': store,
@@ -323,7 +424,7 @@ def main():
                 'period_start': conn.execute('select min(data) from rows where month_key=? and loja=?', (mk, store)).fetchone()[0],
                 'period_end': conn.execute('select max(data) from rows where month_key=? and loja=?', (mk, store)).fetchone()[0],
                 'generated_at': generated_at,
-                'aggregates': summarize_sql(conn, month_key=mk, store=store),
+                'aggregates': summarize_sql(conn, store_order, month_key=mk, store=store),
                 'rows': export_rows(conn, mk, store=store),
             }
             write_json(OUTPUT_ROOT / 'stores' / slug / f'{mk}.json', store_payload)
@@ -346,7 +447,7 @@ def main():
         prev_payload = json.loads((OUTPUT_ROOT / 'months' / f'{previous_month}.json').read_text(encoding='utf-8'))
     else:
         prev_payload = {
-            'version': 4,
+            'version': 5,
             'month_key': previous_month,
             'scope': 'all',
             'row_count': 0,
@@ -358,12 +459,14 @@ def main():
 
     row_count = conn.execute('select count(*) from rows').fetchone()[0]
     meta = {
-        'version': 4,
+        'version': 5,
         'generated_at': generated_at,
-        'source': 'firebase-relatorios_diarios',
-        'report_count': len(reports),
+        'source': 'firebase-relatorios_diarios + firebase-vendas_indexadas',
+        'report_count': report_count,
+        'indexed_rows_seen': indexed_inserted,
+        'legacy_rows_seen': legacy_inserted,
         'row_count': row_count,
-        'stores': [{'name': name, 'slug': store_slugs[name]} for name in STORE_ORDER],
+        'stores': [{'name': name, 'slug': store_slugs[name]} for name in store_order],
         'months_available': months_available,
         'latest_month': latest_month,
         'previous_month': previous_month,
@@ -379,10 +482,12 @@ def main():
     write_json(OUTPUT_ROOT / 'meta.json', meta)
 
     print(f'Índices gerados em: {OUTPUT_ROOT.resolve()}')
-    print(f'Relatórios processados: {len(reports)}')
-    print(f'Linhas inseridas (com reposição): {inserted}')
-    print(f'Linhas únicas: {row_count}')
+    print(f'Relatórios legados processados: {report_count}')
+    print(f'Linhas vistas da base indexada: {indexed_inserted}')
+    print(f'Linhas vistas dos relatórios legados: {legacy_inserted}')
+    print(f'Linhas únicas finais: {row_count}')
     print(f'Meses disponíveis: {", ".join(months_available)}')
+
 
 if __name__ == '__main__':
     main()
