@@ -24,7 +24,9 @@
       radial-gradient(circle at 10% 12%, rgba(91,141,239,.10), transparent 26%),
       radial-gradient(circle at 88% 8%, rgba(122,155,248,.08), transparent 20%),
       radial-gradient(circle at 76% 72%, rgba(34,197,94,.07), transparent 18%)}
-    .wrap{position:relative;z-index:1;max-width:1580px;margin:0 auto;padding:20px 16px 38px}
+    .wrap{position:relative;z-index:1;max-width:1580px;margin:0 auto;padding:20px 28px 38px}
+    /* tabelas agrupadas side-by-side */
+    .tables-group{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
     .hero{background:linear-gradient(135deg,#dcecff 0%,#eef5ff 52%,#f9fbff 100%);border:1px solid var(--line2);border-radius:24px;padding:20px 22px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
     .hero h1{margin:0;font-size:30px;line-height:1.04;font-weight:800;letter-spacing:-.03em;color:#16325c}
     .hero p{display:none}
@@ -90,7 +92,7 @@
     .store-pill{padding:8px 14px;border-radius:999px;border:2px solid #d9e5f4;background:#fff;font-size:12px;font-weight:800;cursor:pointer}
     .store-pill.active{color:#fff}
     .muted{color:#64748b}
-    .badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800}
+    .badge{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap;min-width:54px;justify-content:center}
     .badge.up{background:#e9fff1;color:#138247;border:1px solid #bde8cb}
     .badge.down{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}
     .badge.flat{background:#f1f5f9;color:#475569;border:1px solid #d8e2ee}
@@ -127,10 +129,12 @@
       .kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}
       .grid-2,.grid-3{grid-template-columns:1fr}
       .toolbar{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+      .tables-group{grid-template-columns:1fr}
     }
     @media(max-width:760px){
       .hero h1{font-size:22px}
-      .wrap{padding:12px 10px 24px}
+      .wrap{padding:12px 14px 24px}
+      .tables-group{grid-template-columns:1fr}
       /* toolbar: 1 coluna, cada field ocupa linha inteira */
       .toolbar{grid-template-columns:1fr!important;gap:10px}
       /* preset: 3 botões por linha */
@@ -233,9 +237,56 @@
 
     <div id="storeButtonsArea" class="store-grid"></div>
 
-    <!-- ── Visão geral: KPIs + gráficos ── -->
+    <!-- ── KPIs ── -->
     <div id="kpisGeral" class="kpi-row"></div>
 
+    <!-- ── Tabelas agrupadas: Ranking + Projeção (lado a lado) ── -->
+    <div class="tables-group">
+      <div class="panel card finance-ranking-card">
+        <h3>Ranking Financeiro por Loja</h3>
+        <div class="table-wrap finance-ranking-wrap">
+          <table class="finance-ranking-table">
+            <thead>
+              <tr>
+                <th>Loja</th>
+                <th>Pedidos</th>
+                <th>Faturamento</th>
+                <th>Ticket Médio</th>
+                <th>Desconto</th>
+                <th>% Desconto</th>
+                <th>Taxa Entrega</th>
+                <th>% vs período anterior</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyResumo"></tbody>
+          </table>
+        </div>
+        <div class="footer-note" id="footResumo"></div>
+      </div>
+      <div class="panel card">
+        <h3>Detalhamento da projeção</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Loja</th>
+                <th>Pedidos MTD</th>
+                <th>Fat. MTD</th>
+                <th>Mesmo período mês anterior</th>
+                <th>Variação</th>
+                <th>Projeção fechamento</th>
+                <th>Dias corridos</th>
+                <th>Dias no mês</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyProj"></tbody>
+          </table>
+        </div>
+        <div class="footer-note" id="footProj"></div>
+      </div>
+    </div>
+
+    <!-- ── Gráficos: Faturamento + Pedidos ── -->
     <div class="grid-2">
       <div class="panel card">
         <h3>Faturamento por loja</h3>
@@ -256,29 +307,8 @@
         <div class="chart sm"><canvas id="chartEntregaLoja"></canvas></div>
       </div>
     </div>
-    <div class="panel card finance-ranking-card">
-      <h3>Ranking Financeiro por Loja</h3>
-      <div class="table-wrap finance-ranking-wrap">
-        <table class="finance-ranking-table">
-          <thead>
-            <tr>
-              <th>Loja</th>
-              <th>Pedidos</th>
-              <th>Faturamento</th>
-              <th>Ticket Médio</th>
-              <th>Desconto</th>
-              <th>% Desconto</th>
-              <th>Taxa Entrega</th>
-              <th>% vs período anterior</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyResumo"></tbody>
-        </table>
-      </div>
-      <div class="footer-note" id="footResumo"></div>
-    </div>
 
-    <!-- ── Projeção ── -->
+    <!-- ── Gráficos: Comparativo + Projeção por loja ── -->
     <div class="grid-2">
       <div class="panel card">
         <h3>Comparativo do mês atual x mesmo período do mês anterior</h3>
@@ -288,27 +318,6 @@
         <h3>Projeção de fechamento do mês por loja</h3>
         <div class="chart tall"><canvas id="chartProjLoja"></canvas></div>
       </div>
-    </div>
-    <div class="panel card">
-      <h3>Detalhamento da projeção</h3>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Loja</th>
-              <th>Pedidos MTD</th>
-              <th>Fat. MTD</th>
-              <th>Mesmo período mês anterior</th>
-              <th>Variação</th>
-              <th>Projeção fechamento</th>
-              <th>Dias corridos</th>
-              <th>Dias no mês</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyProj"></tbody>
-        </table>
-      </div>
-      <div class="footer-note" id="footProj"></div>
     </div>
 
     <!-- ── Por loja ── -->
@@ -339,6 +348,9 @@
           </thead>
           <tbody id="tbodyLojaDia"></tbody>
         </table>
+      </div>
+      <div id="expandLojaDia" style="display:none;text-align:center;margin-top:12px">
+        <button class="btn secondary" id="btnExpandLojaDia" style="font-size:12px;height:36px;padding:0 20px">Ver todos os dias ▾</button>
       </div>
     </div>
 
@@ -794,11 +806,28 @@
     const daysLabels=days.map(([k])=>{ const[,m,d]=k.split('-'); return `${d}/${m}`; });
     mkChart('chartLojaFat','line',{labels:daysLabels,datasets:[{label:'Faturamento',data:days.map(([,v])=>v.faturamento),borderColor:colorOf(store),backgroundColor:`${colorOf(store)}22`,tension:.35,fill:true,pointRadius:3}]},{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>fmtMoney.format(v)}}}});
     mkChart('chartLojaPed','bar',{labels:daysLabels,datasets:[{label:'Pedidos',data:days.map(([,v])=>v.pedidos),backgroundColor:colorOf(store),borderRadius:6}]},{plugins:{legend:{display:false}}});
-    document.getElementById('tbodyLojaDia').innerHTML=days.map(([k,v])=>{
+    const DIAS_INICIAL = 3;
+    const tbodyDia = document.getElementById('tbodyLojaDia');
+    const expandArea = document.getElementById('expandLojaDia');
+    const btnExp = document.getElementById('btnExpandLojaDia');
+    let mostrarTodosDias = false;
+    function makeDayRow([k,v]){
       const ticket2=v.pedidos?v.faturamento/v.pedidos:0;
-      const[y,m,d]=k.split('-');
-      return `<tr><td>${d}/${m}/${y}</td><td>${fmtInt.format(v.pedidos)}</td><td class="money-green">${fmtMoney.format(v.faturamento)}</td><td>${fmtMoney.format(ticket2)}</td><td class="money-red">${fmtMoney.format(v.desconto)}</td><td>${fmtMoney.format(v.entrega)}</td></tr>`;
-    }).join('')||'<tr><td colspan="6" class="empty">Sem dados para o período</td></tr>';
+      const[yr,mo,dy]=k.split('-');
+      return `<tr><td>${dy}/${mo}/${yr}</td><td>${fmtInt.format(v.pedidos)}</td><td class="money-green">${fmtMoney.format(v.faturamento)}</td><td>${fmtMoney.format(ticket2)}</td><td class="money-red">${fmtMoney.format(v.desconto)}</td><td>${fmtMoney.format(v.entrega)}</td></tr>`;
+    }
+    function renderDaysTable(){
+      const vis = mostrarTodosDias ? days : days.slice(0, DIAS_INICIAL);
+      tbodyDia.innerHTML = vis.map(makeDayRow).join('') || '<tr><td colspan="6" class="empty">Sem dados para o período</td></tr>';
+      if(days.length > DIAS_INICIAL){
+        expandArea.style.display = 'block';
+        btnExp.textContent = mostrarTodosDias ? 'Ver menos ▴' : `Ver todos os ${days.length} dias ▾`;
+      } else {
+        expandArea.style.display = 'none';
+      }
+    }
+    renderDaysTable();
+    btnExp.onclick = () => { mostrarTodosDias = !mostrarTodosDias; renderDaysTable(); };
   }
 
   /* ── Render: diário consolidado ─────────────────────────── */
