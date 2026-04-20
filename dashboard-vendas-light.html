@@ -203,14 +203,7 @@
 
     <div id="storeButtonsArea" class="store-grid"></div>
 
-    <div class="tabs">
-      <button class="tab active" data-tab="geral">🏠 Visão geral</button>
-      <button class="tab" data-tab="projecao">📈 Projeção</button>
-      <button class="tab" data-tab="lojas">🏪 Por loja</button>
-      <button class="tab" data-tab="diario">📅 Evolução diária</button>
-    </div>
-
-    <section class="section active" id="sec-geral">
+    <section id="sec-geral" style="display:block">
       <div class="kpi-row" id="kpisGeral"></div>
       <div class="grid-2">
         <div class="panel card">
@@ -255,7 +248,7 @@
       </div>
     </section>
 
-    <section class="section" id="sec-projecao">
+    <section id="sec-projecao" style="display:block">
       <div class="kpi-row" id="kpisProj"></div>
       <div class="grid-2">
         <div class="panel card">
@@ -290,7 +283,7 @@
       </div>
     </section>
 
-    <section class="section" id="sec-lojas">
+    <section id="sec-lojas" style="display:block">
       <div class="store-pills" id="storePills"></div>
       <div class="kpi-row" id="kpisLoja"></div>
       <div class="grid-2">
@@ -323,7 +316,7 @@
       </div>
     </section>
 
-    <section class="section" id="sec-diario">
+    <section id="sec-diario" style="display:block">
       <div class="panel card" style="margin-bottom:18px">
         <h3>Faturamento diário consolidado</h3>
         <div class="chart tall"><canvas id="chartDiarioFat"></canvas></div>
@@ -581,13 +574,40 @@
     return d>=0 ? `<span class="badge up">▲ ${Math.abs(d).toFixed(1)}%</span>` : `<span class="badge down">▼ ${Math.abs(d).toFixed(1)}%</span>`;
   }
 
-  /* ── Projeção ───────────────────────────────────────────── */
-  function projectionCard(range, curRev, prevRev){
+  /* ── Projeção ───────────────────────────────────────────────
+     Lógica:
+       1. Calcula variação% entre MTD atual (dia1→ontem) e mesmo
+          período do mês anterior (dia1→mesmodia)
+       2. Aplica essa variação% sobre o TOTAL FECHADO do mês anterior
+       Fórmula: prev_total_mes × (1 + (cur_mtd - prev_mtd) / prev_mtd)
+     ─────────────────────────────────────────────────────────── */
+  function projectionCard(range, curMtdRev, prevMtdRev, prevMonthTotalRev){
     if(!range?.from||!range?.to) return {label:'Projeção mensal',value:'—',sub:'sem período',compare:badge(0,0)};
     const daysInMonth = new Date(range.from.getFullYear(),range.from.getMonth()+1,0).getDate();
     const elapsed = Math.max(1, Math.round((new Date(range.to.getFullYear(),range.to.getMonth(),range.to.getDate()) - new Date(range.from.getFullYear(),range.from.getMonth(),range.from.getDate()))/86400000)+1);
-    const projected = elapsed ? (curRev/elapsed)*daysInMonth : 0;
-    return {label:'Projeção de faturamento mensal', value:fmtMoney.format(projected), sub:`${elapsed} de ${daysInMonth} dias`, compare:badge(curRev,prevRev)};
+
+    let projected = 0;
+    let subLabel = `${elapsed} de ${daysInMonth} dias`;
+
+    if(prevMtdRev > 0 && prevMonthTotalRev > 0){
+      // variação% do MTD atual vs mesmo período mês anterior
+      const variation = (curMtdRev - prevMtdRev) / prevMtdRev;
+      // aplica sobre o total fechado do mês anterior
+      projected = prevMonthTotalRev * (1 + variation);
+      const variationPct = (variation*100).toFixed(1);
+      subLabel = `${elapsed} de ${daysInMonth} dias · var: ${variation>=0?'+':''}${variationPct}%`;
+    } else if(curMtdRev > 0){
+      // fallback: extrapolação linear se não há mês anterior
+      projected = elapsed ? (curMtdRev/elapsed)*daysInMonth : 0;
+      subLabel = `${elapsed} de ${daysInMonth} dias (extrapolação)`;
+    }
+
+    return {
+      label:'Projeção mensal',
+      value: projected>0 ? fmtMoney.format(projected) : '—',
+      sub: subLabel,
+      compare: badge(curMtdRev, prevMtdRev)
+    };
   }
 
   /* ── Chart helper ───────────────────────────────────────── */
@@ -602,10 +622,18 @@
   /* ── Render: visão geral ────────────────────────────────── */
   function renderGeral(allRows, range){
     const curRows  = filterRows(allRows, range, activeStore);
-    const prevRows = filterRows(allRows, prevComparableRange(range), activeStore);
+    const prevRange = prevComparableRange(range);
+    const prevRows = filterRows(allRows, prevRange, activeStore);
     const cur  = summarize(curRows);
     const prev = summarize(prevRows);
-    const proj = projectionCard(range, cur.faturamento, prev.faturamento);
+
+    // Total fechado do mês anterior completo (para base da projeção)
+    const prevMonthFrom = prevRange?.from ? new Date(prevRange.from.getFullYear(), prevRange.from.getMonth(), 1) : null;
+    const prevMonthTo   = prevRange?.from ? new Date(prevRange.from.getFullYear(), prevRange.from.getMonth()+1, 0, 23,59,59,999) : null;
+    const prevMonthRows = prevMonthFrom && prevMonthTo ? filterRows(allRows, {from:prevMonthFrom, to:prevMonthTo}, activeStore) : [];
+    const prevMonthTotal = summarize(prevMonthRows).faturamento;
+
+    const proj = projectionCard(range, cur.faturamento, prev.faturamento, prevMonthTotal);
     const storeLbl = activeStore || 'Todas as lojas';
 
     const turnoLabel = activeTurno==='dia' ? ' ☀️ Dia' : activeTurno==='noite' ? ' 🌙 Noite' : '';
@@ -636,11 +664,19 @@
 
   /* ── Render: projeção ───────────────────────────────────── */
   function renderProjecao(allRows, range){
-    const curRows  = filterRows(allRows, range, activeStore);
-    const prevRows = filterRows(allRows, prevComparableRange(range), activeStore);
+    const curRows   = filterRows(allRows, range, activeStore);
+    const prevRange = prevComparableRange(range);
+    const prevRows  = filterRows(allRows, prevRange, activeStore);
     const cur  = summarize(curRows);
     const prev = summarize(prevRows);
-    const proj = projectionCard(range, cur.faturamento, prev.faturamento);
+
+    // Mês anterior completo (para base da projeção por loja)
+    const prevMonthFrom = prevRange?.from ? new Date(prevRange.from.getFullYear(), prevRange.from.getMonth(), 1) : null;
+    const prevMonthTo   = prevRange?.from ? new Date(prevRange.from.getFullYear(), prevRange.from.getMonth()+1, 0, 23,59,59,999) : null;
+    const prevMonthRows = prevMonthFrom && prevMonthTo ? filterRows(allRows, {from:prevMonthFrom, to:prevMonthTo}, activeStore) : [];
+    const prevMonthTotal = summarize(prevMonthRows).faturamento;
+
+    const proj = projectionCard(range, cur.faturamento, prev.faturamento, prevMonthTotal);
     const daysInMonth = range?.from ? new Date(range.from.getFullYear(),range.from.getMonth()+1,0).getDate() : 30;
     const elapsed = range?.from&&range?.to ? Math.max(1,Math.round((new Date(range.to.getFullYear(),range.to.getMonth(),range.to.getDate())-new Date(range.from.getFullYear(),range.from.getMonth(),range.from.getDate()))/86400000)+1) : 1;
 
@@ -648,7 +684,8 @@
       <div class="kpi green"><div class="label">Faturamento MTD</div><div class="value">${fmtMoney.format(cur.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${badge(cur.faturamento,prev.faturamento)}</span></div></div>
       <div class="kpi purple"><div class="label">Projeção mensal</div><div class="value">${proj.value}</div><div class="sub"><span>${proj.sub}</span><span>${proj.compare}</span></div></div>
       <div class="kpi blue"><div class="label">Pedidos MTD</div><div class="value">${fmtInt.format(cur.pedidos)}</div><div class="sub"><span>Dias: ${elapsed}/${daysInMonth}</span><span>${badge(cur.pedidos,prev.pedidos)}</span></div></div>
-      <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(cur.ticket)}</div><div class="sub"><span>Por pedido</span><span>${badge(cur.ticket,prev.ticket)}</span></div></div>`;
+      <div class="kpi yellow"><div class="label">Mesmo período mês ant.</div><div class="value" style="font-size:20px">${fmtMoney.format(prev.faturamento)}</div><div class="sub"><span>Base comparação</span></div></div>
+      <div class="kpi" style="border-color:#d9e5f4"><div class="label" style="color:#64748b">Total mês anterior</div><div class="value" style="font-size:20px;color:#334155">${fmtMoney.format(prevMonthTotal)}</div><div class="sub"><span>Fechamento real</span></div></div>`;
 
     // Gráfico comparativo dia a dia
     const daysRange = monthsBetween(range?.from, range?.to).flatMap(mk=>{
@@ -656,25 +693,9 @@
       const days=[]; let d=new Date(y,m-1,1);
       while(d.getMonth()===m-1){ days.push(ymd(d)); d.setDate(d.getDate()+1); }
       return days;
-    }).filter(d=>{
-      if(!range?.from||!range?.to) return true;
-      return d>=ymd(range.from)&&d<=ymd(range.to);
-    });
-    const byDay=(rows,store=null)=>{
-      const map=new Map();
-      filterRows(rows,range,store).forEach(r=>{ const k=ymd(r.data); map.set(k,(map.get(k)||0)+Number(r.total||0)); });
-      return daysRange.map(d=>map.get(d)||0);
-    };
-    const byDayPrev=(rows,store=null)=>{
-      const pRange=prevComparableRange(range);
-      const pDays=monthsBetween(pRange?.from,pRange?.to).flatMap(mk=>{
-        const [y,m]=mk.split('-').map(Number); const days=[]; let d=new Date(y,m-1,1);
-        while(d.getMonth()===m-1){days.push(ymd(d));d.setDate(d.getDate()+1);} return days;
-      }).filter(d=>{ if(!pRange?.from||!pRange?.to) return true; return d>=ymd(pRange.from)&&d<=ymd(pRange.to); });
-      const map=new Map();
-      filterRows(rows,pRange,store).forEach(r=>{ const k=ymd(r.data); map.set(k,(map.get(k)||0)+Number(r.total||0)); });
-      return pDays.map(d=>map.get(d)||0);
-    };
+    }).filter(d=>{ if(!range?.from||!range?.to) return true; return d>=ymd(range.from)&&d<=ymd(range.to); });
+    const byDay=(rows,store=null)=>{ const map=new Map(); filterRows(rows,range,store).forEach(r=>{ const k=ymd(r.data); map.set(k,(map.get(k)||0)+Number(r.total||0)); }); return daysRange.map(d=>map.get(d)||0); };
+    const byDayPrev=(rows,store=null)=>{ const pRange=prevComparableRange(range); const pDays=monthsBetween(pRange?.from,pRange?.to).flatMap(mk=>{ const [y,m]=mk.split('-').map(Number); const days=[]; let d=new Date(y,m-1,1); while(d.getMonth()===m-1){days.push(ymd(d));d.setDate(d.getDate()+1);} return days; }).filter(d=>{ if(!pRange?.from||!pRange?.to) return true; return d>=ymd(pRange.from)&&d<=ymd(pRange.to); }); const map=new Map(); filterRows(rows,pRange,store).forEach(r=>{ const k=ymd(r.data); map.set(k,(map.get(k)||0)+Number(r.total||0)); }); return pDays.map(d=>map.get(d)||0); };
     const curVals=byDay(allRows,activeStore), prevVals=byDayPrev(allRows,activeStore);
     const shortLabels=daysRange.map(d=>{ const[,,dd]=d.split('-'); return pad(Number(dd)); });
     mkChart('chartProjComp','line',{labels:shortLabels,datasets:[
@@ -682,20 +703,35 @@
       {label:'Mês anterior',data:prevVals,borderColor:'#d1d5db',backgroundColor:'transparent',tension:.35,borderDash:[5,4],pointRadius:2}
     ]},{plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:v=>fmtMoney.format(v)}}}});
 
-    // Projeção por loja
-    const projStores=cur.stores.filter(s=>s.pedidos>0);
+    // Projeção por loja — usando variação% × total fechado mês anterior
+    const prevMonthByStore = new Map();
+    summarize(prevMonthRows).stores.forEach(s=>prevMonthByStore.set(s.loja,s.faturamento));
+    const prevMtdByStore = new Map(prev.stores.map(s=>[s.loja,s.faturamento]));
+
+    const projStores = cur.stores.filter(s=>s.pedidos>0);
+    const projVals = projStores.map(s=>{
+      const pmtd = prevMtdByStore.get(s.loja)||0;
+      const ptotal = prevMonthByStore.get(s.loja)||0;
+      if(pmtd>0 && ptotal>0){ const variation=(s.faturamento-pmtd)/pmtd; return ptotal*(1+variation); }
+      return elapsed&&daysInMonth ? (s.faturamento/elapsed)*daysInMonth : 0;
+    });
+
     mkChart('chartProjLoja','bar',{labels:projStores.map(s=>s.loja),datasets:[
-      {label:'MTD',data:projStores.map(s=>s.faturamento),backgroundColor:projStores.map(s=>colorOf(s.loja)),borderRadius:6},
-      {label:'Projeção',data:projStores.map(s=>elapsed&&daysInMonth ? (s.faturamento/elapsed)*daysInMonth : 0),backgroundColor:'rgba(100,116,139,.18)',borderRadius:6}
+      {label:'MTD atual',data:projStores.map(s=>s.faturamento),backgroundColor:projStores.map(s=>colorOf(s.loja)),borderRadius:6},
+      {label:'Projeção',data:projVals,backgroundColor:'rgba(100,116,139,.22)',borderRadius:6}
     ]},{plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:v=>fmtMoney.format(v)}}}});
 
     const prevMap2=new Map(prev.stores.map(s=>[s.loja,s]));
     document.getElementById('tbodyProj').innerHTML=cur.stores.filter(s=>s.pedidos>0).map(s=>{
-      const p=prevMap2.get(s.loja)||{faturamento:0};
-      const projVal=elapsed&&daysInMonth?(s.faturamento/elapsed)*daysInMonth:0;
-      return `<tr><td class="store-name-strong">${s.loja}</td><td>${fmtInt.format(s.pedidos)}</td><td class="money-green">${fmtMoney.format(s.faturamento)}</td><td>${fmtMoney.format(p.faturamento)}</td><td>${badge(s.faturamento,p.faturamento)}</td><td class="money-blue">${fmtMoney.format(projVal)}</td><td>${elapsed}</td><td>${daysInMonth}</td></tr>`;
+      const pmtd = prevMap2.get(s.loja)||{faturamento:0};
+      const ptotal = prevMonthByStore.get(s.loja)||0;
+      let projVal = 0;
+      if(pmtd.faturamento>0 && ptotal>0){ const v=(s.faturamento-pmtd.faturamento)/pmtd.faturamento; projVal=ptotal*(1+v); }
+      else if(elapsed&&daysInMonth){ projVal=(s.faturamento/elapsed)*daysInMonth; }
+      const variation = pmtd.faturamento>0 ? ((s.faturamento-pmtd.faturamento)/pmtd.faturamento*100).toFixed(1)+'%' : '—';
+      return `<tr><td class="store-name-strong">${s.loja}</td><td>${fmtInt.format(s.pedidos)}</td><td class="money-green">${fmtMoney.format(s.faturamento)}</td><td>${fmtMoney.format(pmtd.faturamento)}</td><td>${badge(s.faturamento,pmtd.faturamento)}</td><td class="money-blue">${fmtMoney.format(projVal)}</td><td>${elapsed}</td><td>${daysInMonth}</td></tr>`;
     }).join('')||'<tr><td colspan="8" class="empty">Sem dados</td></tr>';
-    document.getElementById('footProj').textContent=`Projeção baseada em ${elapsed} dias de ${daysInMonth} do mês · período: ${periodLabel(range)}`;
+    document.getElementById('footProj').textContent=`Projeção = total mês ant. × (1 + variação%) · ${elapsed} dias de ${daysInMonth} · ${periodLabel(range)}`;
   }
 
   /* ── Render: por loja ───────────────────────────────────── */
@@ -765,10 +801,10 @@
     if(activeTab==='lojas')    renderLojas(allRows, range);
     if(activeTab==='diario')   renderDiario(allRows, range);
 
-    // Pré-carrega as outras abas em background
-    setTimeout(()=>{ renderProjecao(allRows, range); }, 200);
-    setTimeout(()=>{ renderLojas(allRows, range); }, 400);
-    setTimeout(()=>{ renderDiario(allRows, range); }, 600);
+    // Renderiza todas as seções (sem abas)
+    renderProjecao(allRows, range);
+    renderLojas(allRows, range);
+    renderDiario(allRows, range);
 
     document.getElementById('loadingOverlay').style.display='none';
   }
@@ -819,15 +855,7 @@
     document.getElementById('rangePopover').hidden=true;
   }
 
-  /* ── UI: tabs ───────────────────────────────────────────── */
-  function showSection(tab){
-    activeTab=tab;
-    document.querySelectorAll('.section').forEach(s=>{ s.classList.remove('active'); s.style.display='none'; });
-    document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
-    const sec=document.getElementById(`sec-${tab}`);
-    if(sec){ sec.classList.add('active'); sec.style.display='block'; }
-    renderAll(selectedRange());
-  }
+  // Tabs removidas — página exibe tudo em scroll único
 
   /* ── Watcher realtime (Firebase) ────────────────────────── */
   function bindRealtimeWatcher(){
@@ -927,8 +955,7 @@
       renderAll({from,to});
     });
 
-    // Tabs
-    document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>showSection(tab.dataset.tab)));
+    // Tabs removidas
   }
 
   /* ── Inicialização ──────────────────────────────────────── */
