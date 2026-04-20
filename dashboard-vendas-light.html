@@ -115,14 +115,44 @@
     .kpi-row{grid-template-columns:repeat(6,minmax(0,1fr))}
     .kpi .value{font-size:22px}
     .kpi .label{font-size:10px}
+    /* toolbar desktop: 4 colunas */
+    .toolbar{grid-template-columns:repeat(4,minmax(0,1fr))}
     /* turno btns */
     .turno-group{display:flex;gap:8px;flex-wrap:wrap}
     .turno-btn{height:42px;padding:0 14px;border-radius:12px;border:2px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;transition:.15s ease;flex:1 1 auto}
     .turno-btn:hover{transform:translateY(-1px)}
     .turno-btn.active-dia{background:#f97316;border-color:#f97316;color:#fff}
     .turno-btn.active-noite{background:#7c3aed;border-color:#7c3aed;color:#fff}
-    @media(max-width:1320px){.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}}{.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2,.grid-3{grid-template-columns:1fr}.toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:760px){.hero h1{font-size:24px}.wrap{padding:14px 12px 26px}.toolbar{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))}.chart,.chart.sm,.chart.tall{height:250px}.tabs{overflow:visible;flex-wrap:wrap;padding-bottom:0}.tab{flex:1 1 calc(50% - 8px);text-align:center}.preset-group,.action-group,.turno-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}.preset-btn,.btn,.turno-btn{width:100%;padding:0 8px}}
+    @media(max-width:1320px){
+      .kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .grid-2,.grid-3{grid-template-columns:1fr}
+      .toolbar{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+    }
+    @media(max-width:760px){
+      .hero h1{font-size:22px}
+      .wrap{padding:12px 10px 24px}
+      /* toolbar: 1 coluna, cada field ocupa linha inteira */
+      .toolbar{grid-template-columns:1fr!important;gap:10px}
+      /* preset: 3 botões por linha */
+      .preset-group{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
+      /* turno: 3 botões por linha */
+      .turno-group{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
+      /* ações: 3 botões por linha */
+      .action-group{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
+      .preset-btn,.btn,.turno-btn{width:100%;padding:0 6px;font-size:11px;height:40px}
+      .range-display{width:100%;font-size:13px}
+      /* KPI: 2 colunas no mobile */
+      .kpi-row{grid-template-columns:repeat(2,1fr)!important;gap:10px}
+      /* valor KPI: fonte fluida para não estourar */
+      .kpi .value{font-size:clamp(14px,4.5vw,22px)!important;word-break:break-word;overflow-wrap:anywhere}
+      .kpi{padding:12px 10px}
+      /* grids viram coluna única */
+      .grid-2,.grid-3{grid-template-columns:1fr}
+      .chart,.chart.sm,.chart.tall{height:240px}
+      /* store buttons: wrap natural */
+      .store-grid{gap:6px}
+      .store-btn{height:34px;padding:0 10px;font-size:11px}
+    }
   </style>
 </head>
 <body>
@@ -138,7 +168,7 @@
       </div>
     </div>
 
-    <div class="panel toolbar" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+    <div class="panel toolbar" id="mainToolbar">
       <div class="field">
         <label>Períodos rápidos</label>
         <div class="preset-group">
@@ -595,7 +625,7 @@
       // aplica sobre o total fechado do mês anterior
       projected = prevMonthTotalRev * (1 + variation);
       const variationPct = (variation*100).toFixed(1);
-      subLabel = `${elapsed} de ${daysInMonth} dias · var: ${variation>=0?'+':''}${variationPct}%`;
+      subLabel = `${elapsed} de ${daysInMonth} dias`;
     } else if(curMtdRev > 0){
       // fallback: extrapolação linear se não há mês anterior
       projected = elapsed ? (curMtdRev/elapsed)*daysInMonth : 0;
