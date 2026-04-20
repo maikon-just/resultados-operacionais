@@ -2492,10 +2492,27 @@ window.__jbAutoInitDisabled = true;
   const DEFAULT_STORES = (typeof STORE_ORDER !== 'undefined' && Array.isArray(STORE_ORDER) && STORE_ORDER.length)
     ? STORE_ORDER.slice()
     : ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi'];
-  const cache = new Map();
+  const staticCache = new Map();
+  const firebaseCache = new Map();
+  const FIREBASE_CACHE_TTL_MS = 8000;
+
   let selectedStore = null;
   let renderToken = 0;
   let storesList = DEFAULT_STORES.slice();
+  let lastKnownUploadAt = 0;
+  let refreshTimer = 0;
+
+  function clearFirebaseCache(){
+    firebaseCache.clear();
+  }
+
+  function scheduleLiveRefresh(delay = 160){
+    clearTimeout(refreshTimer);
+    refreshTimer = window.setTimeout(() => {
+      clearFirebaseCache();
+      loadAndRender(false).catch(() => {});
+    }, delay);
+  }
 
   function slugifySafe(name){ return String(name || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
   function ymdSafe(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -2559,16 +2576,25 @@ window.__jbAutoInitDisabled = true;
     return merged;
   }
   async function fetchJsonCached(url){
-    if(cache.has(url)) return cache.get(url);
-    const p = fetch(url, {cache:'no-store'}).then(async res => { if(!res.ok) throw new Error(String(res.status)); return res.json(); }).catch(() => null);
-    cache.set(url, p); return p;
+    if(staticCache.has(url)) return staticCache.get(url);
+    const p = fetch(url, { cache:'no-store' }).then(async res => {
+      if(!res.ok) throw new Error(String(res.status));
+      return res.json();
+    }).catch(() => null);
+    staticCache.set(url, p);
+    return p;
   }
-  async function firebaseGet(path){
+  async function firebaseGet(path, forceFresh = false){
     if(!window.fbDB_v2) return null;
     const key = `fb:${path}`;
-    if(cache.has(key)) return cache.get(key);
-    const p = window.fbDB_v2.ref(path).once('value').then(snap => snap.val()).catch(() => null);
-    cache.set(key, p); return p;
+    const now = Date.now();
+    const cached = firebaseCache.get(key);
+    if(!forceFresh && cached && (now - cached.ts) <= FIREBASE_CACHE_TTL_MS){
+      return cached.promise;
+    }
+    const promise = window.fbDB_v2.ref(path).once('value').then(snap => snap.val()).catch(() => null);
+    firebaseCache.set(key, { ts: now, promise });
+    return promise;
   }
   async function loadStoreCatalog(){
     const staticMeta = await fetchJsonCached(`${STATIC_INDEX_ROOT}/meta.json`);
@@ -2621,6 +2647,47 @@ window.__jbAutoInitDisabled = true;
     const payload = await fetchJsonCached(url);
     return Array.isArray(payload?.rows) ? payload.rows.map(row => normalizePackedRow(row, storeName || '')).filter(Boolean) : [];
   }
+  function bindRealtimeUploadWatcher(){
+    if(!window.fbDB_v2 || window.__jbFaturamentoWatchBound) return;
+    window.__jbFaturamentoWatchBound = true;
+
+    try {
+      window.fbDB_v2.ref(`${FIREBASE_INDEX_ROOT}/meta/last_upload/updated_at`).on('value', snap => {
+        const ts = Number(snap.val() || 0);
+        if(!ts) return;
+        if(!lastKnownUploadAt){
+          lastKnownUploadAt = ts;
+          return;
+        }
+        if(ts <= lastKnownUploadAt) return;
+        lastKnownUploadAt = ts;
+        scheduleLiveRefresh(180);
+      });
+    } catch (e) {}
+
+    window.addEventListener('storage', ev => {
+      if(ev.key !== 'jb_faturamento_upload_pulse' || !ev.newValue) return;
+      try {
+        const payload = JSON.parse(ev.newValue);
+        lastKnownUploadAt = Number(payload?.updated_at || Date.now());
+      } catch (e) {
+        lastKnownUploadAt = Date.now();
+      }
+      scheduleLiveRefresh(120);
+    }, true);
+
+    window.addEventListener('focus', () => {
+      clearFirebaseCache();
+      scheduleLiveRefresh(80);
+    }, true);
+
+    document.addEventListener('visibilitychange', () => {
+      if(document.hidden) return;
+      clearFirebaseCache();
+      scheduleLiveRefresh(80);
+    });
+  }
+
   async function loadRowsForRange(range, storeName=null){
     const compare = previousComparableRange(range);
     const months = [...new Set([...(monthsBetween(range.from, range.to)), ...(monthsBetween(compare.from, compare.to))])];
@@ -2747,13 +2814,16 @@ window.__jbAutoInitDisabled = true;
     const token = ++renderToken;
     const range = selectedRange();
     if(!range?.from || !range?.to) return;
+    clearFirebaseCache();
     const rows = await loadRowsForRange(range, selectedStore || null);
     if(token !== renderToken) return;
     window.rowsBase = rows;
     showGeneralOnly();
     renderDashboard(rows, range);
     resizeChartsSafe();
-    if(scrollToButtons){ document.getElementById('storeButtonsTopFix')?.scrollIntoView({behavior:'smooth', block:'start'}); }
+    if(scrollToButtons){
+      document.getElementById('storeButtonsTopFix')?.scrollIntoView({behavior:'smooth', block:'start'});
+    }
   }
   function cloneAndReplace(el){ if(!el) return null; const clone = el.cloneNode(true); el.replaceWith(clone); return clone; }
   function openRangePopover(){
@@ -2866,6 +2936,7 @@ window.__jbAutoInitDisabled = true;
   await loadStoreCatalog();
   ensureStoreButtons();
   bindControls();
+  bindRealtimeUploadWatcher();
   closeRangePopover();
   const start = currentMonthRange();
   setDateRange(start.from, start.to, 'mes_atual');

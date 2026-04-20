@@ -283,58 +283,101 @@
         appendLog('Selecione pelo menos um arquivo antes de importar.');
         return;
       }
+
       const displayName = (qs('displayName').value || selectedCompany.source).trim();
       const rows = await parseFiles(files);
       if(!rows.length){
         appendLog('Nenhuma linha válida foi encontrada nos arquivos.');
         return;
       }
+
       const updates = {};
       const monthsTouched = new Set();
+      const monthStats = {};
+      const now = Date.now();
+
       rows.forEach(item => {
         monthsTouched.add(item.monthKey);
+        monthStats[item.monthKey] = (monthStats[item.monthKey] || 0) + 1;
+
         updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/source_name`] = selectedCompany.source;
         updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/display_name`] = displayName;
-        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/updated_at`] = Date.now();
-        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${item.monthKey}/updated_at`] = Date.now();
+        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/updated_at`] = now;
+
+        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${item.monthKey}/updated_at`] = now;
         updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${item.monthKey}/rows/${item.rowKey}`] = item.row;
-        updates[`${INDEX_ROOT}/months/${item.monthKey}/updated_at`] = Date.now();
+
+        updates[`${INDEX_ROOT}/months/${item.monthKey}/updated_at`] = now;
         updates[`${INDEX_ROOT}/months/${item.monthKey}/rows/${selectedCompany.key}_${item.rowKey}`] = item.row;
+
         updates[`${INDEX_ROOT}/months/${item.monthKey}/companies/${selectedCompany.key}`] = {
           source_name: selectedCompany.source,
           display_name: displayName,
-          updated_at: Date.now()
+          updated_at: now
         };
+
         updates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}`] = {
           source_name: selectedCompany.source,
           display_name: displayName,
-          updated_at: Date.now()
+          updated_at: now
         };
+
         updates[`${INDEX_ROOT}/meta/months/${item.monthKey}`] = {
-          updated_at: Date.now()
+          updated_at: now
         };
       });
-      const uploadId = `${selectedCompany.key}_${Date.now()}`;
-      updates[`${INDEX_ROOT}/uploads/${uploadId}`] = {
+
+      Object.entries(monthStats).forEach(([monthKey, rowCount]) => {
+        updates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${monthKey}`] = {
+          source_name: selectedCompany.source,
+          display_name: displayName,
+          month_key: monthKey,
+          row_count: rowCount,
+          updated_at: now
+        };
+
+        updates[`${INDEX_ROOT}/meta/months/${monthKey}/companies/${selectedCompany.key}`] = {
+          source_name: selectedCompany.source,
+          display_name: displayName,
+          month_key: monthKey,
+          row_count: rowCount,
+          updated_at: now
+        };
+      });
+
+      const pulse = {
+        scope: 'faturamento',
         company_key: selectedCompany.key,
         source_name: selectedCompany.source,
         display_name: displayName,
         file_count: files.length,
         row_count: rows.length,
         months: [...monthsTouched],
-        created_at: Date.now()
-      };
-      updates[`${INDEX_ROOT}/meta/last_upload`] = {
-        company_key: selectedCompany.key,
-        display_name: displayName,
-        file_count: files.length,
-        row_count: rows.length,
-        months: [...monthsTouched],
-        updated_at: Date.now()
+        updated_at: now
       };
 
+      const uploadId = `${selectedCompany.key}_${now}`;
+
+      updates[`${INDEX_ROOT}/uploads/${uploadId}`] = {
+        ...pulse,
+        created_at: now
+      };
+
+      updates[`${INDEX_ROOT}/meta/last_upload`] = pulse;
+      updates[`${INDEX_ROOT}/meta/refresh`] = pulse;
+
       await fbDB_v2.ref().update(updates);
-      appendLog(`Upload concluído: ${rows.length} linhas normalizadas em ${monthsTouched.size} mês(es). Duplicatas não se acumulam porque a chave é determinística.`);
+
+      try {
+        localStorage.setItem('jb_faturamento_upload_pulse', JSON.stringify(pulse));
+        sessionStorage.setItem('jb_faturamento_upload_pulse', JSON.stringify(pulse));
+      } catch (e) {}
+
+      appendLog(
+        `Upload concluído: ${rows.length} linhas normalizadas em ${monthsTouched.size} mês(es). ` +
+        `Dashboard sinalizado para atualização automática.`
+      );
+
       await buscarEmpresaMes();
     }
 
