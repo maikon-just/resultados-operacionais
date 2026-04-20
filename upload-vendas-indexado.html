@@ -46,6 +46,7 @@
     .btn.primary{background:linear-gradient(135deg,#5f91ee 0%,#7ba0f8 100%);border-color:#6d97ef;color:#fff;box-shadow:0 8px 20px rgba(95,145,238,.20)}
     .btn.success{background:linear-gradient(135deg,#10b981 0%,#34d399 100%);border-color:#10b981;color:#fff;box-shadow:0 8px 20px rgba(16,185,129,.20)}
     .btn:hover{transform:translateY(-1px)}
+    .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
     .dropzone{border:2px dashed #bfd4fb;border-radius:18px;padding:18px;background:#f8fbff}
     .dropzone strong{display:block;margin-bottom:8px;color:#16325c}
     .muted{color:var(--muted);font-size:12px;font-weight:600}
@@ -57,6 +58,8 @@
     .log{border:1px solid #dbe5f1;border-radius:16px;background:#fbfdff;max-height:360px;overflow:auto;padding:12px;font-size:12px;font-weight:600;line-height:1.55;white-space:pre-wrap}
     .tag{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800;background:#eef4ff;border:1px solid #dbe5f1;color:#334155}
     .stack{display:flex;gap:8px;flex-wrap:wrap}
+    .progress-bar-wrap{height:8px;background:#e2e8f0;border-radius:999px;margin-top:10px;display:none}
+    .progress-bar{height:8px;background:linear-gradient(90deg,#5f91ee,#10b981);border-radius:999px;transition:width .3s ease;width:0%}
     @media(max-width:960px){.grid{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:760px){.wrap{padding:14px 12px 26px}.hero h1{font-size:24px}.company-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid,.kpi-row{grid-template-columns:1fr}.actions{display:grid;grid-template-columns:1fr 1fr}.btn{width:100%}}
   </style>
@@ -98,6 +101,9 @@
           </div>
           <div id="fileList" class="muted" style="margin-top:8px">Nenhum arquivo selecionado.</div>
         </div>
+        <div class="progress-bar-wrap" id="progressWrap">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
         <div class="actions">
           <button class="btn primary" id="btnBuscar">Buscar mês/empresa</button>
           <button class="btn success" id="btnImportar">Importar arquivos</button>
@@ -124,389 +130,302 @@
   <script>
     const COMPANY_ORDER = [
       { key:'burger-matriz', source:'Burger Matriz', color:'#7c3aed' },
-      { key:'burger-abc', source:'Burger ABC', color:'#f97316' },
-      { key:'burger-gru', source:'Burger GRU', color:'#eab308' },
-      { key:'gourmet', source:'Gourmet', color:'#0ea5e9' },
-      { key:'aham-forneria', source:'Aham Forneria', color:'#16a34a' },
-      { key:'aham-sushi', source:'Aham Sushi', color:'#e11d48' }
+      { key:'burger-abc',    source:'Burger ABC',   color:'#f97316' },
+      { key:'burger-gru',    source:'Burger GRU',   color:'#eab308' },
+      { key:'gourmet',       source:'Gourmet',      color:'#0ea5e9' },
+      { key:'aham-forneria', source:'Aham Forneria',color:'#16a34a' },
+      { key:'aham-sushi',    source:'Aham Sushi',   color:'#e11d48' }
     ];
-    const INDEX_ROOT = 'vendas_indexadas';
+    const INDEX_ROOT        = 'vendas_indexadas';
     const STATIC_INDEX_ROOT = 'data/vendas-index';
+    const BATCH_SIZE        = 400; // máx de chaves por update Firebase
     let selectedCompany = COMPANY_ORDER[0];
+    let importando = false;
 
+    /* ── utilitários ─────────────────────────────── */
     function qs(id){ return document.getElementById(id); }
-    function nowMonthValue(){
-      const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    }
-    function ymd(d){
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    }
-    function slugify(v=''){
-      return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-    }
+    function nowMonthValue(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+    function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+    function slugify(v=''){ return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
     function moneyNumber(v){
-      if(v == null || v === '') return 0;
-      if(typeof v === 'number') return Number.isFinite(v) ? v : 0;
-      let s = String(v).trim().replace(/\s+/g,'').replace(/R\$/g,'');
+      if(v==null||v==='') return 0;
+      if(typeof v==='number') return Number.isFinite(v)?v:0;
+      let s=String(v).trim().replace(/\s+/g,'').replace(/R\$/g,'');
       if(!s) return 0;
-      const hasComma = s.includes(',');
-      const hasDot = s.includes('.');
-      if(hasComma && hasDot){
-        if(s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g,'').replace(',', '.');
-        else s = s.replace(/,/g,'');
-      } else if(hasComma){
-        s = s.replace(/\./g,'').replace(',', '.');
-      } else {
-        s = s.replace(/,/g,'');
-      }
-      s = s.replace(/[^0-9.-]/g,'');
-      const n = Number(s);
-      return Number.isFinite(n) ? n : 0;
+      const hC=s.includes(','), hD=s.includes('.');
+      if(hC&&hD){ if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(',','.'); else s=s.replace(/,/g,''); }
+      else if(hC){ s=s.replace(/\./g,'').replace(',','.'); }
+      else { s=s.replace(/,/g,''); }
+      s=s.replace(/[^0-9.-]/g,'');
+      const n=Number(s); return Number.isFinite(n)?n:0;
     }
     function parseDateFlex(value){
-      if(value == null || value === '') return null;
-      if(value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-      if(typeof value === 'number'){
-        const epoch = new Date(Math.round((value - 25569) * 86400 * 1000));
-        return Number.isNaN(epoch.getTime()) ? null : epoch;
-      }
-      const s = String(value).trim();
-      let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-      if(m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
-      m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if(m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-      m = s.match(/^(\d{2})-(\d{2})-(\d{4})/);
-      if(m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
-      const d = new Date(s);
-      return Number.isNaN(d.getTime()) ? null : d;
+      if(value==null||value==='') return null;
+      if(value instanceof Date) return Number.isNaN(value.getTime())?null:value;
+      if(typeof value==='number'){ const e=new Date(Math.round((value-25569)*86400*1000)); return Number.isNaN(e.getTime())?null:e; }
+      const s=String(value).trim();
+      let m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/); if(m) return new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));
+      m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);       if(m) return new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));
+      m=s.match(/^(\d{2})-(\d{2})-(\d{4})/);       if(m) return new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));
+      const d=new Date(s); return Number.isNaN(d.getTime())?null:d;
     }
-    function detectDate(row){
-      return parseDateFlex(row['Data da venda'] || row['Data'] || row['Data da Venda'] || row['data'] || row['date']);
-    }
+    function detectDate(row){ return parseDateFlex(row['Data da venda']||row['Data']||row['Data da Venda']||row['data']||row['date']); }
     function hashString(str){
-      let h = 2166136261;
-      for(let i = 0; i < str.length; i += 1){
-        h ^= str.charCodeAt(i);
-        h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
-      }
-      return (h >>> 0).toString(36);
+      let h=2166136261;
+      for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h+=(h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24); }
+      return (h>>>0).toString(36);
     }
-    function monthKey(date){
-      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+    function monthKey(date){ return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`; }
+
+    /* ── log e UI ────────────────────────────────── */
+    function appendLog(msg){ const ts=new Date().toLocaleString('pt-BR'); qs('log').textContent=`[${ts}] ${msg}\n`+qs('log').textContent; }
+    function setSummary({empresa='—',mes='—',linhas='0',atualizado='—'}={}){ qs('sumEmpresa').textContent=empresa; qs('sumMes').textContent=mes; qs('sumLinhas').textContent=linhas; qs('sumAtualizado').textContent=atualizado; }
+    function setProgress(pct, show=true){
+      qs('progressWrap').style.display = show ? 'block' : 'none';
+      qs('progressBar').style.width = `${Math.max(0,Math.min(100,pct))}%`;
     }
-    function appendLog(msg){
-      const ts = new Date().toLocaleString('pt-BR');
-      qs('log').textContent = `[${ts}] ${msg}\n` + qs('log').textContent;
+    function setImportando(state){
+      importando=state;
+      qs('btnImportar').disabled=state;
+      qs('btnBuscar').disabled=state;
+      qs('btnImportar').textContent=state?'Importando…':'Importar arquivos';
+      if(!state) setProgress(0,false);
     }
-    function setSummary({ empresa='—', mes='—', linhas='0', atualizado='—' } = {}){
-      qs('sumEmpresa').textContent = empresa;
-      qs('sumMes').textContent = mes;
-      qs('sumLinhas').textContent = linhas;
-      qs('sumAtualizado').textContent = atualizado;
-    }
+
+    /* ── empresas ────────────────────────────────── */
     function renderCompanies(){
-      qs('companyGrid').innerHTML = COMPANY_ORDER.map(company => {
-        const active = selectedCompany.key === company.key;
-        const style = active ? `background:${company.color};border-color:${company.color};color:#fff;` : `background:#fff;border-color:${company.color};color:${company.color};`;
-        return `<button type="button" class="company-card ${active ? 'active' : ''}" data-company="${company.key}" style="${style}"><span class="company-title">${company.source}</span><span class="company-sub">chave ${company.key}</span></button>`;
+      qs('companyGrid').innerHTML=COMPANY_ORDER.map(company=>{
+        const active=selectedCompany.key===company.key;
+        const style=active?`background:${company.color};border-color:${company.color};color:#fff;`:`background:#fff;border-color:${company.color};color:${company.color};`;
+        return `<button type="button" class="company-card${active?' active':''}" data-company="${company.key}" style="${style}"><span class="company-title">${company.source}</span><span class="company-sub">chave ${company.key}</span></button>`;
       }).join('');
-      qs('companyGrid').querySelectorAll('[data-company]').forEach(btn => btn.addEventListener('click', () => {
-        selectedCompany = COMPANY_ORDER.find(item => item.key === btn.dataset.company) || COMPANY_ORDER[0];
-        qs('displayName').value = selectedCompany.source;
+      qs('companyGrid').querySelectorAll('[data-company]').forEach(btn=>btn.addEventListener('click',()=>{
+        if(importando) return;
+        selectedCompany=COMPANY_ORDER.find(c=>c.key===btn.dataset.company)||COMPANY_ORDER[0];
+        qs('displayName').value=selectedCompany.source;
         renderCompanies();
-        setSummary({ empresa: selectedCompany.source, mes: qs('searchMonth').value || '—', linhas: qs('sumLinhas').textContent, atualizado: qs('sumAtualizado').textContent });
+        setSummary({empresa:selectedCompany.source,mes:qs('searchMonth').value||'—',linhas:qs('sumLinhas').textContent,atualizado:qs('sumAtualizado').textContent});
       }));
     }
+
+    /* ── leitura de planilha ─────────────────────── */
     function readWorkbookRows(file, data){
-      const wb = XLSX.read(data, { type: 'array' });
-      const rows = [];
-      for(const name of wb.SheetNames){
-        const sheet = wb.Sheets[name];
-        rows.push(...XLSX.utils.sheet_to_json(sheet, { defval:'' }));
-      }
+      const wb=XLSX.read(data,{type:'array'}), rows=[];
+      for(const name of wb.SheetNames){ rows.push(...XLSX.utils.sheet_to_json(wb.Sheets[name],{defval:''})); }
       return rows;
     }
+
+    /* ── parse dos arquivos ──────────────────────── */
     async function parseFiles(files){
-      const normalized = [];
+      const normalized=[];
       for(const file of files){
-        const ext = (file.name.split('.').pop() || '').toLowerCase();
-        let rows = [];
-        if(ext === 'csv' || ext === 'txt'){
-          const text = await file.text();
-          const wb = XLSX.read(text, { type:'string' });
-          for(const name of wb.SheetNames){
-            rows.push(...XLSX.utils.sheet_to_json(wb.Sheets[name], { defval:'' }));
-          }
-        } else {
-          const data = await file.arrayBuffer();
-          rows = readWorkbookRows(file, data);
-        }
+        const ext=(file.name.split('.').pop()||'').toLowerCase();
+        let rows=[];
+        if(ext==='csv'||ext==='txt'){ const text=await file.text(); const wb=XLSX.read(text,{type:'string'}); for(const name of wb.SheetNames) rows.push(...XLSX.utils.sheet_to_json(wb.Sheets[name],{defval:''})); }
+        else { const data=await file.arrayBuffer(); rows=readWorkbookRows(file,data); }
         appendLog(`${file.name}: ${rows.length} linhas lidas.`);
-        rows.forEach((row, index) => {
-          const dataVenda = detectDate(row);
+        rows.forEach((row,index)=>{
+          const dataVenda=detectDate(row);
           if(!dataVenda) return;
-          const pedido = row['Id do pedido no parceiro'] || row['Número do pedido no parceiro'] || row['Pedido'] || `${file.name}_${index}`;
-          const keyBase = [selectedCompany.key, ymd(dataVenda), pedido, moneyNumber(row['Total'])].join('|');
+          const pedido=row['Id do pedido no parceiro']||row['Número do pedido no parceiro']||row['Pedido']||`${file.name}_${index}`;
+          const keyBase=[selectedCompany.key,ymd(dataVenda),pedido,moneyNumber(row['Total'])].join('|');
           normalized.push({
             rowKey: hashString(keyBase),
             monthKey: monthKey(dataVenda),
-            row: {
+            row:{
               p: String(pedido),
               d: ymd(dataVenda),
               l: selectedCompany.source,
               i: Number(moneyNumber(row['Itens']).toFixed(2)),
               e: Number(moneyNumber(row['Entrega']).toFixed(2)),
               dc: Number(moneyNumber(row['Desconto']).toFixed(2)),
-              a: Number(moneyNumber(row['Acréscimo'] || row['Acrescimo']).toFixed(2)),
+              a: Number(moneyNumber(row['Acréscimo']||row['Acrescimo']).toFixed(2)),
               t: Number(moneyNumber(row['Total']).toFixed(2)),
-              c: /^S$/i.test(String(row['Está cancelado'] || row['Esta cancelado'] || row['Cancelado'] || '').trim()) ? 1 : 0
+              c: /^S$/i.test(String(row['Está cancelado']||row['Esta cancelado']||row['Cancelado']||'').trim())?1:0
             }
           });
         });
       }
       return normalized;
     }
-    function rowKeyFromParts(companyKey, dateValue, pedidoValue, totalValue){
-      const dateObj = parseDateFlex(dateValue);
-      if(!dateObj) return '';
-      const pedido = String(pedidoValue || '').trim();
-      return hashString([companyKey, ymd(dateObj), pedido, moneyNumber(totalValue)].join('|'));
-    }
+
+    /* ── firebase helpers ────────────────────────── */
     function rowKeyFromStaticRow(companyKey, row){
-      return rowKeyFromParts(companyKey, row?.data || row?.d, row?.pedido || row?.p, row?.total || row?.t);
+      const dateObj=parseDateFlex(row?.data||row?.d);
+      if(!dateObj) return '';
+      const pedido=String(row?.pedido||row?.p||'').trim();
+      return hashString([companyKey,ymd(dateObj),pedido,moneyNumber(row?.total||row?.t)].join('|'));
     }
     async function loadStaticMonth(companyKey, month){
-      try {
-        const res = await fetch(`${STATIC_INDEX_ROOT}/stores/${companyKey}/${month}.json`, { cache:'no-store' });
-        if(!res.ok) return { rows: [], updatedAt: 0, source:'static' };
-        const payload = await res.json();
-        const rows = Array.isArray(payload?.rows) ? payload.rows : [];
-        return { rows, updatedAt: Number(new Date(payload?.generated_at || 0)) || 0, source:'static', rowCount: Number(payload?.row_count || rows.length || 0) };
-      } catch(e){
-        return { rows: [], updatedAt: 0, source:'static' };
-      }
+      try{
+        const res=await fetch(`${STATIC_INDEX_ROOT}/stores/${companyKey}/${month}.json`,{cache:'no-store'});
+        if(!res.ok) return {rows:[],updatedAt:0};
+        const payload=await res.json();
+        return {rows:Array.isArray(payload?.rows)?payload.rows:[],updatedAt:Number(new Date(payload?.generated_at||0))||0};
+      }catch(e){ return {rows:[],updatedAt:0}; }
     }
     async function loadFirebaseMonth(companyKey, month){
-      try {
-        const snap = await fbDB_v2.ref(`${INDEX_ROOT}/companies/${companyKey}/months/${month}`).once('value');
-        const payload = snap.val() || {};
-        const rowsObj = payload?.rows || {};
-        return { rowsObj, updatedAt: Number(payload?.updated_at || 0), source:'firebase', rowCount: Object.keys(rowsObj).length };
-      } catch(e){
-        return { rowsObj: {}, updatedAt: 0, source:'firebase', rowCount: 0 };
-      }
+      try{
+        const snap=await fbDB_v2.ref(`${INDEX_ROOT}/companies/${companyKey}/months/${month}`).once('value');
+        const payload=snap.val()||{};
+        const rowsObj=payload?.rows||{};
+        return {rowsObj,updatedAt:Number(payload?.updated_at||0)};
+      }catch(e){ return {rowsObj:{},updatedAt:0}; }
     }
     async function loadCombinedMonth(companyKey, month){
-      const [staticPack, firebasePack] = await Promise.all([
-        loadStaticMonth(companyKey, month),
-        loadFirebaseMonth(companyKey, month)
-      ]);
-
-      const combined = new Map();
-      const firebaseKeys = new Set(Object.keys(firebasePack.rowsObj || {}));
-      const staticKeys = new Set();
-
-      (staticPack.rows || []).forEach(row => {
-        const rowKey = rowKeyFromStaticRow(companyKey, row);
-        if(!rowKey) return;
-        staticKeys.add(rowKey);
-        combined.set(rowKey, row);
-      });
-
-      Object.entries(firebasePack.rowsObj || {}).forEach(([rowKey, row]) => {
-        combined.set(rowKey, row);
-      });
-
-      return {
-        combinedKeys: combined,
-        staticKeys,
-        firebaseKeys,
-        staticCount: staticKeys.size,
-        firebaseCount: firebaseKeys.size,
-        totalCount: combined.size,
-        updatedAt: Math.max(staticPack.updatedAt || 0, firebasePack.updatedAt || 0)
-      };
+      const [staticPack,firebasePack]=await Promise.all([loadStaticMonth(companyKey,month),loadFirebaseMonth(companyKey,month)]);
+      const combined=new Map(), firebaseKeys=new Set(Object.keys(firebasePack.rowsObj||{})), staticKeys=new Set();
+      (staticPack.rows||[]).forEach(row=>{ const k=rowKeyFromStaticRow(companyKey,row); if(!k) return; staticKeys.add(k); combined.set(k,row); });
+      Object.entries(firebasePack.rowsObj||{}).forEach(([k,row])=>combined.set(k,row));
+      return {combined,staticKeys,firebaseKeys,staticCount:staticKeys.size,firebaseCount:firebaseKeys.size,totalCount:combined.size,updatedAt:Math.max(staticPack.updatedAt||0,firebasePack.updatedAt||0)};
     }
 
+    /* ── envio em lotes ──────────────────────────── */
+    async function firebaseBatchUpdate(updatesObj){
+      const entries=Object.entries(updatesObj);
+      if(!entries.length) return;
+      const totalBatches=Math.ceil(entries.length/BATCH_SIZE);
+      appendLog(`Gravando ${entries.length} chaves no Firebase em ${totalBatches} lote(s) de até ${BATCH_SIZE}…`);
+      for(let i=0;i<totalBatches;i++){
+        const batch=Object.fromEntries(entries.slice(i*BATCH_SIZE,(i+1)*BATCH_SIZE));
+        await fbDB_v2.ref().update(batch);
+        const pct=Math.round(((i+1)/totalBatches)*100);
+        setProgress(pct);
+        appendLog(`Lote ${i+1}/${totalBatches} gravado (${pct}%).`);
+      }
+    }
+
+    /* ── buscar ──────────────────────────────────── */
     async function buscarEmpresaMes(){
-      const month = qs('searchMonth').value || nowMonthValue();
-      const companyKey = selectedCompany.key;
-      const result = await loadCombinedMonth(companyKey, month);
-      const updatedAt = result.updatedAt ? new Date(result.updatedAt).toLocaleString('pt-BR') : 'sem atualização';
-      setSummary({ empresa: qs('displayName').value || selectedCompany.source, mes: month, linhas: String(result.totalCount), atualizado: updatedAt });
-      appendLog(`Consulta executada para ${companyKey} em ${month}: total consolidado ${result.totalCount} linhas.`);
+      const month=qs('searchMonth').value||nowMonthValue();
+      const result=await loadCombinedMonth(selectedCompany.key,month);
+      const updatedAt=result.updatedAt?new Date(result.updatedAt).toLocaleString('pt-BR'):'sem atualização';
+      setSummary({empresa:qs('displayName').value||selectedCompany.source,mes:month,linhas:String(result.totalCount),atualizado:updatedAt});
+      appendLog(`Consulta executada para ${selectedCompany.key} em ${month}: total consolidado ${result.totalCount} linhas.`);
       appendLog(`Base estática: ${result.staticCount} • Firebase: ${result.firebaseCount} • Total sem duplicar: ${result.totalCount}.`);
     }
+
+    /* ── importar ────────────────────────────────── */
     async function importarArquivos(){
-      const files = [...(qs('fileInput').files || [])];
-      if(!files.length){
-        appendLog('Selecione pelo menos um arquivo antes de importar.');
-        return;
-      }
+      if(importando){ appendLog('Já existe uma importação em andamento. Aguarde.'); return; }
+      const files=[...(qs('fileInput').files||[])];
+      if(!files.length){ appendLog('Selecione pelo menos um arquivo antes de importar.'); return; }
 
-      const displayName = (qs('displayName').value || selectedCompany.source).trim();
-      const parsedRows = await parseFiles(files);
-      if(!parsedRows.length){
-        appendLog('Nenhuma linha válida foi encontrada nos arquivos.');
-        return;
-      }
+      setImportando(true);
+      setProgress(0,true);
 
-      const uniqueMap = new Map();
-      parsedRows.forEach(item => uniqueMap.set(`${item.monthKey}__${item.rowKey}`, item));
-      const rows = [...uniqueMap.values()];
-      const duplicatedInsideBatch = parsedRows.length - rows.length;
-      const monthsTouched = [...new Set(rows.map(item => item.monthKey))].sort();
+      try{
+        const displayName=(qs('displayName').value||selectedCompany.source).trim();
+        const parsedRows=await parseFiles(files);
+        if(!parsedRows.length){ appendLog('Nenhuma linha válida foi encontrada nos arquivos.'); setImportando(false); return; }
 
-      const monthCaches = {};
-      for(const monthKey of monthsTouched){
-        monthCaches[monthKey] = await loadCombinedMonth(selectedCompany.key, monthKey);
-      }
+        // dedup dentro do lote
+        const uniqueMap=new Map();
+        parsedRows.forEach(item=>uniqueMap.set(`${item.monthKey}__${item.rowKey}`,item));
+        const rows=[...uniqueMap.values()];
+        const duplicatedInsideBatch=parsedRows.length-rows.length;
+        const monthsTouched=[...new Set(rows.map(item=>item.monthKey))].sort();
 
-      const updates = {};
-      const monthStats = {};
-      let newRows = 0;
-      let duplicateRows = 0;
-      let mirroredIntoFirebase = 0;
-      const now = Date.now();
+        appendLog(`Linhas únicas do lote: ${rows.length} (${duplicatedInsideBatch} duplicadas dentro do lote).`);
+        appendLog(`Meses envolvidos: ${monthsTouched.join(', ')}.`);
+        appendLog(`Carregando base atual para comparação…`);
 
-      rows.forEach(item => {
-        const cache = monthCaches[item.monthKey];
-        if(!monthStats[item.monthKey]){
-          monthStats[item.monthKey] = {
-            static_before: cache.staticCount,
-            firebase_before: cache.firebaseCount,
-            combined_before: cache.totalCount,
-            new_rows: 0,
-            duplicate_rows: 0,
-            mirrored_rows: 0,
-            combined_final: cache.totalCount
-          };
-        }
+        // carrega bases
+        const monthCaches={};
+        for(const mk of monthsTouched) monthCaches[mk]=await loadCombinedMonth(selectedCompany.key,mk);
 
-        const alreadyInCombined = cache.combinedKeys.has(item.rowKey);
-        const alreadyInFirebase = cache.firebaseKeys.has(item.rowKey);
+        // monta objetos de atualização separados:
+        // rowUpdates  → as linhas de dados (grandes, enviadas em lote separado)
+        // metaUpdates → metadados e estatísticas (pequeno, envia de uma vez no fim)
+        const rowUpdates={};
+        const metaUpdates={};
+        const monthStats={};
+        let newRows=0, duplicateRows=0, mirroredIntoFirebase=0;
+        const now=Date.now();
 
-        if(alreadyInCombined){
-          duplicateRows += 1;
-          monthStats[item.monthKey].duplicate_rows += 1;
+        rows.forEach(item=>{
+          const cache=monthCaches[item.monthKey];
+          if(!monthStats[item.monthKey]) monthStats[item.monthKey]={static_before:cache.staticCount,firebase_before:cache.firebaseCount,combined_before:cache.totalCount,new_rows:0,duplicate_rows:0,mirrored_rows:0,combined_final:cache.totalCount};
+
+          const alreadyInCombined=cache.combined.has(item.rowKey);
+          const alreadyInFirebase=cache.firebaseKeys.has(item.rowKey);
+
+          if(alreadyInCombined){ duplicateRows++; monthStats[item.monthKey].duplicate_rows++; }
+          else { newRows++; monthStats[item.monthKey].new_rows++; monthStats[item.monthKey].combined_final++; cache.combined.set(item.rowKey,item.row); }
+
+          if(!alreadyInFirebase){
+            mirroredIntoFirebase++;
+            monthStats[item.monthKey].mirrored_rows++;
+            cache.firebaseKeys.add(item.rowKey);
+            // chaves de dados vão para rowUpdates
+            rowUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${item.monthKey}/rows/${item.rowKey}`]=item.row;
+            rowUpdates[`${INDEX_ROOT}/months/${item.monthKey}/rows/${selectedCompany.key}_${item.rowKey}`]=item.row;
+          }
+        });
+
+        // metadados (pequenos, uma única chave por mês/empresa)
+        monthsTouched.forEach(mk=>{
+          metaUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/source_name`]=selectedCompany.source;
+          metaUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/display_name`]=displayName;
+          metaUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/updated_at`]=now;
+          metaUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${mk}/updated_at`]=now;
+          metaUpdates[`${INDEX_ROOT}/months/${mk}/updated_at`]=now;
+          metaUpdates[`${INDEX_ROOT}/months/${mk}/companies/${selectedCompany.key}`]={source_name:selectedCompany.source,display_name:displayName,updated_at:now};
+          metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}`]={source_name:selectedCompany.source,display_name:displayName,updated_at:now};
+          metaUpdates[`${INDEX_ROOT}/meta/months/${mk}`]={updated_at:now};
+          const stats=monthStats[mk];
+          metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${mk}`]={source_name:selectedCompany.source,display_name:displayName,month_key:mk,row_count:stats.combined_final,static_before:stats.static_before,firebase_before:stats.firebase_before,new_rows_last_import:stats.new_rows,duplicate_rows_last_import:stats.duplicate_rows,mirrored_rows_last_import:stats.mirrored_rows,updated_at:now};
+          metaUpdates[`${INDEX_ROOT}/meta/months/${mk}/companies/${selectedCompany.key}`]={source_name:selectedCompany.source,display_name:displayName,month_key:mk,row_count:stats.combined_final,static_before:stats.static_before,firebase_before:stats.firebase_before,new_rows_last_import:stats.new_rows,duplicate_rows_last_import:stats.duplicate_rows,mirrored_rows_last_import:stats.mirrored_rows,updated_at:now};
+        });
+
+        const pulse={scope:'faturamento',company_key:selectedCompany.key,source_name:selectedCompany.source,display_name:displayName,file_count:files.length,row_count:rows.length,parsed_row_count:parsedRows.length,new_row_count:newRows,duplicate_row_count:duplicateRows,mirrored_row_count:mirroredIntoFirebase,months:monthsTouched,updated_at:now};
+        const uploadId=`${selectedCompany.key}_${now}`;
+        metaUpdates[`${INDEX_ROOT}/uploads/${uploadId}`]={...pulse,duplicated_inside_batch:duplicatedInsideBatch,month_stats:monthStats,created_at:now};
+        metaUpdates[`${INDEX_ROOT}/meta/last_upload`]=pulse;
+        metaUpdates[`${INDEX_ROOT}/meta/refresh`]=pulse;
+
+        appendLog(`Novas linhas a gravar: ${mirroredIntoFirebase} • Já existentes: ${duplicateRows}.`);
+
+        // 1) Grava linhas de dados em lotes
+        if(Object.keys(rowUpdates).length>0){
+          await firebaseBatchUpdate(rowUpdates);
         } else {
-          newRows += 1;
-          monthStats[item.monthKey].new_rows += 1;
-          monthStats[item.monthKey].combined_final += 1;
-          cache.combinedKeys.set(item.rowKey, item.row);
+          appendLog('Nenhuma linha nova para gravar no Firebase (todas já existem na base).');
         }
 
-        if(!alreadyInFirebase){
-          mirroredIntoFirebase += 1;
-          monthStats[item.monthKey].mirrored_rows += 1;
-          cache.firebaseKeys.add(item.rowKey);
-          updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${item.monthKey}/rows/${item.rowKey}`] = item.row;
-          updates[`${INDEX_ROOT}/months/${item.monthKey}/rows/${selectedCompany.key}_${item.rowKey}`] = item.row;
-        }
+        // 2) Grava metadados em lote único (pequeno)
+        await fbDB_v2.ref().update(metaUpdates);
+        appendLog('Metadados atualizados.');
 
-        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/source_name`] = selectedCompany.source;
-        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/display_name`] = displayName;
-        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/updated_at`] = now;
-        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${item.monthKey}/updated_at`] = now;
-        updates[`${INDEX_ROOT}/months/${item.monthKey}/updated_at`] = now;
-        updates[`${INDEX_ROOT}/months/${item.monthKey}/companies/${selectedCompany.key}`] = {
-          source_name: selectedCompany.source,
-          display_name: displayName,
-          updated_at: now
-        };
-        updates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}`] = {
-          source_name: selectedCompany.source,
-          display_name: displayName,
-          updated_at: now
-        };
-        updates[`${INDEX_ROOT}/meta/months/${item.monthKey}`] = { updated_at: now };
-      });
+        // 3) Pulso para dashboard
+        try{
+          localStorage.setItem('jb_faturamento_upload_pulse',JSON.stringify(pulse));
+          sessionStorage.setItem('jb_faturamento_upload_pulse',JSON.stringify(pulse));
+        }catch(e){}
 
-      Object.entries(monthStats).forEach(([monthKey, stats]) => {
-        updates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${monthKey}`] = {
-          source_name: selectedCompany.source,
-          display_name: displayName,
-          month_key: monthKey,
-          row_count: stats.combined_final,
-          static_before: stats.static_before,
-          firebase_before: stats.firebase_before,
-          new_rows_last_import: stats.new_rows,
-          duplicate_rows_last_import: stats.duplicate_rows,
-          mirrored_rows_last_import: stats.mirrored_rows,
-          updated_at: now
-        };
-        updates[`${INDEX_ROOT}/meta/months/${monthKey}/companies/${selectedCompany.key}`] = {
-          source_name: selectedCompany.source,
-          display_name: displayName,
-          month_key: monthKey,
-          row_count: stats.combined_final,
-          static_before: stats.static_before,
-          firebase_before: stats.firebase_before,
-          new_rows_last_import: stats.new_rows,
-          duplicate_rows_last_import: stats.duplicate_rows,
-          mirrored_rows_last_import: stats.mirrored_rows,
-          updated_at: now
-        };
-      });
+        appendLog(`✅ Importação concluída para ${displayName}.`);
+        appendLog(`Arquivos: ${files.length} • Lidas: ${parsedRows.length} • Únicas: ${rows.length} • Novas: ${newRows} • Repetidas: ${duplicateRows}.`);
+        Object.entries(monthStats).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([mk,stats])=>{
+          appendLog(`Mês ${mk}: estática ${stats.static_before} • Firebase ${stats.firebase_before} • antes ${stats.combined_before} • novas ${stats.new_rows} • repetidas ${stats.duplicate_rows} • total final ${stats.combined_final}.`);
+        });
+        if(newRows===0) appendLog('ℹ️ Nenhuma linha nova: este arquivo já estava 100% na base consolidada (estática + Firebase).');
 
-      const pulse = {
-        scope: 'faturamento',
-        company_key: selectedCompany.key,
-        source_name: selectedCompany.source,
-        display_name: displayName,
-        file_count: files.length,
-        row_count: rows.length,
-        parsed_row_count: parsedRows.length,
-        new_row_count: newRows,
-        duplicate_row_count: duplicateRows,
-        mirrored_row_count: mirroredIntoFirebase,
-        months: monthsTouched,
-        updated_at: now
-      };
+        await buscarEmpresaMes();
 
-      const uploadId = `${selectedCompany.key}_${now}`;
-      updates[`${INDEX_ROOT}/uploads/${uploadId}`] = {
-        ...pulse,
-        duplicated_inside_batch: duplicatedInsideBatch,
-        month_stats: monthStats,
-        created_at: now
-      };
-      updates[`${INDEX_ROOT}/meta/last_upload`] = pulse;
-      updates[`${INDEX_ROOT}/meta/refresh`] = pulse;
-
-      await fbDB_v2.ref().update(updates);
-
-      try {
-        localStorage.setItem('jb_faturamento_upload_pulse', JSON.stringify(pulse));
-        sessionStorage.setItem('jb_faturamento_upload_pulse', JSON.stringify(pulse));
-      } catch (e) {}
-
-      appendLog(`Importação concluída para ${displayName}.`);
-      appendLog(`Arquivos: ${files.length} • Linhas lidas: ${parsedRows.length} • Linhas únicas do lote: ${rows.length}.`);
-      if(duplicatedInsideBatch > 0) appendLog(`Duplicadas dentro do lote: ${duplicatedInsideBatch}.`);
-      appendLog(`Novas linhas reais na base consolidada: ${newRows}.`);
-      appendLog(`Linhas já existentes na base consolidada: ${duplicateRows}.`);
-      appendLog(`Linhas gravadas/espelhadas no Firebase nesta importação: ${mirroredIntoFirebase}.`);
-      Object.entries(monthStats).sort((a,b) => a[0].localeCompare(b[0])).forEach(([monthKey, stats]) => {
-        appendLog(`Mês ${monthKey}: estática ${stats.static_before} • Firebase ${stats.firebase_before} • total antes ${stats.combined_before} • novas ${stats.new_rows} • repetidas ${stats.duplicate_rows} • total final ${stats.combined_final}.`);
-      });
-      if(newRows === 0){
-        appendLog('Nenhuma linha nova entrou porque este arquivo já existe na base consolidada (estática + Firebase).');
+      }catch(err){
+        appendLog(`❌ Erro durante a importação: ${err?.message||String(err)}`);
+        console.error('Erro importarArquivos:', err);
+      } finally {
+        setImportando(false);
       }
-
-      await buscarEmpresaMes();
     }
 
-    qs('searchMonth').value = nowMonthValue();
-    qs('displayName').value = selectedCompany.source;
+    /* ── init ────────────────────────────────────── */
+    qs('searchMonth').value=nowMonthValue();
+    qs('displayName').value=selectedCompany.source;
     renderCompanies();
-    setSummary({ empresa: selectedCompany.source, mes: qs('searchMonth').value, linhas:'0', atualizado:'—' });
-
-    qs('fileInput').addEventListener('change', () => {
-      const files = [...(qs('fileInput').files || [])];
-      qs('fileList').textContent = files.length ? files.map(file => `${file.name} (${Math.round(file.size/1024)} KB)`).join(' · ') : 'Nenhum arquivo selecionado.';
-    });
+    setSummary({empresa:selectedCompany.source,mes:qs('searchMonth').value,linhas:'0',atualizado:'—'});
+    qs('fileInput').addEventListener('change',()=>{ const f=[...(qs('fileInput').files||[])]; qs('fileList').textContent=f.length?f.map(x=>`${x.name} (${Math.round(x.size/1024)} KB)`).join(' · '):'Nenhum arquivo selecionado.'; });
     qs('btnBuscar').addEventListener('click', buscarEmpresaMes);
     qs('btnImportar').addEventListener('click', importarArquivos);
   </script>

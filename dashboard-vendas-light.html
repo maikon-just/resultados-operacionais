@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard de Vendas</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js"></script>
+  <script src="https://maikon-just.github.io/just-burger-producao/js/firebase_v2.js?v=20260418"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     :root{
@@ -22,14 +25,13 @@
       radial-gradient(circle at 88% 8%, rgba(122,155,248,.08), transparent 20%),
       radial-gradient(circle at 76% 72%, rgba(34,197,94,.07), transparent 18%)}
     .wrap{position:relative;z-index:1;max-width:1580px;margin:0 auto;padding:20px 16px 38px}
-    .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
     .hero{background:linear-gradient(135deg,#dcecff 0%,#eef5ff 52%,#f9fbff 100%);border:1px solid var(--line2);border-radius:24px;padding:20px 22px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
     .hero h1{margin:0;font-size:30px;line-height:1.04;font-weight:800;letter-spacing:-.03em;color:#16325c}
     .hero p{display:none}
     .live{display:none}
     .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-    .toolbar{margin-top:16px;padding:14px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;align-items:end}
-    .field{display:flex;flex-direction:column;gap:6px;min-width:0}.field-center{align-items:flex-start;text-align:left}
+    .toolbar{margin-top:16px;padding:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:0}
     .field label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#4b5d79}
     .field input{height:42px;border:1px solid #d6e2f1;border-radius:12px;padding:0 12px;background:#fbfdff;color:#0f172a;font:700 13px Montserrat,system-ui,sans-serif;outline:none}
     .field input:focus{border-color:#95b7ff;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
@@ -40,6 +42,28 @@
     .btn.primary{background:linear-gradient(135deg,#5f91ee 0%,#7ba0f8 100%);border-color:#6d97ef;color:#fff;box-shadow:0 8px 20px rgba(95,145,238,.20)}
     .btn.secondary{background:#f8fbff;color:#34517c}
     .btn.proj{background:linear-gradient(135deg,#10b981 0%,#34d399 100%);border-color:#10b981;color:#fff;box-shadow:0 8px 20px rgba(16,185,129,.20)}
+    /* range popover */
+    .range-display{height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;text-align:left;width:100%}
+    #rangeHiddenInputs{display:none}
+    .range-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.28);z-index:200}
+    .range-popover{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:201;width:min(440px,96vw)}
+    .range-popover-card{background:#fff;border-radius:22px;box-shadow:0 24px 60px rgba(15,23,42,.18);padding:20px}
+    .range-popover-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+    .range-popover-head strong{font-size:15px;font-weight:800;color:#16325c;display:block}
+    .range-popover-head span{font-size:12px;color:#64748b;font-weight:600}
+    .range-close{background:none;border:none;font-size:22px;cursor:pointer;color:#64748b;line-height:1}
+    .range-steps{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    .range-step label{display:block;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#4b5d79;margin-bottom:6px}
+    .range-step input{width:100%;height:44px;border:1px solid #d6e2f1;border-radius:12px;padding:0 12px;background:#fbfdff;color:#0f172a;font:700 13px Montserrat,system-ui,sans-serif;outline:none}
+    .range-step input:disabled{background:#f1f5f9;color:#94a3b8}
+    .range-preview{font-size:12px;font-weight:700;color:#4b5d79;margin-bottom:14px;min-height:20px}
+    .range-actions{display:flex;gap:10px;justify-content:flex-end}
+    /* store buttons */
+    .store-grid{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+    .store-btn{height:38px;padding:0 14px;border-radius:999px;border:2px solid #d6e2f1;background:#fff;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;transition:.15s ease}
+    .store-btn:hover{transform:translateY(-1px)}
+    .store-btn.active{color:#fff}
+    /* tabs */
     .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
     .tab{padding:11px 16px;border-radius:999px;border:1px solid #d8e3f2;background:#fff;color:#526581;font-size:12px;font-weight:800;cursor:pointer}
     .tab.active{background:#18355f;color:#fff;border-color:#18355f;box-shadow:0 10px 20px rgba(24,53,95,.18)}
@@ -66,7 +90,6 @@
     .store-pill{padding:8px 14px;border-radius:999px;border:2px solid #d9e5f4;background:#fff;font-size:12px;font-weight:800;cursor:pointer}
     .store-pill.active{color:#fff}
     .muted{color:#64748b}
-    .mini{font-size:12px;font-weight:700;color:#64748b}
     .badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800}
     .badge.up{background:#e9fff1;color:#138247;border:1px solid #bde8cb}
     .badge.down{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}
@@ -78,30 +101,35 @@
     .finance-ranking-table{min-width:980px}
     .finance-ranking-table thead th{background:#37465c;color:#fff}
     .finance-ranking-table tbody td{vertical-align:middle}
-    .rank-badge{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:#5b9cf6;color:#fff;font-size:10px;font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+    .rank-badge{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:#5b9cf6;color:#fff;font-size:10px;font-weight:800}
     .store-name-strong{font-weight:800;color:#334155}
     .money-green{color:#59c17a;font-weight:800}
     .money-blue{color:#5b8def;font-weight:800}
     .money-red{color:#ff5a52;font-weight:800}
     .money-dark{color:#334155;font-weight:800}
-    .share-strong{font-weight:800;color:#1f2937}
+    .loading-overlay{position:fixed;inset:0;background:rgba(248,251,255,.85);z-index:300;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+    .loading-spinner{width:44px;height:44px;border:4px solid #dbe5f1;border-top-color:#5b8def;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-text{font-size:13px;font-weight:800;color:#4b5d79}
     @media(max-width:1320px){.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2,.grid-3{grid-template-columns:1fr}.toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:760px){.hero h1{font-size:24px}.wrap{padding:14px 12px 26px}.toolbar{grid-template-columns:1fr}.kpi-row{grid-template-columns:1fr}.chart,.chart.sm,.chart.tall{height:250px}.tabs{overflow:visible;flex-wrap:wrap;padding-bottom:0}.tab{flex:1 1 calc(50% - 8px);text-align:center}.preset-group,.action-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}.preset-btn,.btn{width:100%;padding:0 8px}.field-center{align-items:stretch;text-align:left}}
+    @media(max-width:760px){.hero h1{font-size:24px}.wrap{padding:14px 12px 26px}.toolbar{grid-template-columns:1fr}.kpi-row{grid-template-columns:1fr}.chart,.chart.sm,.chart.tall{height:250px}.tabs{overflow:visible;flex-wrap:wrap;padding-bottom:0}.tab{flex:1 1 calc(50% - 8px);text-align:center}.preset-group,.action-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}.preset-btn,.btn{width:100%;padding:0 8px}}
   </style>
 </head>
 <body>
   <div class="bg"></div>
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Carregando dados...</div>
+  </div>
   <div class="wrap">
     <div class="hero">
       <div>
         <h1>📊 Dashboard de Vendas</h1>
-        <p></p>
       </div>
-      <div class="live"></div>
     </div>
 
     <div class="panel toolbar">
-      <div class="field toolbar-presets">
+      <div class="field">
         <label>Períodos rápidos</label>
         <div class="preset-group">
           <button class="preset-btn active" data-preset="mes_atual">Mês atual</button>
@@ -109,26 +137,26 @@
           <button class="preset-btn" data-preset="ontem">Ontem</button>
         </div>
       </div>
-      <div class="field toolbar-range">
+      <div class="field">
         <label>Período selecionado</label>
-        <button type="button" class="range-display" id="periodRangeDisplay">Escolha data</button>
+        <button type="button" id="periodRangeDisplay" class="range-display">Escolha data</button>
         <div id="rangeHiddenInputs" aria-hidden="true">
           <input type="date" id="dataInicio">
           <input type="date" id="dataFim">
         </div>
       </div>
-      <div class="field toolbar-actions">
+      <div class="field">
         <label>Ações</label>
         <div class="action-group">
           <button class="btn primary" id="btnAplicar">Aplicar período</button>
-          <button class="btn secondary" id="btnLimpar">Voltar para mês atual</button>
-          <button class="btn proj" id="btnProjecao">Projeção do mês</button>
+          <button class="btn secondary" id="btnLimpar">Mês atual</button>
+          <button class="btn proj" id="btnProjecao">Projeção</button>
         </div>
       </div>
     </div>
 
-    <div class="range-backdrop" id="rangeBackdrop" hidden></div>
-    <div class="range-popover" id="rangePopover" hidden>
+    <div id="rangeBackdrop" class="range-backdrop" hidden></div>
+    <div id="rangePopover" class="range-popover" hidden>
       <div class="range-popover-card">
         <div class="range-popover-head">
           <div>
@@ -154,6 +182,8 @@
         </div>
       </div>
     </div>
+
+    <div id="storeButtonsArea" class="store-grid"></div>
 
     <div class="tabs">
       <button class="tab active" data-tab="geral">🏠 Visão geral</button>
@@ -288,1367 +318,565 @@
   </div>
 
 <script>
-const FIREBASE_URL = 'https://justburger-producao-e9b27-default-rtdb.firebaseio.com';
-const REPORTS_URL = FIREBASE_URL + '/relatorios_diarios.json';
-const CURRENT_MONTH_CACHE_URL = 'vendas-cache-mes-atual.json';
-const CURRENT_MONTH_LOCAL_CACHE_KEY = 'jb_dash_vendas_cache_mes_atual_v2';
-const CURRENT_MONTH_LOCAL_META_KEY = 'jb_dash_vendas_cache_mes_atual_meta_v2';
-const STORE_ORDER = ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi'];
-const STORE_COLORS = {
-  'Burger Matriz':'#7c3aed',
-  'Burger ABC':'#f97316',
-  'Burger GRU':'#eab308',
-  'Gourmet':'#0ea5e9',
-  'Aham Forneria':'#16a34a',
-  'Aham Sushi':'#e11d48'
-};
-const LOJA_CODIGO_MAP = {
-  '21870':'Burger Matriz',
-  'aa6576e8-574e-42c5-8d38-0d7df31f3fcc':'Burger ABC',
-  '8432b620-27ea-48fb-bf3b-a0b76bbf3516':'Burger GRU',
-  '510cb9b9-a4dc-4962-a70f-cc01b0e4bdc8':'Aham Forneria',
-  '1eb0ccfe-ba7e-43ad-9a23-06c4ea7a823a':'Aham Forneria',
-  'fe4e06bd-2f30-410a-97ef-b21eba59f3e4':'Aham Sushi',
-  '20215':'Aham Sushi'
-};
-const fmtMoney = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
-const fmtInt = new Intl.NumberFormat('pt-BR');
-let rowsBase = [];
-let charts = {};
-let activeTab = 'geral';
-let activeStore = 'Burger Matriz';
-let activePreset = 'mes_atual';
-let reportsMetaCache = [];
-let reportsMetaPromise = null;
-let fullBaseLoaded = false;
-let fullBasePromise = null;
-let threeMonthBaseLoaded = false;
-let threeMonthBasePromise = null;
-let fastBaseStart = null;
-let currentMonthStart = null;
-let renderRunId = 0;
-let chartRefreshTimer = null;
-let backgroundWarmupStarted = false;
-
-function colorOf(store){ return STORE_COLORS[store] || '#64748b'; }
-function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-function brDate(d){ return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
-function shortDate(d){ return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
-function fmtPct(v){ return `${Number(v).toFixed(1)}%`; }
-function currentMonthKey(date = new Date()){
-  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
-}
-function cacheBustedUrl(url){
-  const now = new Date();
-  const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}`;
-  return `${url}${url.includes('?') ? '&' : '?'}v=${stamp}`;
-}
-function parseDateFlex(value){
-  if(value == null || value === '') return null;
-  if(value instanceof Date) return isNaN(value) ? null : value;
-  if(typeof value === 'number'){
-    const epoch = new Date(Math.round((value - 25569) * 86400 * 1000));
-    return isNaN(epoch) ? null : epoch;
-  }
-  const s = String(value).trim();
-  let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-  if(m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
-  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  m = s.match(/^(\d{2})-(\d{2})-(\d{4})/);
-  if(m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
-  const d = new Date(s);
-  return isNaN(d) ? null : d;
-}
-function moneyNumber(v){
-  if(v == null || v === '') return 0;
-  if(typeof v === 'number') return isFinite(v) ? v : 0;
-  let s = String(v).trim().replace(/\s+/g,'').replace(/R\$/g,'');
-  if(!s) return 0;
-  const hasComma = s.includes(',');
-  const hasDot = s.includes('.');
-  if(hasComma && hasDot){
-    if(s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g,'').replace(',', '.');
-    else s = s.replace(/,/g,'');
-  } else if(hasComma){
-    s = s.replace(/\./g,'').replace(',', '.');
-  } else {
-    s = s.replace(/,/g,'');
-  }
-  s = s.replace(/[^0-9.-]/g,'');
-  const n = Number(s);
-  return isFinite(n) ? n : 0;
-}
-function normalizeStr(v){ return String(v || '').trim(); }
-function hasFinanceSchema(row){
-  if(!row || typeof row !== 'object') return false;
-  const keys = Object.keys(row);
-  const hasDate = ['Data da venda','Data','Data da Venda'].some(k => keys.includes(k));
-  const hasStore = ['Código da loja','Codigo da loja','Cód. loja','Nome da loja','Loja'].some(k => keys.includes(k));
-  const hasMoney = ['Itens','Entrega','Desconto','Total'].some(k => keys.includes(k));
-  return hasDate && hasStore && hasMoney;
-}
-function reportStoreHint(rep={}){
-  return normalizeStr(rep.loja_arquivo || rep.chave_loja_arquivo || rep.nome_arquivo || '');
-}
-function normalizeStore(store='', code=''){
-  const cod = String(code || '').trim();
-  if(LOJA_CODIGO_MAP[cod]) return LOJA_CODIGO_MAP[cod];
-  const s = String(store || '').toLowerCase().trim();
-  if(!s) return 'Sem loja informada';
-  if(/(^|\s)abc(\s|$)/.test(s) || s.includes('santo andré') || s.includes('santo andre') || s.includes('sao bernardo') || s.includes('são bernardo') || s.includes('são caetano')) return 'Burger ABC';
-  if(s.includes('gru') || s.includes('guarulhos')) return 'Burger GRU';
-  if(s.includes('zona leste') || s.includes('matriz')) return 'Burger Matriz';
-  if(s.includes('gourmet')) return 'Gourmet';
-  if(s.includes('forneria') || s.includes('esfiha')) return 'Aham Forneria';
-  if(s.includes('sushi')) return 'Aham Sushi';
-  if(s.includes('just burger') || s === 'burger' || s.includes('burger')) return 'Burger Matriz';
-  return String(store || '').trim() || 'Sem loja informada';
-}
-function fetchJson(url){
-  return fetch(url,{cache:'no-store'}).then(r => {
-    if(!r.ok) throw new Error('Falha ao ler base');
-    return r.json();
-  });
-}
-async function ensureReportsMetaLoaded(){
-  if(reportsMetaPromise) return reportsMetaPromise;
-  reportsMetaPromise = (async () => {
-    const obj = await fetchJson(REPORTS_URL) || {};
-    reportsMetaCache = Object.entries(obj)
-      .map(([id,v]) => ({id,...v}))
-      .filter(r => r.status !== 'deletado' && r.tipo === 'financeiro')
-      .sort((a,b)=>(b.timestamp_upload||0)-(a.timestamp_upload||0));
-    return reportsMetaCache;
-  })();
-  return reportsMetaPromise;
-}
-async function fetchReportRows(rep){
-  let parsed = {};
-  try{ parsed = JSON.parse(rep.dados_json || '{}'); }catch(e){ parsed = {}; }
-  let rows = Array.isArray(parsed.linhas) ? parsed.linhas.slice() : [];
-  if(rep.chunked && rep.chunks_path){
-    try{
-      const chunkObj = await fetchJson(`${FIREBASE_URL}/${rep.chunks_path}.json`);
-      let chunkList = [];
-      if(Array.isArray(chunkObj)) chunkList = chunkObj.filter(Boolean);
-      else chunkList = Object.values(chunkObj || {});
-      chunkList.sort((a,b)=>(a?.chunk_index||0)-(b?.chunk_index||0));
-      rows = chunkList.flatMap(c => Array.isArray(c?.rows) ? c.rows : []);
-    }catch(err){ console.error('Erro chunks', rep.nome_arquivo, err); }
-  }
-  return rows;
-}
-function getReportRefDate(rep){
-  return parseDateFlex(rep?.data_referencia) || (rep?.timestamp_upload ? new Date(rep.timestamp_upload) : null);
-}
-async function mapWithConcurrency(list, limit, mapper){
-  const safeLimit = Math.max(1, Math.min(limit || 4, 8));
-  const results = new Array(list.length);
-  let cursor = 0;
-  async function worker(){
-    while(cursor < list.length){
-      const index = cursor++;
-      results[index] = await mapper(list[index], index);
-    }
-  }
-  await Promise.all(Array.from({length: Math.min(safeLimit, list.length)}, () => worker()));
-  return results;
-}
-function rowToCacheShape(row){
-  return {
-    p: row.pedido || '',
-    d: ymd(row.data),
-    l: row.loja,
-    i: Number(row.itens || 0),
-    e: Number(row.entrega || 0),
-    dc: Number(row.desconto || 0),
-    a: Number(row.acrescimo || 0),
-    t: Number(row.total || 0),
-    c: row.cancelado ? 1 : 0
-  };
-}
-function rowFromCacheShape(row){
-  const data = parseDateFlex(row?.d || row?.data);
-  if(!data) return null;
-  return {
-    pedido: row?.p || row?.pedido || '',
-    data,
-    loja: row?.l || row?.loja || 'Sem loja informada',
-    itens: Number(row?.i ?? row?.itens ?? 0),
-    entrega: Number(row?.e ?? row?.entrega ?? 0),
-    desconto: Number(row?.dc ?? row?.desconto ?? 0),
-    acrescimo: Number(row?.a ?? row?.acrescimo ?? 0),
-    total: Number(row?.t ?? row?.total ?? 0),
-    cancelado: Boolean(row?.c ?? row?.cancelado)
-  };
-}
-function saveCurrentMonthLocalCache(rows, meta = {}){
-  try{
-    const payload = rows.map(rowToCacheShape);
-    const monthKey = meta.month_key || currentMonthKey();
-    localStorage.setItem(CURRENT_MONTH_LOCAL_CACHE_KEY, JSON.stringify(payload));
-    localStorage.setItem(CURRENT_MONTH_LOCAL_META_KEY, JSON.stringify({
-      month_key: monthKey,
-      generated_at: meta.generated_at || new Date().toISOString(),
-      source: meta.source || 'browser'
-    }));
-  }catch(e){}
-}
-function loadCurrentMonthLocalCache(){
-  try{
-    const meta = JSON.parse(localStorage.getItem(CURRENT_MONTH_LOCAL_META_KEY) || 'null');
-    if(!meta || meta.month_key !== currentMonthKey()) return null;
-    const raw = JSON.parse(localStorage.getItem(CURRENT_MONTH_LOCAL_CACHE_KEY) || '[]');
-    const rows = Array.isArray(raw) ? raw.map(rowFromCacheShape).filter(Boolean) : [];
-    return rows.length ? {rows, meta} : null;
-  }catch(e){
-    return null;
-  }
-}
-async function loadCurrentMonthRemoteCache(){
-  try{
-    const payload = await fetchJson(cacheBustedUrl(CURRENT_MONTH_CACHE_URL));
-    if(!payload || payload.month_key !== currentMonthKey()) return null;
-    const rows = Array.isArray(payload.rows) ? payload.rows.map(rowFromCacheShape).filter(Boolean) : [];
-    if(!rows.length) return null;
-    saveCurrentMonthLocalCache(rows, {month_key: payload.month_key, generated_at: payload.generated_at, source: 'arquivo'});
-    return {rows, meta: payload};
-  }catch(e){
-    return null;
-  }
-}
-async function buildRowsFromReports(reports, concurrency = 6){
-  const reportRows = await mapWithConcurrency(reports, concurrency, async rep => ({ rep, rows: await fetchReportRows(rep) }));
-  const dedupe = new Map();
-  reportRows.forEach(({rep, rows}) => {
-    (rows || []).forEach((row, idx) => {
-      if(!hasFinanceSchema(row)) return;
-      const data = parseDateFlex(row['Data da venda'] || row['Data'] || row['Data da Venda'] || rep.data_referencia);
-      if(!data) return;
-      const code = row['Código da loja'] || row['Codigo da loja'] || row['Cód. loja'] || '';
-      const lojaOriginal = normalizeStr(row['Nome da loja'] || row['Loja'] || '');
-      const loja = normalizeStore(lojaOriginal || reportStoreHint(rep), code);
-      if(loja === 'Sem loja informada') return;
-      const pedidoKey = row['Id do pedido no parceiro'] || row['Número do pedido no parceiro'] || row['Pedido'] || `${rep.id}_${idx}`;
-      const key = `${pedidoKey}||${loja}||${ymd(data)}`;
-      dedupe.set(key, {
-        pedido: pedidoKey,
-        data,
-        loja,
-        itens: moneyNumber(row['Itens']),
-        entrega: moneyNumber(row['Entrega']),
-        desconto: moneyNumber(row['Desconto']),
-        acrescimo: moneyNumber(row['Acréscimo'] || row['Acrescimo']),
-        total: moneyNumber(row['Total']),
-        cancelado: /^S$/i.test(normalizeStr(row['Está cancelado'] || row['Esta cancelado'] || row['Cancelado']))
-      });
-    });
-  });
-  return [...dedupe.values()].sort((a,b)=>a.data-b.data);
-}
-async function loadCurrentMonthRowsFromFirebase(){
-  await ensureReportsMetaLoaded();
-  const initialReports = reportsMetaCache.filter(rep => {
-    const ref = getReportRefDate(rep);
-    return !ref || ref >= currentMonthStart;
-  });
-  const rows = await buildRowsFromReports(initialReports, 6);
-  saveCurrentMonthLocalCache(rows, {month_key: currentMonthKey(), generated_at: new Date().toISOString(), source: 'firebase'});
-  return rows;
-}
-async function ensureThreeMonthBaseLoaded(wait=true){
-  if(threeMonthBaseLoaded) return rowsBase;
-  if(!threeMonthBasePromise){
-    threeMonthBasePromise = (async () => {
-      await ensureReportsMetaLoaded();
-      const recentReports = reportsMetaCache.filter(rep => {
-        const ref = getReportRefDate(rep);
-        return !ref || ref >= fastBaseStart;
-      });
-      rowsBase = await buildRowsFromReports(recentReports, 6);
-      threeMonthBaseLoaded = true;
-      return rowsBase;
-    })();
-  }
-  if(wait) await threeMonthBasePromise;
-  return rowsBase;
-}
-async function ensureFullBaseLoaded(wait=true){
-  if(fullBaseLoaded) return rowsBase;
-  if(!fullBasePromise){
-    fullBasePromise = (async () => {
-      await ensureReportsMetaLoaded();
-      rowsBase = await buildRowsFromReports(reportsMetaCache, 6);
-      fullBaseLoaded = true;
-      threeMonthBaseLoaded = true;
-      return rowsBase;
-    })();
-  }
-  if(wait) await fullBasePromise;
-  return rowsBase;
-}
-function rangeNeedsThreeMonthBase(range){
-  if(threeMonthBaseLoaded || !fastBaseStart || !currentMonthStart) return false;
-  if(!range?.from) return true;
-  const from = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate());
-  return from < currentMonthStart && from >= fastBaseStart;
-}
-function rangeNeedsFullBase(range){
-  if(fullBaseLoaded || !fastBaseStart) return false;
-  if(!range?.from) return true;
-  const from = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate());
-  return from < fastBaseStart;
-}
-function getPresetRange(name){
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if(name === 'ontem'){
-    const d = new Date(today); d.setDate(d.getDate() - 1);
-    return {from:d, to:new Date(d)};
-  }
-  if(name === 'mes_anterior'){
-    return {from:new Date(today.getFullYear(), today.getMonth()-1, 1), to:new Date(today.getFullYear(), today.getMonth(), 0)};
-  }
-  return {from:new Date(today.getFullYear(), today.getMonth(), 1), to:today};
-}
-function applyPreset(name){
-  activePreset = name;
-  document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.preset === name));
-  const range = getPresetRange(name);
-  document.getElementById('dataInicio').value = ymd(range.from);
-  document.getElementById('dataFim').value = ymd(range.to);
-}
-function selectedRange(){
-  const from = document.getElementById('dataInicio').value ? new Date(document.getElementById('dataInicio').value + 'T00:00:00') : null;
-  const to = document.getElementById('dataFim').value ? new Date(document.getElementById('dataFim').value + 'T23:59:59') : null;
-  return {from,to};
-}
-function filteredRows(range = selectedRange()){
-  return rowsBase.filter(r => {
-    if(range.from && r.data < range.from) return false;
-    if(range.to && r.data > range.to) return false;
-    return !r.cancelado;
-  });
-}
-function periodLabel(range){
-  if(!range.from || !range.to) return 'Todos os dados';
-  return `${brDate(range.from)} até ${brDate(range.to)}`;
-}
-function previousComparableRange(range){
-  if(!range.from || !range.to) return {from:null,to:null};
-  const msDay = 24*60*60*1000;
-  const totalDays = Math.max(1, Math.round((new Date(range.to.getFullYear(), range.to.getMonth(), range.to.getDate()) - new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate())) / msDay) + 1);
-  const prevTo = new Date(range.from); prevTo.setDate(prevTo.getDate() - 1); prevTo.setHours(23,59,59,999);
-  const prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate() - (totalDays - 1)); prevFrom.setHours(0,0,0,0);
-  return {from:prevFrom, to:prevTo};
-}
-async function warmBackgroundLoads(){
-  if(backgroundWarmupStarted) return;
-  backgroundWarmupStarted = true;
-  try{
-    await ensureThreeMonthBaseLoaded(false);
-    await ensureFullBaseLoaded(false);
-  }catch(err){
-    console.error('Erro carregando bases em segundo plano', err);
-  }
-}
-async function loadBase(){
-  const today = new Date();
-  currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  fastBaseStart = new Date(today.getFullYear(), today.getMonth()-2, 1);
-  applyPreset('mes_atual');
-
-  const metaTask = ensureReportsMetaLoaded();
-  const localCache = loadCurrentMonthLocalCache();
-  let renderedFast = false;
-
-  if(localCache?.rows?.length){
-    rowsBase = localCache.rows;
-    await renderAll();
-    renderedFast = true;
-  }
-
-  const remoteCache = await loadCurrentMonthRemoteCache();
-  if(remoteCache?.rows?.length){
-    const shouldRefresh = !renderedFast || remoteCache.rows.length !== (localCache?.rows?.length || 0) || remoteCache.meta?.generated_at !== localCache?.meta?.generated_at;
-    rowsBase = remoteCache.rows;
-    if(shouldRefresh) await renderAll();
-    renderedFast = true;
-  }
-
-  await metaTask;
-
-  if(!renderedFast){
-    rowsBase = await loadCurrentMonthRowsFromFirebase();
-    await renderAll();
-  }
-
-  setTimeout(() => { warmBackgroundLoads(); }, 80);
-}
-function summarize(rows){
-  const map = new Map();
-  rows.forEach(r => {
-    const curr = map.get(r.loja) || {loja:r.loja,pedidos:0,faturamento:0,desconto:0,entrega:0};
-    curr.pedidos += 1;
-    curr.faturamento += r.total;
-    curr.desconto += r.desconto;
-    curr.entrega += r.entrega;
-    map.set(r.loja, curr);
-  });
-  const stores = STORE_ORDER.map(loja => map.get(loja) || {loja,pedidos:0,faturamento:0,desconto:0,entrega:0});
-  const pedidos = stores.reduce((s,r)=>s+r.pedidos,0);
-  const faturamento = stores.reduce((s,r)=>s+r.faturamento,0);
-  const desconto = stores.reduce((s,r)=>s+r.desconto,0);
-  const entrega = stores.reduce((s,r)=>s+r.entrega,0);
-  return {stores,pedidos,faturamento,desconto,entrega,ticket: pedidos ? faturamento/pedidos : 0};
-}
-function compareBadge(current, previous){
-  if(!previous) return '<span class="badge flat">sem base</span>';
-  const delta = ((current / previous) - 1) * 100;
-  if(Math.abs(delta) < 0.05) return '<span class="badge flat">estável</span>';
-  return delta >= 0
-    ? `<span class="badge up">▲ ${fmtPct(delta)}</span>`
-    : `<span class="badge down">▼ ${fmtPct(Math.abs(delta))}</span>`;
-}
-function groupByDay(rows){
-  const map = new Map();
-  rows.forEach(r => {
-    const key = ymd(r.data);
-    const curr = map.get(key) || {data:new Date(r.data.getFullYear(), r.data.getMonth(), r.data.getDate()), pedidos:0, faturamento:0, desconto:0, entrega:0};
-    curr.pedidos += 1;
-    curr.faturamento += r.total;
-    curr.desconto += r.desconto;
-    curr.entrega += r.entrega;
-    map.set(key, curr);
-  });
-  return [...map.values()].sort((a,b)=>a.data - b.data);
-}
-function destroyCharts(){ Object.values(charts).forEach(ch => { try{ ch.destroy(); }catch(e){} }); charts = {}; }
-function draw(id, type, data, options={}){
-  const el = document.getElementById(id);
-  if(!el) return;
-  if(charts[id]) charts[id].destroy();
-  charts[id] = new Chart(el, {
-    type,
-    data,
-    options:Object.assign({
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#475569',font:{weight:'700'}}}},
-      scales: type === 'doughnut' ? {} : {
-        x:{ticks:{color:'#64748b',font:{weight:'700'}},grid:{color:'#edf2f8'}},
-        y:{ticks:{color:'#64748b',font:{weight:'700'}},grid:{color:'#edf2f8'}}
-      }
-    }, options)
-  });
-}
-function renderGeral(){
-  const range = selectedRange();
-  const currRows = filteredRows(range);
-  const prevRows = filteredRows(previousComparableRange(range));
-  const curr = summarize(currRows);
-  const prev = summarize(prevRows);
-  document.getElementById('kpisGeral').innerHTML = `
-    <div class="kpi green"><div class="label">Faturamento total</div><div class="value">${fmtMoney.format(curr.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${compareBadge(curr.faturamento, prev.faturamento)}</span></div></div>
-    <div class="kpi blue"><div class="label">Total de pedidos</div><div class="value">${fmtInt.format(curr.pedidos)}</div><div class="sub"><span>Base válida</span><span>${compareBadge(curr.pedidos, prev.pedidos)}</span></div></div>
-    <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(curr.ticket)}</div><div class="sub"><span>Por pedido</span><span>${compareBadge(curr.ticket, prev.ticket)}</span></div></div>
-    <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(curr.desconto)}</div><div class="sub"><span>${curr.faturamento ? fmtPct(curr.desconto/curr.faturamento*100) : '0,0%'}</span><span>${compareBadge(curr.desconto, prev.desconto)}</span></div></div>
-    <div class="kpi purple"><div class="label">Taxa de entrega</div><div class="value">${fmtMoney.format(curr.entrega)}</div><div class="sub"><span>Recebida</span><span>${compareBadge(curr.entrega, prev.entrega)}</span></div></div>`;
-
-  const stores = curr.stores;
-  draw('chartFatLoja','bar',{
-    labels:stores.map(s=>s.loja),
-    datasets:[{label:'Faturamento',data:stores.map(s=>s.faturamento),backgroundColor:stores.map(s=>colorOf(s.loja)+'cc'),borderColor:stores.map(s=>colorOf(s.loja)),borderWidth:2,borderRadius:8}]
-  },{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b',callback:v=>fmtMoney.format(v)}},y:{ticks:{color:'#475569'}}}});
-
-  draw('chartPedLoja','doughnut',{
-    labels:stores.map(s=>s.loja),
-    datasets:[{data:stores.map(s=>s.pedidos),backgroundColor:stores.map(s=>colorOf(s.loja)+'cc'),borderColor:stores.map(s=>colorOf(s.loja)),borderWidth:2}]
-  },{plugins:{legend:{position:'top',labels:{boxWidth:12,color:'#475569'}}}});
-
-  draw('chartDescLoja','bar',{
-    labels:stores.map(s=>s.loja),
-    datasets:[{label:'Desconto',data:stores.map(s=>s.desconto),backgroundColor:'rgba(239,68,68,.35)',borderColor:'#ef4444',borderWidth:2,borderRadius:8}]
-  },{indexAxis:'y',plugins:{legend:{display:false}}});
-
-  draw('chartEntregaLoja','bar',{
-    labels:stores.map(s=>s.loja),
-    datasets:[{label:'Entrega',data:stores.map(s=>s.entrega),backgroundColor:'rgba(14,165,233,.28)',borderColor:'#0ea5e9',borderWidth:2,borderRadius:8}]
-  },{indexAxis:'y',plugins:{legend:{display:false}}});
-
-  const prevMap = new Map(prev.stores.map(s => [s.loja, s]));
-  document.getElementById('tbodyResumo').innerHTML = stores.map(s => {
-    const p = prevMap.get(s.loja) || {faturamento:0};
-    const pctDesc = s.faturamento ? s.desconto / s.faturamento * 100 : 0;
-    const delta = p.faturamento ? ((s.faturamento / p.faturamento) - 1) * 100 : null;
-    const badge = delta == null ? '<span class="badge flat">sem base</span>' : delta >= 0 ? `<span class="badge up">▲ ${fmtPct(delta)}</span>` : `<span class="badge down">▼ ${fmtPct(Math.abs(delta))}</span>`;
-    return `<tr>
-      <td><b style="color:${colorOf(s.loja)}">${s.loja}</b></td>
-      <td>${fmtInt.format(s.pedidos)}</td>
-      <td>${fmtMoney.format(s.faturamento)}</td>
-      <td>${fmtMoney.format(s.pedidos ? s.faturamento/s.pedidos : 0)}</td>
-      <td>${fmtMoney.format(s.desconto)}</td>
-      <td>${fmtPct(pctDesc)}</td>
-      <td>${fmtMoney.format(s.entrega)}</td>
-      <td>${badge}</td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="8" class="empty">Sem dados no período.</td></tr>';
-  document.getElementById('footResumo').textContent = `Período exibido: ${periodLabel(range)} · Comparação automática com ${periodLabel(previousComparableRange(range))}.`;
-}
-function projectionRange(){
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-  const currentFrom = new Date(today.getFullYear(), today.getMonth(), 1);
-  const prevFrom = new Date(today.getFullYear(), today.getMonth()-1, 1);
-  const prevTo = new Date(today.getFullYear(), today.getMonth()-1, yesterday.getDate());
-  return {currentFrom, currentTo:yesterday, prevFrom, prevTo, daysElapsed: Math.max(1, yesterday.getDate()), daysInMonth: new Date(today.getFullYear(), today.getMonth()+1, 0).getDate()};
-}
-function renderProjection(){
-  const pr = projectionRange();
-  const currRows = filteredRows({from:pr.currentFrom,to:new Date(pr.currentTo.getFullYear(), pr.currentTo.getMonth(), pr.currentTo.getDate(), 23,59,59)});
-  const prevRows = filteredRows({from:pr.prevFrom,to:new Date(pr.prevTo.getFullYear(), pr.prevTo.getMonth(), pr.prevTo.getDate(), 23,59,59)});
-  const curr = summarize(currRows);
-  const prev = summarize(prevRows);
-  const projFat = curr.faturamento / pr.daysElapsed * pr.daysInMonth;
-  const projPed = curr.pedidos / pr.daysElapsed * pr.daysInMonth;
-  document.getElementById('kpisProj').innerHTML = `
-    <div class="kpi green"><div class="label">Faturamento MTD</div><div class="value">${fmtMoney.format(curr.faturamento)}</div><div class="sub"><span>${brDate(pr.currentFrom)} até ${brDate(pr.currentTo)}</span><span>${compareBadge(curr.faturamento, prev.faturamento)}</span></div></div>
-    <div class="kpi blue"><div class="label">Pedidos MTD</div><div class="value">${fmtInt.format(curr.pedidos)}</div><div class="sub"><span>Mês atual até ontem</span><span>${compareBadge(curr.pedidos, prev.pedidos)}</span></div></div>
-    <div class="kpi yellow"><div class="label">Mesmo período mês anterior</div><div class="value">${fmtMoney.format(prev.faturamento)}</div><div class="sub"><span>${brDate(pr.prevFrom)} até ${brDate(pr.prevTo)}</span><span>${fmtInt.format(prev.pedidos)} pedidos</span></div></div>
-    <div class="kpi purple"><div class="label">Projeção de fechamento</div><div class="value">${fmtMoney.format(projFat)}</div><div class="sub"><span>Ritmo médio diário</span><span>${fmtInt.format(Math.round(projPed))} pedidos</span></div></div>
-    <div class="kpi red"><div class="label">Dias considerados</div><div class="value">${fmtInt.format(pr.daysElapsed)}</div><div class="sub"><span>de ${fmtInt.format(pr.daysInMonth)} dias no mês</span><span>${fmtPct((pr.daysElapsed/pr.daysInMonth)*100)}</span></div></div>`;
-
-  draw('chartProjComp','bar',{
-    labels:['Faturamento','Pedidos'],
-    datasets:[
-      {label:'Mês atual até ontem',data:[curr.faturamento,curr.pedidos],backgroundColor:['rgba(37,99,235,.55)','rgba(37,99,235,.55)'],borderColor:['#2563eb','#2563eb'],borderWidth:2,borderRadius:10},
-      {label:'Mesmo período mês anterior',data:[prev.faturamento,prev.pedidos],backgroundColor:['rgba(148,163,184,.42)','rgba(148,163,184,.42)'],borderColor:['#64748b','#64748b'],borderWidth:2,borderRadius:10},
-      {label:'Projeção fechamento mês',data:[projFat,projPed],backgroundColor:['rgba(16,185,129,.34)','rgba(16,185,129,.34)'],borderColor:['#10b981','#10b981'],borderWidth:2,borderRadius:10}
-    ]
-  },{plugins:{legend:{labels:{color:'#475569'}}}});
-
-  const prevMap = new Map(prev.stores.map(s=>[s.loja,s]));
-  const projStores = curr.stores.map(s => {
-    const prevStore = prevMap.get(s.loja) || {faturamento:0,pedidos:0};
-    const fatProj = s.faturamento / pr.daysElapsed * pr.daysInMonth;
-    const pedProj = s.pedidos / pr.daysElapsed * pr.daysInMonth;
-    return {...s, prevFat:prevStore.faturamento, prevPed:prevStore.pedidos, fatProj, pedProj};
-  });
-
-  draw('chartProjLoja','bar',{
-    labels:projStores.map(s=>s.loja),
-    datasets:[
-      {label:'Atual até ontem',data:projStores.map(s=>s.faturamento),backgroundColor:projStores.map(s=>colorOf(s.loja)+'99'),borderColor:projStores.map(s=>colorOf(s.loja)),borderWidth:2,borderRadius:8},
-      {label:'Projeção mês',data:projStores.map(s=>s.fatProj),backgroundColor:projStores.map(s=>colorOf(s.loja)+'33'),borderColor:projStores.map(s=>colorOf(s.loja)),borderWidth:2,borderDash:[6,4],borderRadius:8}
-    ]
-  },{plugins:{legend:{labels:{color:'#475569'}}}});
-
-  document.getElementById('tbodyProj').innerHTML = projStores.map(s => {
-    const delta = s.prevFat ? ((s.faturamento / s.prevFat) - 1) * 100 : null;
-    const badge = delta == null ? '<span class="badge flat">sem base</span>' : delta >= 0 ? `<span class="badge up">▲ ${fmtPct(delta)}</span>` : `<span class="badge down">▼ ${fmtPct(Math.abs(delta))}</span>`;
-    return `<tr>
-      <td><b style="color:${colorOf(s.loja)}">${s.loja}</b></td>
-      <td>${fmtInt.format(s.pedidos)}</td>
-      <td>${fmtMoney.format(s.faturamento)}</td>
-      <td>${fmtMoney.format(s.prevFat)}</td>
-      <td>${badge}</td>
-      <td>${fmtMoney.format(s.fatProj)}</td>
-      <td>${fmtInt.format(pr.daysElapsed)}</td>
-      <td>${fmtInt.format(pr.daysInMonth)}</td>
-    </tr>`;
-  }).join('');
-  document.getElementById('footProj').textContent = `Botão Projeção sempre usa ${brDate(pr.currentFrom)} até ${brDate(pr.currentTo)} e compara com ${brDate(pr.prevFrom)} até ${brDate(pr.prevTo)}.`;
-}
-function buildStorePills(){
-  document.getElementById('storePills').innerHTML = STORE_ORDER.map(loja => `
-    <button class="store-pill ${loja===activeStore?'active':''}" data-store="${loja}" style="border-color:${colorOf(loja)};${loja===activeStore?`background:${colorOf(loja)};color:#fff;`:`color:${colorOf(loja)};`}">${loja}</button>
-  `).join('');
-}
-function renderStoreSection(){
-  buildStorePills();
-  const range = selectedRange();
-  const storeRows = filteredRows(range).filter(r => r.loja === activeStore);
-  const prevRows = filteredRows(previousComparableRange(range)).filter(r => r.loja === activeStore);
-  const curr = summarize(storeRows);
-  const prev = summarize(prevRows);
-  const store = curr.stores.find(s => s.loja === activeStore) || {loja:activeStore,pedidos:0,faturamento:0,desconto:0,entrega:0};
-  document.getElementById('kpisLoja').innerHTML = `
-    <div class="kpi blue"><div class="label">Loja</div><div class="value" style="font-size:22px;color:${colorOf(activeStore)}">${activeStore}</div><div class="sub"><span>${periodLabel(range)}</span><span>${compareBadge(store.faturamento, (prev.stores.find(s=>s.loja===activeStore)||{}).faturamento || 0)}</span></div></div>
-    <div class="kpi green"><div class="label">Faturamento</div><div class="value">${fmtMoney.format(store.faturamento)}</div><div class="sub"><span>Período atual</span><span>${fmtInt.format(store.pedidos)} pedidos</span></div></div>
-    <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(store.pedidos ? store.faturamento/store.pedidos : 0)}</div><div class="sub"><span>Por pedido</span><span>${compareBadge(store.pedidos ? store.faturamento/store.pedidos : 0, (prev.stores.find(s=>s.loja===activeStore)?.pedidos ? prev.stores.find(s=>s.loja===activeStore).faturamento/prev.stores.find(s=>s.loja===activeStore).pedidos : 0))}</span></div></div>
-    <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(store.desconto)}</div><div class="sub"><span>${store.faturamento ? fmtPct(store.desconto/store.faturamento*100) : '0,0%'}</span><span>no período</span></div></div>
-    <div class="kpi purple"><div class="label">Entrega</div><div class="value">${fmtMoney.format(store.entrega)}</div><div class="sub"><span>recebida</span><span>no período</span></div></div>`;
-
-  const daily = groupByDay(storeRows);
-  draw('chartLojaFat','bar',{
-    labels:daily.map(d=>shortDate(d.data)),
-    datasets:[{label:'Faturamento',data:daily.map(d=>d.faturamento),backgroundColor:colorOf(activeStore)+'99',borderColor:colorOf(activeStore),borderWidth:2,borderRadius:8}]
-  },{plugins:{legend:{display:false}}});
-  draw('chartLojaPed','line',{
-    labels:daily.map(d=>shortDate(d.data)),
-    datasets:[{label:'Pedidos',data:daily.map(d=>d.pedidos),borderColor:colorOf(activeStore),backgroundColor:colorOf(activeStore)+'22',fill:true,tension:.28,pointRadius:2}]
-  });
-  document.getElementById('tbodyLojaDia').innerHTML = daily.map(d => `
-    <tr>
-      <td>${brDate(d.data)}</td>
-      <td>${fmtInt.format(d.pedidos)}</td>
-      <td>${fmtMoney.format(d.faturamento)}</td>
-      <td>${fmtMoney.format(d.pedidos ? d.faturamento/d.pedidos : 0)}</td>
-      <td>${fmtMoney.format(d.desconto)}</td>
-      <td>${fmtMoney.format(d.entrega)}</td>
-    </tr>
-  `).join('') || '<tr><td colspan="6" class="empty">Sem dados para a loja neste período.</td></tr>';
-}
-function renderDailySection(){
-  const range = selectedRange();
-  const rows = filteredRows(range);
-  const byDay = groupByDay(rows);
-  draw('chartDiarioFat','line',{
-    labels:byDay.map(d=>shortDate(d.data)),
-    datasets:[{label:'Faturamento',data:byDay.map(d=>d.faturamento),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.12)',fill:true,tension:.28,pointRadius:2}]
-  });
-  draw('chartDiarioPed','line',{
-    labels:byDay.map(d=>shortDate(d.data)),
-    datasets:[{label:'Pedidos',data:byDay.map(d=>d.pedidos),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.12)',fill:true,tension:.28,pointRadius:2}]
-  });
-}
-function refreshVisibleCharts(){
-  clearTimeout(chartRefreshTimer);
-  chartRefreshTimer = setTimeout(() => {
-    const section = document.getElementById(`sec-${activeTab}`);
-    if(!section) return;
-    section.querySelectorAll('canvas').forEach(cv => {
-      const chart = charts[cv.id];
-      if(!chart) return;
-      try{ chart.resize(); chart.update('none'); }catch(e){}
-    });
-  }, 90);
-}
-async function renderAll(){
-  const runId = ++renderRunId;
-  const range = selectedRange();
-  if(rangeNeedsThreeMonthBase(range)) await ensureThreeMonthBaseLoaded(true);
-  if(runId !== renderRunId) return;
-  if(rangeNeedsFullBase(range)) await ensureFullBaseLoaded(true);
-  if(runId !== renderRunId) return;
-  destroyCharts();
-  renderGeral();
-  renderProjection();
-  renderStoreSection();
-  renderDailySection();
-  showTab(activeTab);
-  refreshVisibleCharts();
-}
-function showTab(name){
-  activeTab = name;
-  document.querySelectorAll('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === name));
-  document.querySelectorAll('.section').forEach(sec => sec.classList.toggle('active', sec.id === `sec-${name}`));
-  refreshVisibleCharts();
-}
-
-document.querySelectorAll('.preset-btn').forEach(btn => btn.addEventListener('click', () => {
-  applyPreset(btn.dataset.preset);
-  renderAll();
-}));
-document.getElementById('btnAplicar').addEventListener('click', () => {
-  activePreset = 'custom';
-  document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-  renderAll();
-});
-document.getElementById('btnLimpar').addEventListener('click', () => {
-  applyPreset('mes_atual');
-  renderAll();
-});
-document.getElementById('btnProjecao').addEventListener('click', () => showTab('projecao'));
-document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => { showTab(btn.dataset.tab); refreshVisibleCharts(); }));
-window.addEventListener('resize', refreshVisibleCharts);
-document.addEventListener('click', e => {
-  const pill = e.target.closest('.store-pill');
-  if(!pill) return;
-  activeStore = pill.dataset.store;
-  renderStoreSection();
-});
-
-window.__jbAutoInitDisabled = true;
-
-</script>
-
-<style id="dash2-compare-patch-style">
-  .global-store-panel{margin:0 0 0 auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end;max-width:760px}
-  .global-store-panel .label{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#4b5d79;margin-right:4px}
-  .global-store-btn{height:40px;padding:0 14px;border-radius:999px;border:2px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
-  .global-store-btn:hover{transform:translateY(-1px)}
-  .global-store-btn.active{color:#fff}
-  .global-store-btn.compare{box-shadow:0 8px 18px rgba(15,23,42,.12)}
-  #storePills{display:none !important}
-  .result-line-light{margin:16px 0;padding:12px 16px;border-radius:18px;background:#fff;border:1px solid #dbe5f1;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-  .result-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#f8fbff;border:1px solid #dbe5f1;font-size:12px;font-weight:700;color:#334155}
-  .result-chip strong{color:#1f2937}
-  @media(max-width:760px){.tabs{overflow:visible;flex-wrap:wrap;padding-bottom:0}.tab{flex:1 1 calc(50% - 8px);text-align:center}.global-store-panel{margin:10px 0 0;width:100%;max-width:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch;justify-content:stretch}.global-store-panel .label{grid-column:1 / -1;margin-right:0}.global-store-btn{height:auto;min-height:44px;padding:10px 6px;border-radius:14px;line-height:1.2;text-align:center;white-space:normal}.result-line-light{padding:14px 16px}.result-chip{width:100%;justify-content:space-between;border-radius:14px;padding:10px 12px}}
-</style>
-<style id="dash-final-style">
-  .tabs,
-  #sec-projecao,
-  #sec-diario,
-  #globalStorePanelPatch,
-  .live,
-  .hero p,
-  .footer-note,
-  .result-line-light{display:none !important}
-  .wrap{max-width:1540px;padding-top:14px}
-  .hero{padding:14px 16px;border-radius:20px;margin-bottom:12px}
-  .hero h1{font-size:26px}
-
-  .toolbar{
-    display:flex !important;
-    flex-wrap:nowrap !important;
-    align-items:end;
-    gap:10px;
-    padding:10px 12px;
-    overflow-x:auto;
-    scrollbar-width:none;
-  }
-  .toolbar::-webkit-scrollbar{display:none}
-  .toolbar .field{flex:0 0 auto;min-width:0}
-  .toolbar .field:nth-child(1){width:330px}
-  .toolbar .field:nth-child(2),
-  .toolbar .field:nth-child(3){width:150px}
-  .toolbar .field:nth-child(4){flex:1 0 420px}
-  .preset-group,.action-group{display:flex !important;flex-wrap:nowrap !important;gap:8px;width:100%}
-  .preset-btn,.btn{flex:1 1 0;min-width:0}
-
-  .store-top-shell{margin:10px 0 12px}
-  .store-filter-row{
-    display:grid;
-    grid-auto-flow:column;
-    grid-auto-columns:max-content;
-    gap:8px;
-    margin:0 0 8px;
-    overflow-x:auto;
-    padding-bottom:2px;
-    scrollbar-width:none;
-  }
-  .store-filter-row::-webkit-scrollbar{display:none}
-  .store-filter-btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-height:38px;
-    padding:0 14px;
-    border-radius:999px;
-    border:2px solid #d6e2f1;
-    background:#fff;
-    font:800 12px Montserrat,system-ui,sans-serif;
-    cursor:pointer;
-    white-space:nowrap;
-    transition:.15s ease;
-  }
-  .store-filter-btn:hover{transform:translateY(-1px)}
-  .store-filter-btn.active{box-shadow:0 10px 18px rgba(15,23,42,.12)}
-  #storePills.store-filter-row .store-pill,
-  #storePills .store-pill{display:none !important}
-
-  .kpi-row{gap:10px;margin-bottom:12px}
-  .kpi{padding:12px;border-radius:16px}
-  .kpi .label{margin-bottom:6px;font-size:10px}
-  .kpi .value{font-size:24px}
-  .kpi .sub{margin-top:6px;padding-top:6px;font-size:11px;line-height:1.2;align-items:center;gap:8px;flex-wrap:wrap}
-  .card{padding:12px}
-  .card h3{margin-bottom:10px;font-size:12px}
-  .chart{height:280px}
-  .chart.sm{height:230px}
-  .chart.tall{height:300px}
-  .badge{padding:4px 8px;font-size:10px}
-
-  #kpisLoja{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:0 0 12px}
-  #kpisLoja .kpi{padding:12px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between}
-  #kpisLoja .kpi .value{font-size:19px;line-height:1.08}
-
-  @media (max-width: 760px){
-    .wrap{padding:10px 10px 24px}
-    .hero h1{font-size:20px}
-    .toolbar{
-      display:grid !important;
-      grid-template-columns:repeat(6,minmax(0,1fr));
-      gap:8px;
-      overflow:visible;
-      padding:10px;
-    }
-    .toolbar .field:nth-child(1){grid-column:1 / -1;width:auto}
-    .toolbar .field:nth-child(2){grid-column:1 / span 3;width:auto}
-    .toolbar .field:nth-child(3){grid-column:4 / span 3;width:auto}
-    .toolbar .field:nth-child(4){grid-column:1 / -1;flex:unset}
-    .preset-group,.action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
-    .field input,.preset-btn,.btn{height:40px;padding:0 8px;font-size:11px}
-    .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-    .kpi-row .kpi:first-child{grid-column:span 2}
-    #kpisLoja{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-    #kpisLoja .kpi{min-height:104px}
-    .kpi .value,#kpisLoja .kpi .value{font-size:18px}
-    .kpi .sub{font-size:10px}
-    .grid-2{grid-template-columns:1fr;gap:12px}
-    .chart,.chart.sm,.chart.tall{height:220px}
-    .store-filter-btn{min-height:36px;padding:0 12px;font-size:11px}
-    th,td{padding:10px 10px;font-size:12px}
-  }
-</style>
-<style id="jb-ultimate-fix-style">
-  [hidden]{display:none !important}
-  body.range-modal-open{overflow:hidden !important}
-  #storeButtonsTopFix{margin:10px 0 12px}
-  #storeButtonsTopFix .store-grid{display:flex;flex-wrap:wrap;gap:8px}
-  #storeButtonsTopFix .store-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:16px;border:2px solid #d6e2f1;background:#fff;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;white-space:nowrap;transition:.15s ease}
-  #storeButtonsTopFix .store-btn.active{color:#fff !important;box-shadow:0 10px 18px rgba(15,23,42,.12)}
-  #storeButtonsTopFix .store-btn:hover{transform:translateY(-1px)}
-  #kpisLoja,#sec-lojas,#resultLineLightPatch{display:none !important}
-  #rangeHiddenInputs{display:none !important}
-
-  .toolbar,
-  .toolbar *{box-sizing:border-box}
-  .toolbar{align-items:stretch !important}
-  .toolbar .field,
-  .toolbar-presets,
-  .toolbar-range,
-  .toolbar-actions{justify-content:flex-start;width:auto !important;min-width:0 !important;flex:unset !important}
-  .toolbar .field:nth-child(1),
-  .toolbar .field:nth-child(2),
-  .toolbar .field:nth-child(3),
-  .toolbar .field:nth-child(4),
-  .toolbar-presets,
-  .toolbar-range,
-  .toolbar-actions{grid-column:auto !important;width:auto !important}
-  .toolbar .field label{margin-bottom:8px}
-  .toolbar-range > label{display:none !important}
-  .toolbar .preset-group,.toolbar .action-group{width:100% !important;margin:0 !important}
-  .toolbar .preset-group,
-  .toolbar .action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:10px !important;align-items:stretch !important;justify-items:stretch !important}
-  .toolbar .preset-group > *,
-  .toolbar .action-group > *{width:100% !important;max-width:none !important;justify-self:stretch !important;margin:0 !important}
-  .toolbar .preset-btn,
-  .toolbar .btn{display:flex !important;align-items:center !important;justify-content:center !important;text-align:center !important;white-space:normal !important;word-break:keep-all !important;overflow-wrap:anywhere !important;line-height:1.08 !important;min-height:48px !important;height:48px !important;padding:8px 6px !important;border-radius:14px !important;font-size:10.5px !important;letter-spacing:-.15px !important}
-  .range-display{height:48px !important;width:100% !important;display:flex !important;align-items:center !important;justify-content:center !important;padding:0 14px !important;border-radius:16px !important;border:1px solid #d6e2f1 !important;background:#fbfdff !important;color:#0f172a !important;font:800 13px Montserrat,system-ui,sans-serif !important;cursor:pointer !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.7) !important}
-  .range-display:hover{filter:brightness(1.01)}
-  .range-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.34);backdrop-filter:blur(2px);z-index:9998}
-  .range-popover{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;z-index:9999}
-  .range-popover-card{width:min(520px,100%);background:#fff;border:1px solid #dbe5f1;border-radius:24px;box-shadow:0 25px 60px rgba(15,23,42,.18);padding:18px}
-  .range-popover-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
-  .range-popover-head strong{display:block;font-size:18px;color:#16325c}
-  .range-popover-head span{display:block;margin-top:4px;font-size:12px;font-weight:700;color:#64748b;line-height:1.3}
-  .range-close{width:36px;height:36px;border:none;border-radius:999px;background:#eef4ff;color:#33507c;font-size:22px;line-height:1;cursor:pointer}
-  .range-steps{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .range-step{display:flex;flex-direction:column;gap:8px}
-  .range-step label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#4b5d79}
-  .range-step input{height:48px;border:1px solid #d6e2f1;border-radius:14px;padding:0 12px;background:#fbfdff;color:#0f172a;font:700 13px Montserrat,system-ui,sans-serif;outline:none}
-  .range-step input:disabled{background:#f3f6fb;color:#94a3b8;cursor:not-allowed}
-  .range-preview{margin-top:14px;padding:12px 14px;border-radius:16px;background:#f8fbff;border:1px solid #dbe5f1;font-size:12px;font-weight:700;color:#334155;line-height:1.3}
-  .range-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-
-  @media (min-width:761px){
-    .toolbar{display:grid !important;grid-template-columns:minmax(280px,1fr) minmax(220px,.8fr) minmax(320px,1fr) !important;gap:12px !important;overflow:visible !important}
-  }
-
-  @media (max-width:760px){
-    .toolbar{display:grid !important;grid-template-columns:1fr !important;gap:10px !important;overflow:visible !important;padding:12px !important}
-    .toolbar-presets,.toolbar-range,.toolbar-actions,
-    .toolbar .field:nth-child(1),.toolbar .field:nth-child(2),.toolbar .field:nth-child(3),.toolbar .field:nth-child(4){grid-column:1 / -1 !important;width:auto !important}
-    .toolbar .field{width:100% !important;align-items:stretch !important}
-    .toolbar .field label{font-size:11px !important;line-height:1.05 !important;margin:0 0 6px !important;padding:0 2px !important;text-align:left !important}
-    .toolbar .preset-group,.toolbar .action-group{gap:8px !important}
-    .toolbar .preset-btn,.toolbar .btn{min-height:46px !important;height:46px !important;padding:7px 4px !important;font-size:9.8px !important;letter-spacing:-.2px !important;line-height:1.02 !important}
-    .range-display{height:46px !important;font-size:13px !important;padding:0 12px !important;text-align:center !important}
-    .range-popover{align-items:flex-start !important;padding:78px 10px 14px !important}
-    .range-popover-card{max-width:100% !important;padding:16px !important;border-radius:22px !important}
-    .range-popover-head strong{font-size:17px !important}
-    .range-steps{grid-template-columns:1fr !important}
-    .range-actions{grid-template-columns:1fr !important}
-    #storeButtonsTopFix .store-grid{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:10px !important}
-    #storeButtonsTopFix .store-btn{width:100% !important;min-height:44px !important;padding:8px 6px !important;white-space:normal !important;line-height:1.1 !important;text-align:center !important}
-    #kpisGeral{grid-template-columns:1fr !important;gap:10px !important}
-    #kpisGeral .kpi{min-height:auto !important}
-  }
-</style>
-<style id="jb-indexed-query-style">
-  #storeButtonsTopFix{display:block !important}
-  #storeButtonsTopFix .store-grid{display:flex;flex-wrap:wrap;gap:8px}
-  #storeButtonsTopFix .store-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:16px;border:2px solid #d6e2f1;background:#fff;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;white-space:nowrap;transition:.15s ease}
-  #storeButtonsTopFix .store-btn.active{color:#fff !important;box-shadow:0 10px 18px rgba(15,23,42,.12)}
-  #storeButtonsTopFix .store-btn:hover{transform:translateY(-1px)}
-  #kpisLoja,#sec-lojas,#resultLineLightPatch{display:none !important}
-  @media(max-width:760px){
-    #storeButtonsTopFix .store-grid{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:10px !important}
-    #storeButtonsTopFix .store-btn{width:100% !important;min-height:44px !important;padding:8px 6px !important;white-space:normal !important;line-height:1.1 !important;text-align:center !important}
-  }
-</style>
-<script id="jb-live-indexed-query-v2">
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD DE VENDAS — versão limpa única
+   Lê base estática (data/vendas-index) + Firebase (vendas_indexadas)
+   Deduplica por pedido||loja||data
+   ═══════════════════════════════════════════════════════════ */
 (async function(){
-  if(window.__jbLiveIndexedQueryV2Loaded) return;
-  window.__jbLiveIndexedQueryV2Loaded = true;
 
-  const STATIC_INDEX_ROOT = 'data/vendas-index';
-  const FIREBASE_INDEX_ROOT = 'vendas_indexadas';
-  const DEFAULT_STORES = (typeof STORE_ORDER !== 'undefined' && Array.isArray(STORE_ORDER) && STORE_ORDER.length)
-    ? STORE_ORDER.slice()
-    : ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi'];
-  const staticCache = new Map();
-  const firebaseCache = new Map();
-  const FIREBASE_CACHE_TTL_MS = 8000;
+  /* ── Constantes ─────────────────────────────────────────── */
+  const STATIC_ROOT   = 'data/vendas-index';
+  const FB_ROOT       = 'vendas_indexadas';
+  const STORE_ORDER   = ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi'];
+  const STORE_COLORS  = {
+    'Burger Matriz':'#7c3aed','Burger ABC':'#f97316','Burger GRU':'#eab308',
+    'Gourmet':'#0ea5e9','Aham Forneria':'#16a34a','Aham Sushi':'#e11d48'
+  };
+  const fmtMoney = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+  const fmtInt   = new Intl.NumberFormat('pt-BR');
 
-  let selectedStore = null;
-  let renderToken = 0;
-  let storesList = DEFAULT_STORES.slice();
-  let lastKnownUploadAt = 0;
-  let refreshTimer = 0;
+  /* ── Estado ─────────────────────────────────────────────── */
+  let activeStore   = null;   // null = todas as lojas
+  let activePreset  = 'mes_atual';
+  let activeTab     = 'geral';
+  let charts        = {};
+  let storesList    = STORE_ORDER.slice();
+  let refreshTimer  = 0;
+  let lastUploadTs  = 0;
+  let renderToken   = 0;
 
-  function clearFirebaseCache(){
-    firebaseCache.clear();
+  /* Cache separado: estático (longa duração) e Firebase (TTL curto) */
+  const staticCache = new Map();          // url → Promise<json>
+  const fbCache     = new Map();          // path → {ts, promise}
+  const FB_TTL      = 10_000;            // 10 s de cache no Firebase
+
+  /* ── Utilitários de data ─────────────────────────────────── */
+  function ymd(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function brDate(d){ return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`; }
+  function longDate(d){ return d.toLocaleDateString('pt-BR',{day:'numeric',month:'short',year:'numeric'}); }
+  function monthKey(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; }
+  function parseDate(val, end=false){
+    if(!val) return null;
+    const d = new Date(val + (end ? 'T23:59:59' : 'T00:00:00'));
+    return isNaN(d) ? null : d;
   }
-
-  function scheduleLiveRefresh(delay = 160){
-    clearTimeout(refreshTimer);
-    refreshTimer = window.setTimeout(() => {
-      clearFirebaseCache();
-      loadAndRender(false).catch(() => {});
-    }, delay);
-  }
-
-  function slugifySafe(name){ return String(name || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
-  function ymdSafe(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-  function brDateSafe(d){ return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
-  function longDateSafe(d){ return d.toLocaleDateString('pt-BR',{day:'numeric',month:'short',year:'numeric'}); }
-  function parseInputDate(value, end=false){ if(!value) return null; const d = new Date(value + (end ? 'T23:59:59' : 'T00:00:00')); return Number.isNaN(d.getTime()) ? null : d; }
+  function monthStart(mk){ const [y,m]=mk.split('-').map(Number); return new Date(y,m-1,1); }
+  function monthEnd(mk)  { const [y,m]=mk.split('-').map(Number); return new Date(y,m,0,23,59,59,999); }
   function monthsBetween(from,to){
-    if(!from || !to) return [];
-    const out=[]; let y=from.getFullYear(), m=from.getMonth(); const ey=to.getFullYear(), em=to.getMonth();
-    while(y < ey || (y === ey && m <= em)){
-      out.push(`${y}-${String(m+1).padStart(2,'0')}`);
-      m += 1; if(m > 11){ m = 0; y += 1; }
-    }
-    return out;
+    if(!from||!to) return [];
+    const list=[]; let y=from.getFullYear(), m=from.getMonth();
+    const ey=to.getFullYear(), em=to.getMonth();
+    while(y<ey||(y===ey&&m<=em)){ list.push(`${y}-${pad(m+1)}`); m++; if(m>11){m=0;y++;} }
+    return list;
   }
-  function selectedRange(){ return { from: parseInputDate(document.getElementById('dataInicio')?.value), to: parseInputDate(document.getElementById('dataFim')?.value, true) }; }
-  function currentMonthRange(){ const now=new Date(); const today=new Date(now.getFullYear(),now.getMonth(),now.getDate()); return {from:new Date(today.getFullYear(),today.getMonth(),1), to:today}; }
-  function previousMonthRange(){ const now=new Date(); return { from:new Date(now.getFullYear(), now.getMonth()-1, 1), to:new Date(now.getFullYear(), now.getMonth(), 0, 23,59,59,999) }; }
-  function yesterdayRange(){ const now=new Date(); const d=new Date(now.getFullYear(), now.getMonth(), now.getDate()-1); return {from:d, to:new Date(d.getFullYear(),d.getMonth(),d.getDate(),23,59,59,999)}; }
-  function projectionRange(){ const now=new Date(); const today=new Date(now.getFullYear(), now.getMonth(), now.getDate()); const y=new Date(today); y.setDate(y.getDate()-1); return { from:new Date(today.getFullYear(),today.getMonth(),1), to:new Date(y.getFullYear(), y.getMonth(), y.getDate(),23,59,59,999) }; }
-  function previousComparableRange(range){
-    if(!range?.from || !range?.to) return {from:null,to:null};
-    const prevFromLast = new Date(range.from.getFullYear(), range.from.getMonth(), 0).getDate();
-    const prevToLast = new Date(range.to.getFullYear(), range.to.getMonth(), 0).getDate();
-    const prevFrom = new Date(range.from.getFullYear(), range.from.getMonth()-1, Math.min(range.from.getDate(), prevFromLast));
-    const prevTo = new Date(range.to.getFullYear(), range.to.getMonth()-1, Math.min(range.to.getDate(), prevToLast), 23,59,59,999);
-    prevFrom.setHours(0,0,0,0);
-    return {from:prevFrom, to:prevTo};
+  function prevComparableRange(range){
+    if(!range?.from||!range?.to) return {from:null,to:null};
+    const pfLast = new Date(range.from.getFullYear(),range.from.getMonth(),0).getDate();
+    const ptLast = new Date(range.to.getFullYear(),range.to.getMonth(),0).getDate();
+    const pf = new Date(range.from.getFullYear(),range.from.getMonth()-1,Math.min(range.from.getDate(),pfLast));
+    const pt = new Date(range.to.getFullYear(),range.to.getMonth()-1,Math.min(range.to.getDate(),ptLast),23,59,59,999);
+    pf.setHours(0,0,0,0);
+    return {from:pf, to:pt};
   }
-  function periodLabel(range){ if(!range?.from || !range?.to) return 'Todos os dados'; return `${brDateSafe(range.from)} até ${brDateSafe(range.to)}`; }
-  function getRangeDisplayText(from, to){ return from && to ? `${longDateSafe(from)} até ${longDateSafe(to)}` : 'Selecionar período'; }
-  function updateRangeDisplay(){
-    const display = document.getElementById('periodRangeDisplay');
-    if(!display) return;
-    const range = selectedRange();
-    display.textContent = 'Escolha data';
-    display.title = range.from && range.to ? getRangeDisplayText(range.from, range.to) : 'Escolha data';
+  function currentMonthRange(){
+    const now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    return {from:new Date(today.getFullYear(),today.getMonth(),1), to:today};
   }
-  function setDateRange(from, to, preset=null){
-    const fromEl=document.getElementById('dataInicio'); const toEl=document.getElementById('dataFim');
-    if(fromEl) fromEl.value = ymdSafe(from);
-    if(toEl) toEl.value = ymdSafe(to);
-    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.toggle('active', !!preset && btn.dataset.preset === preset));
-    window.activePreset = preset || 'custom';
-    updateRangeDisplay();
+  function previousMonthRange(){
+    const now=new Date();
+    return {from:new Date(now.getFullYear(),now.getMonth()-1,1), to:new Date(now.getFullYear(),now.getMonth(),0,23,59,59,999)};
   }
-  function upsertStoreNames(names){
-    const merged = [...storesList];
-    (names || []).forEach(name => {
-      const clean = String(name || '').trim();
-      if(clean && !merged.includes(clean)) merged.push(clean);
-    });
-    storesList = merged;
+  function yesterdayRange(){
+    const now=new Date(), d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
+    return {from:d, to:new Date(d.getFullYear(),d.getMonth(),d.getDate(),23,59,59,999)};
   }
-  function knownStores(rows=[]){
-    const merged = [...storesList];
-    rows.forEach(r => {
-      const clean = String(r?.loja || '').trim();
-      if(clean && !merged.includes(clean)) merged.push(clean);
-    });
-    return merged;
+  function projectionRange(){
+    const now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const yd=new Date(today); yd.setDate(yd.getDate()-1);
+    return {from:new Date(today.getFullYear(),today.getMonth(),1), to:new Date(yd.getFullYear(),yd.getMonth(),yd.getDate(),23,59,59,999)};
   }
-  async function fetchJsonCached(url){
+  function selectedRange(){
+    return { from: parseDate(document.getElementById('dataInicio')?.value), to: parseDate(document.getElementById('dataFim')?.value, true) };
+  }
+  function periodLabel(range){ return range?.from&&range?.to ? `${brDate(range.from)} até ${brDate(range.to)}` : 'Todos os dados'; }
+
+  /* ── Utilitários de slugify e cor ───────────────────────── */
+  function slugify(name){ return String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+  function colorOf(s){ return STORE_COLORS[s]||'#64748b'; }
+
+  /* ── Fetch helpers ──────────────────────────────────────── */
+  function fetchJson(url){
     if(staticCache.has(url)) return staticCache.get(url);
-    const p = fetch(url, { cache:'no-store' }).then(async res => {
-      if(!res.ok) throw new Error(String(res.status));
-      return res.json();
-    }).catch(() => null);
-    staticCache.set(url, p);
+    const p = fetch(url,{cache:'no-store'}).then(r=> r.ok ? r.json() : null).catch(()=>null);
+    staticCache.set(url,p);
     return p;
   }
-  async function firebaseGet(path, forceFresh = false){
+  function clearFbCache(){ fbCache.clear(); }
+  async function fbGet(path){
     if(!window.fbDB_v2) return null;
-    const key = `fb:${path}`;
-    const now = Date.now();
-    const cached = firebaseCache.get(key);
-    if(!forceFresh && cached && (now - cached.ts) <= FIREBASE_CACHE_TTL_MS){
-      return cached.promise;
-    }
-    const promise = window.fbDB_v2.ref(path).once('value').then(snap => snap.val()).catch(() => null);
-    firebaseCache.set(key, { ts: now, promise });
-    return promise;
+    const key=`fb:${path}`, now=Date.now();
+    const cached=fbCache.get(key);
+    if(cached && (now-cached.ts)<=FB_TTL) return cached.promise;
+    const p = window.fbDB_v2.ref(path).once('value').then(s=>s.val()).catch(()=>null);
+    fbCache.set(key,{ts:now,promise:p});
+    return p;
   }
-  async function loadStoreCatalog(){
-    const staticMeta = await fetchJsonCached(`${STATIC_INDEX_ROOT}/meta.json`);
-    const firebaseCompanies = await firebaseGet(`${FIREBASE_INDEX_ROOT}/meta/companies`);
-    const staticNames = Array.isArray(staticMeta?.stores) ? staticMeta.stores.map(s => s?.name).filter(Boolean) : [];
-    const firebaseNames = firebaseCompanies && typeof firebaseCompanies === 'object'
-      ? Object.values(firebaseCompanies).map(item => item?.display_name || item?.source_name).filter(Boolean)
-      : [];
-    upsertStoreNames(staticNames);
-    upsertStoreNames(firebaseNames);
-  }
-  function normalizePackedRow(row, fallbackStore=''){
-    const data = row?.d ? new Date(row.d + 'T12:00:00') : (row?.data ? new Date(row.data) : null);
-    if(!data || Number.isNaN(data.getTime())) return null;
+
+  /* ── Normalização de linha ──────────────────────────────── */
+  function normalizeRow(raw, fallbackStore=''){
+    const d = raw?.d ? new Date(raw.d+'T12:00:00') : (raw?.data ? new Date(raw.data) : null);
+    if(!d||isNaN(d)) return null;
     return {
-      pedido: String(row?.p ?? row?.pedido ?? ''),
-      data,
-      loja: String(row?.l ?? row?.loja ?? fallbackStore ?? ''),
-      itens: Number(row?.i ?? row?.itens ?? 0),
-      entrega: Number(row?.e ?? row?.entrega ?? 0),
-      desconto: Number(row?.dc ?? row?.desconto ?? 0),
-      acrescimo: Number(row?.a ?? row?.acrescimo ?? 0),
-      total: Number(row?.t ?? row?.total ?? 0),
-      cancelado: Boolean(row?.c ?? row?.cancelado)
+      pedido:   String(raw?.p ?? raw?.pedido ?? ''),
+      data:     d,
+      loja:     String(raw?.l ?? raw?.loja ?? fallbackStore ?? ''),
+      itens:    Number(raw?.i ?? raw?.itens ?? 0),
+      entrega:  Number(raw?.e ?? raw?.entrega ?? 0),
+      desconto: Number(raw?.dc ?? raw?.desconto ?? 0),
+      acrescimo:Number(raw?.a ?? raw?.acrescimo ?? 0),
+      total:    Number(raw?.t ?? raw?.total ?? 0),
+      cancelado:Boolean(raw?.c ?? raw?.cancelado)
     };
   }
+
+  /* ── Deduplicação ───────────────────────────────────────── */
   function dedupeRows(rows){
     const map = new Map();
-    (rows || []).forEach(r => { if(r?.data && !Number.isNaN(r.data.getTime())) map.set(`${r.pedido || ''}||${r.loja || ''}||${ymdSafe(r.data)}`, r); });
-    return [...map.values()].sort((a,b)=>a.data-b.data || String(a.loja).localeCompare(String(b.loja)));
+    (rows||[]).forEach(r=>{
+      if(!r||!r.data||isNaN(r.data)) return;
+      const k = `${r.pedido}||${r.loja}||${ymd(r.data)}`;
+      map.set(k, r);
+    });
+    return [...map.values()].sort((a,b)=>a.data-b.data||String(a.loja).localeCompare(String(b.loja)));
   }
-  async function loadMonthFromFirebase(monthKey, storeName=null){
+
+  /* ── Carregamento por mês ───────────────────────────────── */
+  async function loadMonthStatic(mk, storeName=null){
+    const url = storeName
+      ? `${STATIC_ROOT}/stores/${slugify(storeName)}/${mk}.json`
+      : `${STATIC_ROOT}/months/${mk}.json`;
+    const payload = await fetchJson(url);
+    if(!payload) return [];
+    const rawRows = Array.isArray(payload.rows) ? payload.rows : [];
+    return rawRows.map(r=>normalizeRow(r, storeName||'')).filter(Boolean);
+  }
+  async function loadMonthFirebase(mk, storeName=null){
     if(!window.fbDB_v2) return [];
+    let payload;
     if(storeName){
-      const slug = slugifySafe(storeName);
-      const payload = await firebaseGet(`${FIREBASE_INDEX_ROOT}/companies/${slug}/months/${monthKey}`);
-      const rowsObj = payload?.rows || {};
-      const rows = Object.values(rowsObj).map(row => normalizePackedRow(row, storeName)).filter(Boolean);
-      return rows;
+      const slug = slugify(storeName);
+      payload = await fbGet(`${FB_ROOT}/companies/${slug}/months/${mk}`);
+    } else {
+      payload = await fbGet(`${FB_ROOT}/months/${mk}`);
     }
-    const payload = await firebaseGet(`${FIREBASE_INDEX_ROOT}/months/${monthKey}`);
+    if(!payload) return [];
     const rowsObj = payload?.rows || {};
-    const rows = Object.values(rowsObj).map(row => normalizePackedRow(row)).filter(Boolean);
-    return rows;
+    return Object.values(rowsObj).map(r=>normalizeRow(r, storeName||'')).filter(Boolean);
   }
-  async function loadMonthFromStatic(monthKey, storeName=null){
-    let url = storeName
-      ? `${STATIC_INDEX_ROOT}/stores/${slugifySafe(storeName)}/${monthKey}.json`
-      : `${STATIC_INDEX_ROOT}/months/${monthKey}.json`;
-    const payload = await fetchJsonCached(url);
-    return Array.isArray(payload?.rows) ? payload.rows.map(row => normalizePackedRow(row, storeName || '')).filter(Boolean) : [];
+
+  /* ── Carregamento do intervalo completo ─────────────────── */
+  async function loadRowsForRange(range, storeName=null){
+    const compare = prevComparableRange(range);
+    const allMonths = [...new Set([
+      ...monthsBetween(range?.from, range?.to),
+      ...monthsBetween(compare?.from, compare?.to)
+    ])];
+    let all = [];
+    await Promise.all(allMonths.map(async mk => {
+      const [staticRows, fbRows] = await Promise.all([
+        loadMonthStatic(mk, storeName),
+        loadMonthFirebase(mk, storeName)
+      ]);
+      all.push(...staticRows, ...fbRows);
+    }));
+    return dedupeRows(all);
   }
-  function bindRealtimeUploadWatcher(){
-    if(!window.fbDB_v2 || window.__jbFaturamentoWatchBound) return;
-    window.__jbFaturamentoWatchBound = true;
 
-    try {
-      window.fbDB_v2.ref(`${FIREBASE_INDEX_ROOT}/meta/last_upload/updated_at`).on('value', snap => {
-        const ts = Number(snap.val() || 0);
-        if(!ts) return;
-        if(!lastKnownUploadAt){
-          lastKnownUploadAt = ts;
-          return;
-        }
-        if(ts <= lastKnownUploadAt) return;
-        lastKnownUploadAt = ts;
-        scheduleLiveRefresh(180);
-      });
-    } catch (e) {}
-
-    window.addEventListener('storage', ev => {
-      if(ev.key !== 'jb_faturamento_upload_pulse' || !ev.newValue) return;
-      try {
-        const payload = JSON.parse(ev.newValue);
-        lastKnownUploadAt = Number(payload?.updated_at || Date.now());
-      } catch (e) {
-        lastKnownUploadAt = Date.now();
-      }
-      scheduleLiveRefresh(120);
-    }, true);
-
-    window.addEventListener('focus', () => {
-      clearFirebaseCache();
-      scheduleLiveRefresh(80);
-    }, true);
-
-    document.addEventListener('visibilitychange', () => {
-      if(document.hidden) return;
-      clearFirebaseCache();
-      scheduleLiveRefresh(80);
+  /* ── Catálogo de lojas ──────────────────────────────────── */
+  async function loadStoreCatalog(){
+    const staticMeta = await fetchJson(`${STATIC_ROOT}/meta.json`);
+    const fbCompanies = await fbGet(`${FB_ROOT}/meta/companies`);
+    const staticNames = Array.isArray(staticMeta?.stores) ? staticMeta.stores.map(s=>s?.name||s).filter(Boolean) : [];
+    const fbNames = fbCompanies && typeof fbCompanies==='object'
+      ? Object.values(fbCompanies).map(c=>c?.display_name||c?.source_name).filter(Boolean) : [];
+    [...staticNames,...fbNames].forEach(name=>{
+      const n=String(name).trim();
+      if(n && !storesList.includes(n)) storesList.push(n);
     });
   }
 
-  async function loadRowsForRange(range, storeName=null){
-    const compare = previousComparableRange(range);
-    const months = [...new Set([...(monthsBetween(range.from, range.to)), ...(monthsBetween(compare.from, compare.to))])];
-    let all=[];
-    for(const mk of months){
-      const [firebasePart, staticPart] = await Promise.all([
-        loadMonthFromFirebase(mk, storeName),
-        loadMonthFromStatic(mk, storeName)
-      ]);
-      all.push(...staticPart, ...firebasePart);
-    }
-    return dedupeRows(all);
-  }
+  /* ── Filtro e sumarização ───────────────────────────────── */
   function filterRows(rows, range, storeName=null){
-    return (rows || []).filter(r => {
+    return (rows||[]).filter(r=>{
       if(r.cancelado) return false;
       if(range?.from && r.data < range.from) return false;
-      if(range?.to && r.data > range.to) return false;
-      if(storeName && r.loja !== storeName) return false;
+      if(range?.to   && r.data > range.to)   return false;
+      if(storeName && r.loja !== storeName)   return false;
       return true;
     });
   }
-  function summarizeRows(rows){
-    const baseStores = knownStores(rows);
-    const map = new Map();
-    (rows || []).forEach(r => {
+  function summarize(rows){
+    const map=new Map();
+    (rows||[]).forEach(r=>{
       if(r.cancelado) return;
-      const curr = map.get(r.loja) || {loja:r.loja,pedidos:0,faturamento:0,desconto:0,entrega:0};
-      curr.pedidos += 1;
-      curr.faturamento += Number(r.total || 0);
-      curr.desconto += Number(r.desconto || 0);
-      curr.entrega += Number(r.entrega || 0);
-      map.set(r.loja, curr);
+      const cur=map.get(r.loja)||{loja:r.loja,pedidos:0,faturamento:0,desconto:0,entrega:0};
+      cur.pedidos++; cur.faturamento+=Number(r.total||0);
+      cur.desconto+=Number(r.desconto||0); cur.entrega+=Number(r.entrega||0);
+      map.set(r.loja,cur);
     });
-    const stores = baseStores.map(loja => map.get(loja) || {loja,pedidos:0,faturamento:0,desconto:0,entrega:0});
-    const pedidos = stores.reduce((s,r)=>s+r.pedidos,0);
-    const faturamento = stores.reduce((s,r)=>s+r.faturamento,0);
-    const desconto = stores.reduce((s,r)=>s+r.desconto,0);
-    const entrega = stores.reduce((s,r)=>s+r.entrega,0);
-    return {stores,pedidos,faturamento,desconto,entrega,ticket: pedidos ? faturamento/pedidos : 0};
+    const stores=storesList.map(l=>map.get(l)||{loja:l,pedidos:0,faturamento:0,desconto:0,entrega:0});
+    const pedidos=stores.reduce((s,r)=>s+r.pedidos,0);
+    const faturamento=stores.reduce((s,r)=>s+r.faturamento,0);
+    const desconto=stores.reduce((s,r)=>s+r.desconto,0);
+    const entrega=stores.reduce((s,r)=>s+r.entrega,0);
+    return {stores, pedidos, faturamento, desconto, entrega, ticket: pedidos ? faturamento/pedidos : 0};
   }
-  function compareBadge(current, previous){
-    if(!previous) return '<span class="badge flat">sem base</span>';
-    const delta = ((current / previous) - 1) * 100;
-    if(!isFinite(delta) || Math.abs(delta) < 0.05) return '<span class="badge flat">estável</span>';
-    return delta >= 0 ? `<span class="badge up">▲ ${fmtPct(Math.abs(delta))}</span>` : `<span class="badge down">▼ ${fmtPct(Math.abs(delta))}</span>`;
+
+  /* ── Comparação percentual ──────────────────────────────── */
+  function badge(cur, prev){
+    if(!prev) return '<span class="badge flat">sem base</span>';
+    const d=((cur/prev)-1)*100;
+    if(!isFinite(d)||Math.abs(d)<0.05) return '<span class="badge flat">estável</span>';
+    return d>=0 ? `<span class="badge up">▲ ${Math.abs(d).toFixed(1)}%</span>` : `<span class="badge down">▼ ${Math.abs(d).toFixed(1)}%</span>`;
   }
-  function projectionCard(range, currentRevenue, previousRevenue){
-    if(!range?.from || !range?.to) return { label:'Projeção de faturamento mensal', value:'—', sub:'sem período', compare:'<span class="badge flat">sem base</span>' };
-    const monthLast = new Date(range.from.getFullYear(), range.from.getMonth()+1, 0).getDate();
-    const elapsed = Math.max(1, Math.round((new Date(range.to.getFullYear(), range.to.getMonth(), range.to.getDate()) - new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate()))/86400000)+1);
-    const projected = elapsed ? (currentRevenue / elapsed) * monthLast : 0;
-    return { label:'Projeção de faturamento mensal', value: fmtMoney.format(projected), sub:`${elapsed} de ${monthLast} dias`, compare: compareBadge(currentRevenue, previousRevenue) };
+
+  /* ── Projeção ───────────────────────────────────────────── */
+  function projectionCard(range, curRev, prevRev){
+    if(!range?.from||!range?.to) return {label:'Projeção mensal',value:'—',sub:'sem período',compare:badge(0,0)};
+    const daysInMonth = new Date(range.from.getFullYear(),range.from.getMonth()+1,0).getDate();
+    const elapsed = Math.max(1, Math.round((new Date(range.to.getFullYear(),range.to.getMonth(),range.to.getDate()) - new Date(range.from.getFullYear(),range.from.getMonth(),range.from.getDate()))/86400000)+1);
+    const projected = elapsed ? (curRev/elapsed)*daysInMonth : 0;
+    return {label:'Projeção de faturamento mensal', value:fmtMoney.format(projected), sub:`${elapsed} de ${daysInMonth} dias`, compare:badge(curRev,prevRev)};
   }
-  function ensureStoreButtons(){
-    let host=document.getElementById('storeButtonsTopFix');
-    if(!host){
-      host=document.createElement('div'); host.id='storeButtonsTopFix'; host.innerHTML='<div class="store-grid"></div>';
-      document.querySelector('.toolbar')?.insertAdjacentElement('afterend', host);
-    }
-    const grid=host.querySelector('.store-grid');
-    if(!grid) return;
-    grid.innerHTML = knownStores().map(store => {
-      const c = typeof colorOf === 'function' ? colorOf(store) : '#33507c';
-      const active = selectedStore === store;
-      const style = active ? `background:${c};border-color:${c};color:#fff;` : `background:#fff;border-color:${c};color:${c};`;
-      return `<button type="button" class="store-btn ${active ? 'active' : ''}" data-live-store="${store}" style="${style}">${store}</button>`;
-    }).join('');
-    grid.querySelectorAll('[data-live-store]').forEach(btn => btn.addEventListener('click', async ev => {
-      ev.preventDefault();
-      const store = btn.dataset.liveStore;
-      selectedStore = (selectedStore === store) ? null : store;
-      window.__jbSelectedStore = selectedStore;
-      ensureStoreButtons();
-      await loadAndRender(true);
-    }, true));
+
+  /* ── Chart helper ───────────────────────────────────────── */
+  function destroyChart(id){ if(charts[id]){charts[id].destroy();delete charts[id];} }
+  function mkChart(id, type, data, opts={}){
+    destroyChart(id);
+    const ctx = document.getElementById(id)?.getContext('2d');
+    if(!ctx) return;
+    charts[id] = new Chart(ctx, {type, data, options:{responsive:true,maintainAspectRatio:false,...opts}});
   }
-  function showGeneralOnly(){
-    document.getElementById('resultLineLightPatch')?.remove();
-    const geral=document.getElementById('sec-geral');
-    const proj=document.getElementById('sec-projecao');
-    const diario=document.getElementById('sec-diario');
-    const lojas=document.getElementById('sec-lojas');
-    if(geral){geral.style.display='block'; geral.classList.add('active');}
-    if(proj){proj.style.display='none'; proj.classList.remove('active');}
-    if(diario){diario.style.display='none'; diario.classList.remove('active');}
-    if(lojas){lojas.style.display='none'; lojas.classList.remove('active');}
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab.dataset.tab === 'geral'));
-  }
-  function resizeChartsSafe(){
-    clearTimeout(window.__jbLiveChartsTimer);
-    window.__jbLiveChartsTimer = setTimeout(() => { try{ Object.values(charts || {}).forEach(ch => { try{ ch.resize(); ch.update('none'); }catch(e){} }); }catch(e){} }, 50);
-  }
-  function renderDashboard(rows, range){
-    const currentRows = filterRows(rows, range, selectedStore);
-    const prevRows = filterRows(rows, previousComparableRange(range), selectedStore);
-    upsertStoreNames(currentRows.map(r => r.loja));
-    const curr = summarizeRows(currentRows);
-    const prev = summarizeRows(prevRows);
-    const proj = projectionCard(range, curr.faturamento, prev.faturamento);
-    const labelStore = selectedStore || 'Todas as lojas';
+
+  /* ── Render: visão geral ────────────────────────────────── */
+  function renderGeral(allRows, range){
+    const curRows  = filterRows(allRows, range, activeStore);
+    const prevRows = filterRows(allRows, prevComparableRange(range), activeStore);
+    const cur  = summarize(curRows);
+    const prev = summarize(prevRows);
+    const proj = projectionCard(range, cur.faturamento, prev.faturamento);
+    const storeLbl = activeStore || 'Todas as lojas';
+
     document.getElementById('kpisGeral').innerHTML = `
-      <div class="kpi green"><div class="label">Faturamento total</div><div class="value">${fmtMoney.format(curr.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${compareBadge(curr.faturamento, prev.faturamento)}</span></div></div>
-      <div class="kpi blue"><div class="label">Total de pedidos</div><div class="value">${fmtInt.format(curr.pedidos)}</div><div class="sub"><span>${labelStore}</span><span>${compareBadge(curr.pedidos, prev.pedidos)}</span></div></div>
-      <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(curr.ticket)}</div><div class="sub"><span>Por pedido</span><span>${compareBadge(curr.ticket, prev.ticket)}</span></div></div>
-      <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(curr.desconto)}</div><div class="sub"><span>${curr.faturamento ? fmtPct(curr.desconto/curr.faturamento*100) : '0,0%'}</span><span>${compareBadge(curr.desconto, prev.desconto)}</span></div></div>
+      <div class="kpi green"><div class="label">Faturamento total</div><div class="value">${fmtMoney.format(cur.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${badge(cur.faturamento,prev.faturamento)}</span></div></div>
+      <div class="kpi blue"><div class="label">Total de pedidos</div><div class="value">${fmtInt.format(cur.pedidos)}</div><div class="sub"><span>${storeLbl}</span><span>${badge(cur.pedidos,prev.pedidos)}</span></div></div>
+      <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(cur.ticket)}</div><div class="sub"><span>Por pedido</span><span>${badge(cur.ticket,prev.ticket)}</span></div></div>
+      <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(cur.desconto)}</div><div class="sub"><span>${cur.faturamento ? ((cur.desconto/cur.faturamento)*100).toFixed(1)+'%' : '0,0%'}</span><span>${badge(cur.desconto,prev.desconto)}</span></div></div>
       <div class="kpi purple"><div class="label">${proj.label}</div><div class="value">${proj.value}</div><div class="sub"><span>${proj.sub}</span><span>${proj.compare}</span></div></div>`;
-    const stores = summarizeRows(currentRows).stores.filter(s => selectedStore ? s.loja === selectedStore : (s.pedidos>0 || s.faturamento>0 || s.desconto>0 || s.entrega>0));
-    if(typeof destroyCharts === 'function') destroyCharts();
-    draw('chartFatLoja','bar',{labels:stores.map(s=>s.loja),datasets:[{label:'Faturamento',data:stores.map(s=>s.faturamento),backgroundColor:stores.map(s=>(typeof colorOf==='function'?colorOf(s.loja):'#5b8def')+'cc'),borderColor:stores.map(s=>typeof colorOf==='function'?colorOf(s.loja):'#5b8def'),borderWidth:1.5,borderRadius:8}]},{plugins:{legend:{display:false}}});
-    draw('chartPedLoja','bar',{labels:stores.map(s=>s.loja),datasets:[{label:'Pedidos',data:stores.map(s=>s.pedidos),backgroundColor:stores.map(s=>(typeof colorOf==='function'?colorOf(s.loja):'#5b8def')+'aa'),borderColor:stores.map(s=>typeof colorOf==='function'?colorOf(s.loja):'#5b8def'),borderWidth:1.5,borderRadius:8}]},{plugins:{legend:{display:false}}});
-    draw('chartDescLoja','bar',{labels:stores.map(s=>s.loja),datasets:[{label:'Descontos',data:stores.map(s=>s.desconto),backgroundColor:stores.map(s=>(typeof colorOf==='function'?colorOf(s.loja):'#ef4444')+'aa'),borderColor:stores.map(s=>typeof colorOf==='function'?colorOf(s.loja):'#ef4444'),borderWidth:1.5,borderRadius:8}]},{plugins:{legend:{display:false}}});
-    draw('chartEntregaLoja','bar',{labels:stores.map(s=>s.loja),datasets:[{label:'Entrega',data:stores.map(s=>s.entrega),backgroundColor:stores.map(s=>(typeof colorOf==='function'?colorOf(s.loja):'#7c3aed')+'99'),borderColor:stores.map(s=>typeof colorOf==='function'?colorOf(s.loja):'#7c3aed'),borderWidth:1.5,borderRadius:8}]},{plugins:{legend:{display:false}}});
-    const prevMap = new Map(summarizeRows(prevRows).stores.map(s => [s.loja, s]));
-    const head = document.querySelector('#sec-geral thead tr');
-    if(head) head.innerHTML = '<th>Loja</th><th>Pedidos</th><th>Faturamento</th><th>Ticket Médio</th><th>Descontos</th><th>Entrega</th><th>% vs período anterior</th>';
-    document.getElementById('tbodyResumo').innerHTML = stores.map(store => {
-      const base = prevMap.get(store.loja) || {faturamento:0};
-      return `<tr><td><span class="store-name-strong">${store.loja}</span></td><td>${fmtInt.format(store.pedidos)}</td><td><span class="money-green">${fmtMoney.format(store.faturamento)}</span></td><td>${fmtMoney.format(store.pedidos ? store.faturamento/store.pedidos : 0)}</td><td><span class="money-red">${fmtMoney.format(store.desconto)}</span></td><td><span class="money-blue">${fmtMoney.format(store.entrega)}</span></td><td>${compareBadge(store.faturamento, base.faturamento)}</td></tr>`;
-    }).join('') || '<tr><td colspan="7" class="empty">Sem dados no período selecionado.</td></tr>';
-    const foot=document.getElementById('footResumo');
-    if(foot) foot.textContent = `${labelStore} · período fixo até você alterar os filtros e clicar em aplicar.`;
-    ensureStoreButtons();
+
+    const visStores = cur.stores.filter(s=>s.pedidos>0||prev.stores?.find(ps=>ps.loja===s.loja&&ps.pedidos>0));
+    const lbls = visStores.map(s=>s.loja), colors=visStores.map(s=>colorOf(s.loja));
+    mkChart('chartFatLoja','bar',{labels:lbls,datasets:[{label:'Faturamento',data:visStores.map(s=>s.faturamento),backgroundColor:colors,borderRadius:8}]},{plugins:{legend:{display:false}}});
+    mkChart('chartPedLoja','bar',{labels:lbls,datasets:[{label:'Pedidos',data:visStores.map(s=>s.pedidos),backgroundColor:colors,borderRadius:8}]},{plugins:{legend:{display:false}}});
+    mkChart('chartDescLoja','bar',{labels:lbls,datasets:[{label:'Desconto',data:visStores.map(s=>s.desconto),backgroundColor:colors,borderRadius:8}]},{plugins:{legend:{display:false}}});
+    mkChart('chartEntregaLoja','bar',{labels:lbls,datasets:[{label:'Entrega',data:visStores.map(s=>s.entrega),backgroundColor:colors,borderRadius:8}]},{plugins:{legend:{display:false}}});
+
+    const body = document.getElementById('tbodyResumo');
+    const prevMap = new Map(prev.stores.map(s=>[s.loja,s]));
+    body.innerHTML = cur.stores.filter(s=>s.pedidos>0).map((s,i)=>{
+      const p=prevMap.get(s.loja)||{faturamento:0};
+      const tk = s.pedidos ? s.faturamento/s.pedidos : 0;
+      return `<tr><td><span class="rank-badge">${i+1}</span> <span class="store-name-strong">${s.loja}</span></td><td>${fmtInt.format(s.pedidos)}</td><td class="money-green">${fmtMoney.format(s.faturamento)}</td><td class="money-blue">${fmtMoney.format(tk)}</td><td class="money-red">${fmtMoney.format(s.desconto)}</td><td>${s.faturamento ? ((s.desconto/s.faturamento)*100).toFixed(1)+'%' : '—'}</td><td class="money-dark">${fmtMoney.format(s.entrega)}</td><td>${badge(s.faturamento,p.faturamento)}</td></tr>`;
+    }).join('') || '<tr><td colspan="8" class="empty">Sem dados para o período</td></tr>';
+    document.getElementById('footResumo').textContent = `${cur.pedidos} pedidos · ${fmtMoney.format(cur.faturamento)} · período: ${periodLabel(range)}`;
   }
-  async function loadAndRender(scrollToButtons=false){
-    const token = ++renderToken;
-    const range = selectedRange();
-    if(!range?.from || !range?.to) return;
-    clearFirebaseCache();
-    const rows = await loadRowsForRange(range, selectedStore || null);
-    if(token !== renderToken) return;
-    window.rowsBase = rows;
-    showGeneralOnly();
-    renderDashboard(rows, range);
-    resizeChartsSafe();
-    if(scrollToButtons){
-      document.getElementById('storeButtonsTopFix')?.scrollIntoView({behavior:'smooth', block:'start'});
-    }
+
+  /* ── Render: projeção ───────────────────────────────────── */
+  function renderProjecao(allRows, range){
+    const curRows  = filterRows(allRows, range, activeStore);
+    const prevRows = filterRows(allRows, prevComparableRange(range), activeStore);
+    const cur  = summarize(curRows);
+    const prev = summarize(prevRows);
+    const proj = projectionCard(range, cur.faturamento, prev.faturamento);
+    const daysInMonth = range?.from ? new Date(range.from.getFullYear(),range.from.getMonth()+1,0).getDate() : 30;
+    const elapsed = range?.from&&range?.to ? Math.max(1,Math.round((new Date(range.to.getFullYear(),range.to.getMonth(),range.to.getDate())-new Date(range.from.getFullYear(),range.from.getMonth(),range.from.getDate()))/86400000)+1) : 1;
+
+    document.getElementById('kpisProj').innerHTML = `
+      <div class="kpi green"><div class="label">Faturamento MTD</div><div class="value">${fmtMoney.format(cur.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${badge(cur.faturamento,prev.faturamento)}</span></div></div>
+      <div class="kpi purple"><div class="label">Projeção mensal</div><div class="value">${proj.value}</div><div class="sub"><span>${proj.sub}</span><span>${proj.compare}</span></div></div>
+      <div class="kpi blue"><div class="label">Pedidos MTD</div><div class="value">${fmtInt.format(cur.pedidos)}</div><div class="sub"><span>Dias: ${elapsed}/${daysInMonth}</span><span>${badge(cur.pedidos,prev.pedidos)}</span></div></div>
+      <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(cur.ticket)}</div><div class="sub"><span>Por pedido</span><span>${badge(cur.ticket,prev.ticket)}</span></div></div>`;
+
+    // Gráfico comparativo dia a dia
+    const daysRange = monthsBetween(range?.from, range?.to).flatMap(mk=>{
+      const [y,m]=mk.split('-').map(Number);
+      const days=[]; let d=new Date(y,m-1,1);
+      while(d.getMonth()===m-1){ days.push(ymd(d)); d.setDate(d.getDate()+1); }
+      return days;
+    }).filter(d=>{
+      if(!range?.from||!range?.to) return true;
+      return d>=ymd(range.from)&&d<=ymd(range.to);
+    });
+    const byDay=(rows,store=null)=>{
+      const map=new Map();
+      filterRows(rows,range,store).forEach(r=>{ const k=ymd(r.data); map.set(k,(map.get(k)||0)+Number(r.total||0)); });
+      return daysRange.map(d=>map.get(d)||0);
+    };
+    const byDayPrev=(rows,store=null)=>{
+      const pRange=prevComparableRange(range);
+      const pDays=monthsBetween(pRange?.from,pRange?.to).flatMap(mk=>{
+        const [y,m]=mk.split('-').map(Number); const days=[]; let d=new Date(y,m-1,1);
+        while(d.getMonth()===m-1){days.push(ymd(d));d.setDate(d.getDate()+1);} return days;
+      }).filter(d=>{ if(!pRange?.from||!pRange?.to) return true; return d>=ymd(pRange.from)&&d<=ymd(pRange.to); });
+      const map=new Map();
+      filterRows(rows,pRange,store).forEach(r=>{ const k=ymd(r.data); map.set(k,(map.get(k)||0)+Number(r.total||0)); });
+      return pDays.map(d=>map.get(d)||0);
+    };
+    const curVals=byDay(allRows,activeStore), prevVals=byDayPrev(allRows,activeStore);
+    const shortLabels=daysRange.map(d=>{ const[,,dd]=d.split('-'); return pad(Number(dd)); });
+    mkChart('chartProjComp','line',{labels:shortLabels,datasets:[
+      {label:'Mês atual',data:curVals,borderColor:'#5b8def',backgroundColor:'rgba(91,141,239,.12)',tension:.35,fill:true,pointRadius:3},
+      {label:'Mês anterior',data:prevVals,borderColor:'#d1d5db',backgroundColor:'transparent',tension:.35,borderDash:[5,4],pointRadius:2}
+    ]},{plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:v=>fmtMoney.format(v)}}}});
+
+    // Projeção por loja
+    const projStores=cur.stores.filter(s=>s.pedidos>0);
+    mkChart('chartProjLoja','bar',{labels:projStores.map(s=>s.loja),datasets:[
+      {label:'MTD',data:projStores.map(s=>s.faturamento),backgroundColor:projStores.map(s=>colorOf(s.loja)),borderRadius:6},
+      {label:'Projeção',data:projStores.map(s=>elapsed&&daysInMonth ? (s.faturamento/elapsed)*daysInMonth : 0),backgroundColor:'rgba(100,116,139,.18)',borderRadius:6}
+    ]},{plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:v=>fmtMoney.format(v)}}}});
+
+    const prevMap2=new Map(prev.stores.map(s=>[s.loja,s]));
+    document.getElementById('tbodyProj').innerHTML=cur.stores.filter(s=>s.pedidos>0).map(s=>{
+      const p=prevMap2.get(s.loja)||{faturamento:0};
+      const projVal=elapsed&&daysInMonth?(s.faturamento/elapsed)*daysInMonth:0;
+      return `<tr><td class="store-name-strong">${s.loja}</td><td>${fmtInt.format(s.pedidos)}</td><td class="money-green">${fmtMoney.format(s.faturamento)}</td><td>${fmtMoney.format(p.faturamento)}</td><td>${badge(s.faturamento,p.faturamento)}</td><td class="money-blue">${fmtMoney.format(projVal)}</td><td>${elapsed}</td><td>${daysInMonth}</td></tr>`;
+    }).join('')||'<tr><td colspan="8" class="empty">Sem dados</td></tr>';
+    document.getElementById('footProj').textContent=`Projeção baseada em ${elapsed} dias de ${daysInMonth} do mês · período: ${periodLabel(range)}`;
   }
-  function cloneAndReplace(el){ if(!el) return null; const clone = el.cloneNode(true); el.replaceWith(clone); return clone; }
+
+  /* ── Render: por loja ───────────────────────────────────── */
+  function renderLojas(allRows, range){
+    const store = activeStore || storesList[0];
+    // pills
+    document.getElementById('storePills').innerHTML = storesList.map(s=>{
+      const col=colorOf(s), active=s===store;
+      const style=active?`background:${col};border-color:${col};color:#fff`:`border-color:${col};color:${col}`;
+      return `<button class="store-pill${active?' active':''}" data-store="${s}" style="${style}">${s}</button>`;
+    }).join('');
+    document.querySelectorAll('.store-pill').forEach(btn=>btn.addEventListener('click',()=>{
+      activeStore=btn.dataset.store; renderAll(selectedRange());
+    }));
+
+    const storeRows = filterRows(allRows, range, store);
+    const prevRows  = filterRows(allRows, prevComparableRange(range), store);
+    const cur=summarize(storeRows), prev=summarize(prevRows);
+    const storeSumCur=cur.stores.find(s=>s.loja===store)||{pedidos:0,faturamento:0,desconto:0,entrega:0};
+    const storeSumPrev=prev.stores.find(s=>s.loja===store)||{pedidos:0,faturamento:0,desconto:0,entrega:0};
+    const ticket=storeSumCur.pedidos?storeSumCur.faturamento/storeSumCur.pedidos:0;
+
+    document.getElementById('kpisLoja').innerHTML=`
+      <div class="kpi green"><div class="label">Faturamento</div><div class="value">${fmtMoney.format(storeSumCur.faturamento)}</div><div class="sub"><span>${store}</span><span>${badge(storeSumCur.faturamento,storeSumPrev.faturamento)}</span></div></div>
+      <div class="kpi blue"><div class="label">Pedidos</div><div class="value">${fmtInt.format(storeSumCur.pedidos)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${badge(storeSumCur.pedidos,storeSumPrev.pedidos)}</span></div></div>
+      <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(ticket)}</div><div class="sub"><span>Por pedido</span><span>${badge(ticket,storeSumPrev.pedidos?storeSumPrev.faturamento/storeSumPrev.pedidos:0)}</span></div></div>
+      <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(storeSumCur.desconto)}</div><div class="sub"><span>${storeSumCur.faturamento?((storeSumCur.desconto/storeSumCur.faturamento)*100).toFixed(1)+'%':'0%'}</span><span>${badge(storeSumCur.desconto,storeSumPrev.desconto)}</span></div></div>
+      <div class="kpi cyan" style="--cyan:#0891b2"><div class="label">Taxa entrega</div><div class="value">${fmtMoney.format(storeSumCur.entrega)}</div><div class="sub"><span>${badge(storeSumCur.entrega,storeSumPrev.entrega)}</span></div></div>`;
+
+    // dados diários
+    const dayMap=new Map();
+    storeRows.forEach(r=>{ const k=ymd(r.data); const d=dayMap.get(k)||{pedidos:0,faturamento:0,desconto:0,entrega:0}; d.pedidos++;d.faturamento+=r.total||0;d.desconto+=r.desconto||0;d.entrega+=r.entrega||0; dayMap.set(k,d); });
+    const days=[...dayMap.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+    const daysLabels=days.map(([k])=>{ const[,m,d]=k.split('-'); return `${d}/${m}`; });
+    mkChart('chartLojaFat','line',{labels:daysLabels,datasets:[{label:'Faturamento',data:days.map(([,v])=>v.faturamento),borderColor:colorOf(store),backgroundColor:`${colorOf(store)}22`,tension:.35,fill:true,pointRadius:3}]},{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>fmtMoney.format(v)}}}});
+    mkChart('chartLojaPed','bar',{labels:daysLabels,datasets:[{label:'Pedidos',data:days.map(([,v])=>v.pedidos),backgroundColor:colorOf(store),borderRadius:6}]},{plugins:{legend:{display:false}}});
+    document.getElementById('tbodyLojaDia').innerHTML=days.map(([k,v])=>{
+      const ticket2=v.pedidos?v.faturamento/v.pedidos:0;
+      const[y,m,d]=k.split('-');
+      return `<tr><td>${d}/${m}/${y}</td><td>${fmtInt.format(v.pedidos)}</td><td class="money-green">${fmtMoney.format(v.faturamento)}</td><td>${fmtMoney.format(ticket2)}</td><td class="money-red">${fmtMoney.format(v.desconto)}</td><td>${fmtMoney.format(v.entrega)}</td></tr>`;
+    }).join('')||'<tr><td colspan="6" class="empty">Sem dados para o período</td></tr>';
+  }
+
+  /* ── Render: diário consolidado ─────────────────────────── */
+  function renderDiario(allRows, range){
+    const curRows=filterRows(allRows, range, activeStore);
+    const dayMap=new Map();
+    curRows.forEach(r=>{ const k=ymd(r.data); const d=dayMap.get(k)||{pedidos:0,faturamento:0}; d.pedidos++;d.faturamento+=r.total||0; dayMap.set(k,d); });
+    const days=[...dayMap.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+    const labels=days.map(([k])=>{ const[,m,d]=k.split('-'); return `${d}/${m}`; });
+    mkChart('chartDiarioFat','bar',{labels,datasets:[{label:'Faturamento',data:days.map(([,v])=>v.faturamento),backgroundColor:'#5b8def',borderRadius:6}]},{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>fmtMoney.format(v)}}}});
+    mkChart('chartDiarioPed','bar',{labels,datasets:[{label:'Pedidos',data:days.map(([,v])=>v.pedidos),backgroundColor:'#0891b2',borderRadius:6}]},{plugins:{legend:{display:false}}});
+  }
+
+  /* ── Render principal ───────────────────────────────────── */
+  async function renderAll(range){
+    if(!range?.from||!range?.to) return;
+    const token=++renderToken;
+
+    // Carrega sempre estático + Firebase juntos
+    clearFbCache(); // limpa cache do Firebase para garantir dados frescos
+    const allRows = await loadRowsForRange(range, activeStore);
+    if(token!==renderToken) return; // outra renderização foi disparada
+
+    renderGeral(allRows, range);
+    if(activeTab==='projecao') renderProjecao(allRows, range);
+    if(activeTab==='lojas')    renderLojas(allRows, range);
+    if(activeTab==='diario')   renderDiario(allRows, range);
+
+    // Pré-carrega as outras abas em background
+    setTimeout(()=>{ renderProjecao(allRows, range); }, 200);
+    setTimeout(()=>{ renderLojas(allRows, range); }, 400);
+    setTimeout(()=>{ renderDiario(allRows, range); }, 600);
+
+    document.getElementById('loadingOverlay').style.display='none';
+  }
+
+  /* ── UI: botões de loja ─────────────────────────────────── */
+  function paintStoreButtons(){
+    const area = document.getElementById('storeButtonsArea');
+    area.innerHTML = storesList.map(s=>{
+      const c=colorOf(s), active=activeStore===s;
+      const style=active?`background:${c};border-color:${c};color:#fff`:`background:#fff;border-color:${c};color:${c}`;
+      return `<button class="store-btn${active?' active':''}" data-store="${s}" style="${style}">${s}</button>`;
+    }).join('');
+    area.querySelectorAll('.store-btn').forEach(btn=>btn.addEventListener('click',()=>{
+      activeStore = (activeStore===btn.dataset.store) ? null : btn.dataset.store;
+      paintStoreButtons();
+      renderAll(selectedRange());
+    }));
+  }
+
+  /* ── UI: range popover ──────────────────────────────────── */
+  function setDateRange(from, to, preset=null){
+    const di=document.getElementById('dataInicio'), df=document.getElementById('dataFim');
+    if(di) di.value=ymd(from);
+    if(df) df.value=ymd(to);
+    document.querySelectorAll('.preset-btn').forEach(b=>b.classList.toggle('active',!!preset&&b.dataset.preset===preset));
+    activePreset=preset||'custom';
+    updateRangeDisplay();
+  }
+  function updateRangeDisplay(){
+    const el=document.getElementById('periodRangeDisplay');
+    if(!el) return;
+    const r=selectedRange();
+    el.textContent = r.from&&r.to ? `${brDate(r.from)} – ${brDate(r.to)}` : 'Escolha data';
+  }
   function openRangePopover(){
-    const backdrop = document.getElementById('rangeBackdrop');
-    const popover = document.getElementById('rangePopover');
-    const start = document.getElementById('rangeStartPicker');
-    const end = document.getElementById('rangeEndPicker');
-    const confirm = document.getElementById('btnRangeConfirm');
-    const current = selectedRange();
-    start.value = current.from ? ymdSafe(current.from) : '';
-    end.value = current.to ? ymdSafe(current.to) : '';
-    end.disabled = !start.value;
-    end.min = start.value || '';
-    confirm.disabled = !(start.value && end.value);
-    updateRangePreview();
-    backdrop.hidden = false;
-    popover.hidden = false;
-    document.body.classList.add('range-modal-open');
-    setTimeout(() => {
-      try{ if(start && !start.value){ start.showPicker?.(); } }catch(e){}
-      try{ start?.focus(); }catch(e){}
-    }, 30);
+    document.getElementById('rangeBackdrop').hidden=false;
+    document.getElementById('rangePopover').hidden=false;
+    const r=selectedRange();
+    const sp=document.getElementById('rangeStartPicker'), ep=document.getElementById('rangeEndPicker');
+    if(sp) sp.value=r.from?ymd(r.from):'';
+    if(ep){ ep.value=r.to?ymd(r.to):''; ep.disabled=!sp.value; }
+    document.getElementById('rangePreviewText').textContent='Selecione a primeira data para começar.';
+    const confirm=document.getElementById('btnRangeConfirm');
+    if(confirm) confirm.disabled=!(sp.value&&ep.value);
   }
   function closeRangePopover(){
-    const backdrop = document.getElementById('rangeBackdrop');
-    const popover = document.getElementById('rangePopover');
-    if(backdrop) backdrop.hidden = true;
-    if(popover) popover.hidden = true;
-    document.body.classList.remove('range-modal-open');
+    document.getElementById('rangeBackdrop').hidden=true;
+    document.getElementById('rangePopover').hidden=true;
   }
-  function updateRangePreview(){
-    const start = document.getElementById('rangeStartPicker');
-    const end = document.getElementById('rangeEndPicker');
-    const preview = document.getElementById('rangePreviewText');
-    const confirm = document.getElementById('btnRangeConfirm');
-    const from = parseInputDate(start?.value);
-    const to = parseInputDate(end?.value, true);
-    if(!from){
-      preview.textContent = 'Selecione a primeira data para começar.';
-      if(confirm) confirm.disabled = true;
-      return;
-    }
-    if(!to){
-      preview.textContent = `Primeira data escolhida: ${longDateSafe(from)}. Agora selecione a segunda data.`;
-      if(confirm) confirm.disabled = true;
-      return;
-    }
-    preview.textContent = `Período preparado: ${getRangeDisplayText(from, to)}.`;
-    if(confirm) confirm.disabled = false;
+
+  /* ── UI: tabs ───────────────────────────────────────────── */
+  function showSection(tab){
+    activeTab=tab;
+    document.querySelectorAll('.section').forEach(s=>{ s.classList.remove('active'); s.style.display='none'; });
+    document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+    const sec=document.getElementById(`sec-${tab}`);
+    if(sec){ sec.classList.add('active'); sec.style.display='block'; }
+    renderAll(selectedRange());
   }
+
+  /* ── Watcher realtime (Firebase) ────────────────────────── */
+  function bindRealtimeWatcher(){
+    if(!window.fbDB_v2||window.__jbDashWatchBound) return;
+    window.__jbDashWatchBound=true;
+    try{
+      window.fbDB_v2.ref(`${FB_ROOT}/meta/last_upload/updated_at`).on('value', snap=>{
+        const ts=Number(snap.val()||0);
+        if(!ts) return;
+        if(!lastUploadTs){ lastUploadTs=ts; return; }
+        if(ts<=lastUploadTs) return;
+        lastUploadTs=ts;
+        clearFbCache();
+        clearTimeout(refreshTimer);
+        refreshTimer=setTimeout(()=>renderAll(selectedRange()), 500);
+      });
+    }catch(e){}
+    window.addEventListener('storage', ev=>{
+      if(ev.key!=='jb_faturamento_upload_pulse'||!ev.newValue) return;
+      clearFbCache();
+      clearTimeout(refreshTimer);
+      refreshTimer=setTimeout(()=>renderAll(selectedRange()), 500);
+    });
+    window.addEventListener('focus',()=>{
+      clearFbCache();
+      clearTimeout(refreshTimer);
+      refreshTimer=setTimeout(()=>renderAll(selectedRange()), 500);
+    });
+  }
+
+  /* ── Bind controles ─────────────────────────────────────── */
   function bindControls(){
-    const btnAplicar = cloneAndReplace(document.getElementById('btnAplicar'));
-    const btnLimpar = cloneAndReplace(document.getElementById('btnLimpar'));
-    const btnProjecao = cloneAndReplace(document.getElementById('btnProjecao'));
-    const presetButtons = [...document.querySelectorAll('.preset-btn')].map(cloneAndReplace);
-    const displayButton = cloneAndReplace(document.getElementById('periodRangeDisplay'));
-    const backdrop = cloneAndReplace(document.getElementById('rangeBackdrop'));
-    const btnClose = cloneAndReplace(document.getElementById('btnRangeClose'));
-    const btnCancel = cloneAndReplace(document.getElementById('btnRangeCancel'));
-    const btnConfirm = cloneAndReplace(document.getElementById('btnRangeConfirm'));
-    const startPicker = cloneAndReplace(document.getElementById('rangeStartPicker'));
-    const endPicker = cloneAndReplace(document.getElementById('rangeEndPicker'));
-    document.querySelectorAll('.tab').forEach(tab => { const t = cloneAndReplace(tab); t.addEventListener('click', ev => { ev.preventDefault(); showGeneralOnly(); }, true); });
+    // Presets
+    document.querySelectorAll('.preset-btn').forEach(btn=>btn.addEventListener('click',()=>{
+      let r;
+      if(btn.dataset.preset==='mes_atual')    r=currentMonthRange();
+      if(btn.dataset.preset==='mes_anterior') r=previousMonthRange();
+      if(btn.dataset.preset==='ontem')        r=yesterdayRange();
+      if(!r) return;
+      setDateRange(r.from,r.to,btn.dataset.preset);
+      renderAll(r);
+    }));
 
-    displayButton?.addEventListener('click', ev => { ev.preventDefault(); openRangePopover(); }, true);
-    backdrop?.addEventListener('click', closeRangePopover, true);
-    btnClose?.addEventListener('click', closeRangePopover, true);
-    btnCancel?.addEventListener('click', closeRangePopover, true);
-    startPicker?.addEventListener('change', () => {
-      if(endPicker){
-        endPicker.disabled = !startPicker.value;
-        endPicker.min = startPicker.value || '';
-        if(endPicker.value && startPicker.value && endPicker.value < startPicker.value) endPicker.value = '';
-      }
-      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-      window.activePreset='custom';
-      updateRangePreview();
-      if(startPicker.value && endPicker && !endPicker.disabled){
-        try{ endPicker.focus(); }catch(e){}
-        setTimeout(() => { try{ endPicker.showPicker?.(); }catch(e){} }, 30);
-      }
+    // Botões de ação
+    document.getElementById('btnAplicar')?.addEventListener('click',()=>{ renderAll(selectedRange()); });
+    document.getElementById('btnLimpar')?.addEventListener('click',()=>{ const r=currentMonthRange(); setDateRange(r.from,r.to,'mes_atual'); renderAll(r); });
+    document.getElementById('btnProjecao')?.addEventListener('click',()=>{ const r=projectionRange(); setDateRange(r.from,r.to,null); renderAll(r); });
+
+    // Range popover
+    document.getElementById('periodRangeDisplay')?.addEventListener('click', openRangePopover);
+    document.getElementById('rangeBackdrop')?.addEventListener('click', closeRangePopover);
+    document.getElementById('btnRangeClose')?.addEventListener('click', closeRangePopover);
+    document.getElementById('btnRangeCancel')?.addEventListener('click', closeRangePopover);
+    const sp=document.getElementById('rangeStartPicker'), ep=document.getElementById('rangeEndPicker');
+    sp?.addEventListener('change',()=>{
+      if(ep){ ep.disabled=!sp.value; ep.min=sp.value||''; if(ep.value&&sp.value&&ep.value<sp.value) ep.value=''; }
+      const confirm=document.getElementById('btnRangeConfirm');
+      if(confirm) confirm.disabled=!(sp.value&&ep&&ep.value);
+      document.getElementById('rangePreviewText').textContent = sp.value ? 'Agora selecione a segunda data.' : 'Selecione a primeira data para começar.';
+      document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
     });
-    endPicker?.addEventListener('change', () => {
-      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-      window.activePreset='custom';
-      updateRangePreview();
+    ep?.addEventListener('change',()=>{
+      const confirm=document.getElementById('btnRangeConfirm');
+      if(confirm) confirm.disabled=!(sp?.value&&ep.value);
+      if(sp?.value&&ep.value) document.getElementById('rangePreviewText').textContent=`${longDate(parseDate(sp.value))} → ${longDate(parseDate(ep.value,true))}`;
     });
-    btnConfirm?.addEventListener('click', ev => {
-      ev.preventDefault();
-      const from = parseInputDate(startPicker?.value);
-      const to = parseInputDate(endPicker?.value, true);
-      if(!from || !to) return;
-      setDateRange(from, to, null);
+    document.getElementById('btnRangeConfirm')?.addEventListener('click',()=>{
+      const from=parseDate(sp?.value), to=parseDate(ep?.value,true);
+      if(!from||!to) return;
+      setDateRange(from,to,null);
       closeRangePopover();
-    }, true);
+      renderAll({from,to});
+    });
 
-    presetButtons.forEach(btn => btn.addEventListener('click', ev => {
-      ev.preventDefault();
-      if(btn.dataset.preset === 'mes_atual'){ const r=currentMonthRange(); setDateRange(r.from,r.to,'mes_atual'); }
-      if(btn.dataset.preset === 'mes_anterior'){ const r=previousMonthRange(); setDateRange(r.from,r.to,'mes_anterior'); }
-      if(btn.dataset.preset === 'ontem'){ const r=yesterdayRange(); setDateRange(r.from,r.to,'ontem'); }
-    }, true));
-    btnAplicar?.addEventListener('click', async ev => { ev.preventDefault(); await loadAndRender(true); }, true);
-    btnLimpar?.addEventListener('click', async ev => { ev.preventDefault(); const r=currentMonthRange(); setDateRange(r.from,r.to,'mes_atual'); await loadAndRender(true); }, true);
-    btnProjecao?.addEventListener('click', async ev => { ev.preventDefault(); const r=projectionRange(); setDateRange(r.from,r.to,null); await loadAndRender(true); }, true);
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>showSection(tab.dataset.tab)));
   }
 
-  showGeneralOnly();
-  closeRangePopover();
+  /* ── Inicialização ──────────────────────────────────────── */
+  document.getElementById('loadingOverlay').style.display='flex';
   await loadStoreCatalog();
-  ensureStoreButtons();
+  paintStoreButtons();
   bindControls();
-  bindRealtimeUploadWatcher();
-  closeRangePopover();
-  const start = currentMonthRange();
-  setDateRange(start.from, start.to, 'mes_atual');
-  await loadAndRender(false);
-  window.renderAll = async function(){ return loadAndRender(false); };
-  window.renderProjection = async function(){ return loadAndRender(false); };
-  window.renderStoreSection = async function(){ return loadAndRender(false); };
-  window.renderDailySection = async function(){ return loadAndRender(false); };
-  window.showTab = function(){ showGeneralOnly(); };
+  bindRealtimeWatcher();
+
+  const startRange = currentMonthRange();
+  setDateRange(startRange.from, startRange.to, 'mes_atual');
+  await renderAll(startRange);
+
 })();
 </script>
-
 </body>
 </html>
