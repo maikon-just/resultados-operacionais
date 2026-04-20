@@ -605,6 +605,7 @@
     return {
       label:'Projeção mensal',
       value: projected>0 ? fmtMoney.format(projected) : '—',
+      projectedValue: projected,
       sub: subLabel,
       compare: badge(curMtdRev, prevMtdRev)
     };
@@ -643,7 +644,7 @@
       <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(cur.ticket)}</div><div class="sub"><span>Por pedido</span><span>${badge(cur.ticket,prev.ticket)}</span></div></div>
       <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(cur.desconto)}</div><div class="sub"><span>${cur.faturamento ? ((cur.desconto/cur.faturamento)*100).toFixed(1)+'%' : '0%'}</span><span>${badge(cur.desconto,prev.desconto)}</span></div></div>
       <div class="kpi" style="border-color:#d9e5f4;background:linear-gradient(180deg,#fff 0%,#fbfdff 100%)"><div class="label" style="color:#0891b2">Taxa de entrega</div><div class="value" style="color:#0891b2;font-size:20px">${fmtMoney.format(cur.entrega)}</div><div class="sub"><span>${cur.faturamento ? ((cur.entrega/cur.faturamento)*100).toFixed(1)+'%' : '0%'}</span><span>${badge(cur.entrega,prev.entrega)}</span></div></div>
-      <div class="kpi purple"><div class="label">Projeção mensal</div><div class="value" style="font-size:18px">${proj.value}</div><div class="sub"><span>${proj.sub}</span><span>${proj.compare}</span></div></div>`;
+      <div class="kpi purple"><div class="label">Projeção mensal</div><div class="value" style="font-size:18px">${proj.value}</div><div class="sub"><span>${proj.sub}</span><span>${proj.compare}</span></div><div style="margin-top:8px;font-size:18px;font-weight:800;color:${prevMonthTotal>0&&(proj.projectedValue||0)>prevMonthTotal?'#2563eb':prevMonthTotal>0?'#ef4444':'#94a3b8'}">${prevMonthTotal>0?fmtMoney.format(prevMonthTotal):'—'}</div></div>`;
 
     const visStores = cur.stores.filter(s=>s.pedidos>0||prev.stores?.find(ps=>ps.loja===s.loja&&ps.pedidos>0));
     const lbls = visStores.map(s=>s.loja), colors=visStores.map(s=>colorOf(s.loja));
@@ -682,7 +683,7 @@
 
     document.getElementById('kpisProj').innerHTML = `
       <div class="kpi green"><div class="label">Faturamento MTD</div><div class="value">${fmtMoney.format(cur.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${badge(cur.faturamento,prev.faturamento)}</span></div></div>
-      <div class="kpi purple"><div class="label">Projeção mensal</div><div class="value">${proj.value}</div><div class="sub"><span>${proj.sub}</span><span>${proj.compare}</span></div></div>
+      <div class="kpi purple"><div class="label">Projeção mensal</div><div class="value">${proj.value}</div><div class="sub"><span>${proj.sub}</span><span>${proj.compare}</span></div><div style="margin-top:8px;font-size:18px;font-weight:800;color:${prevMonthTotal>0&&(proj.projectedValue||0)>prevMonthTotal?'#2563eb':prevMonthTotal>0?'#ef4444':'#94a3b8'}">${prevMonthTotal>0?fmtMoney.format(prevMonthTotal):'—'}</div></div>
       <div class="kpi blue"><div class="label">Pedidos MTD</div><div class="value">${fmtInt.format(cur.pedidos)}</div><div class="sub"><span>Dias: ${elapsed}/${daysInMonth}</span><span>${badge(cur.pedidos,prev.pedidos)}</span></div></div>
       <div class="kpi yellow"><div class="label">Mesmo período mês ant.</div><div class="value" style="font-size:20px">${fmtMoney.format(prev.faturamento)}</div><div class="sub"><span>Base comparação</span></div></div>
       <div class="kpi" style="border-color:#d9e5f4"><div class="label" style="color:#64748b">Total mês anterior</div><div class="value" style="font-size:20px;color:#334155">${fmtMoney.format(prevMonthTotal)}</div><div class="sub"><span>Fechamento real</span></div></div>`;
