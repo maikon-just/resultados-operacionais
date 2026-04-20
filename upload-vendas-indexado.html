@@ -131,6 +131,7 @@
       { key:'aham-sushi', source:'Aham Sushi', color:'#e11d48' }
     ];
     const INDEX_ROOT = 'vendas_indexadas';
+    const STATIC_INDEX_ROOT = 'data/vendas-index';
     let selectedCompany = COMPANY_ORDER[0];
 
     function qs(id){ return document.getElementById(id); }
@@ -266,16 +267,76 @@
       }
       return normalized;
     }
+    function rowKeyFromParts(companyKey, dateValue, pedidoValue, totalValue){
+      const dateObj = parseDateFlex(dateValue);
+      if(!dateObj) return '';
+      const pedido = String(pedidoValue || '').trim();
+      return hashString([companyKey, ymd(dateObj), pedido, moneyNumber(totalValue)].join('|'));
+    }
+    function rowKeyFromStaticRow(companyKey, row){
+      return rowKeyFromParts(companyKey, row?.data || row?.d, row?.pedido || row?.p, row?.total || row?.t);
+    }
+    async function loadStaticMonth(companyKey, month){
+      try {
+        const res = await fetch(`${STATIC_INDEX_ROOT}/stores/${companyKey}/${month}.json`, { cache:'no-store' });
+        if(!res.ok) return { rows: [], updatedAt: 0, source:'static' };
+        const payload = await res.json();
+        const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+        return { rows, updatedAt: Number(new Date(payload?.generated_at || 0)) || 0, source:'static', rowCount: Number(payload?.row_count || rows.length || 0) };
+      } catch(e){
+        return { rows: [], updatedAt: 0, source:'static' };
+      }
+    }
+    async function loadFirebaseMonth(companyKey, month){
+      try {
+        const snap = await fbDB_v2.ref(`${INDEX_ROOT}/companies/${companyKey}/months/${month}`).once('value');
+        const payload = snap.val() || {};
+        const rowsObj = payload?.rows || {};
+        return { rowsObj, updatedAt: Number(payload?.updated_at || 0), source:'firebase', rowCount: Object.keys(rowsObj).length };
+      } catch(e){
+        return { rowsObj: {}, updatedAt: 0, source:'firebase', rowCount: 0 };
+      }
+    }
+    async function loadCombinedMonth(companyKey, month){
+      const [staticPack, firebasePack] = await Promise.all([
+        loadStaticMonth(companyKey, month),
+        loadFirebaseMonth(companyKey, month)
+      ]);
+
+      const combined = new Map();
+      const firebaseKeys = new Set(Object.keys(firebasePack.rowsObj || {}));
+      const staticKeys = new Set();
+
+      (staticPack.rows || []).forEach(row => {
+        const rowKey = rowKeyFromStaticRow(companyKey, row);
+        if(!rowKey) return;
+        staticKeys.add(rowKey);
+        combined.set(rowKey, row);
+      });
+
+      Object.entries(firebasePack.rowsObj || {}).forEach(([rowKey, row]) => {
+        combined.set(rowKey, row);
+      });
+
+      return {
+        combinedKeys: combined,
+        staticKeys,
+        firebaseKeys,
+        staticCount: staticKeys.size,
+        firebaseCount: firebaseKeys.size,
+        totalCount: combined.size,
+        updatedAt: Math.max(staticPack.updatedAt || 0, firebasePack.updatedAt || 0)
+      };
+    }
+
     async function buscarEmpresaMes(){
       const month = qs('searchMonth').value || nowMonthValue();
       const companyKey = selectedCompany.key;
-      const ref = fbDB_v2.ref(`${INDEX_ROOT}/companies/${companyKey}/months/${month}`);
-      const snap = await ref.once('value');
-      const payload = snap.val() || {};
-      const rowCount = Object.keys(payload.rows || {}).length;
-      const updatedAt = payload.updated_at ? new Date(payload.updated_at).toLocaleString('pt-BR') : 'sem atualização';
-      setSummary({ empresa: qs('displayName').value || selectedCompany.source, mes: month, linhas: String(rowCount), atualizado: updatedAt });
-      appendLog(`Consulta executada para ${companyKey} em ${month}: ${rowCount} linhas.`);
+      const result = await loadCombinedMonth(companyKey, month);
+      const updatedAt = result.updatedAt ? new Date(result.updatedAt).toLocaleString('pt-BR') : 'sem atualização';
+      setSummary({ empresa: qs('displayName').value || selectedCompany.source, mes: month, linhas: String(result.totalCount), atualizado: updatedAt });
+      appendLog(`Consulta executada para ${companyKey} em ${month}: total consolidado ${result.totalCount} linhas.`);
+      appendLog(`Base estática: ${result.staticCount} • Firebase: ${result.firebaseCount} • Total sem duplicar: ${result.totalCount}.`);
     }
     async function importarArquivos(){
       const files = [...(qs('fileInput').files || [])];
@@ -285,62 +346,106 @@
       }
 
       const displayName = (qs('displayName').value || selectedCompany.source).trim();
-      const rows = await parseFiles(files);
-      if(!rows.length){
+      const parsedRows = await parseFiles(files);
+      if(!parsedRows.length){
         appendLog('Nenhuma linha válida foi encontrada nos arquivos.');
         return;
       }
 
+      const uniqueMap = new Map();
+      parsedRows.forEach(item => uniqueMap.set(`${item.monthKey}__${item.rowKey}`, item));
+      const rows = [...uniqueMap.values()];
+      const duplicatedInsideBatch = parsedRows.length - rows.length;
+      const monthsTouched = [...new Set(rows.map(item => item.monthKey))].sort();
+
+      const monthCaches = {};
+      for(const monthKey of monthsTouched){
+        monthCaches[monthKey] = await loadCombinedMonth(selectedCompany.key, monthKey);
+      }
+
       const updates = {};
-      const monthsTouched = new Set();
       const monthStats = {};
+      let newRows = 0;
+      let duplicateRows = 0;
+      let mirroredIntoFirebase = 0;
       const now = Date.now();
 
       rows.forEach(item => {
-        monthsTouched.add(item.monthKey);
-        monthStats[item.monthKey] = (monthStats[item.monthKey] || 0) + 1;
+        const cache = monthCaches[item.monthKey];
+        if(!monthStats[item.monthKey]){
+          monthStats[item.monthKey] = {
+            static_before: cache.staticCount,
+            firebase_before: cache.firebaseCount,
+            combined_before: cache.totalCount,
+            new_rows: 0,
+            duplicate_rows: 0,
+            mirrored_rows: 0,
+            combined_final: cache.totalCount
+          };
+        }
+
+        const alreadyInCombined = cache.combinedKeys.has(item.rowKey);
+        const alreadyInFirebase = cache.firebaseKeys.has(item.rowKey);
+
+        if(alreadyInCombined){
+          duplicateRows += 1;
+          monthStats[item.monthKey].duplicate_rows += 1;
+        } else {
+          newRows += 1;
+          monthStats[item.monthKey].new_rows += 1;
+          monthStats[item.monthKey].combined_final += 1;
+          cache.combinedKeys.set(item.rowKey, item.row);
+        }
+
+        if(!alreadyInFirebase){
+          mirroredIntoFirebase += 1;
+          monthStats[item.monthKey].mirrored_rows += 1;
+          cache.firebaseKeys.add(item.rowKey);
+          updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${item.monthKey}/rows/${item.rowKey}`] = item.row;
+          updates[`${INDEX_ROOT}/months/${item.monthKey}/rows/${selectedCompany.key}_${item.rowKey}`] = item.row;
+        }
 
         updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/source_name`] = selectedCompany.source;
         updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/display_name`] = displayName;
         updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/updated_at`] = now;
-
         updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${item.monthKey}/updated_at`] = now;
-        updates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${item.monthKey}/rows/${item.rowKey}`] = item.row;
-
         updates[`${INDEX_ROOT}/months/${item.monthKey}/updated_at`] = now;
-        updates[`${INDEX_ROOT}/months/${item.monthKey}/rows/${selectedCompany.key}_${item.rowKey}`] = item.row;
-
         updates[`${INDEX_ROOT}/months/${item.monthKey}/companies/${selectedCompany.key}`] = {
           source_name: selectedCompany.source,
           display_name: displayName,
           updated_at: now
         };
-
         updates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}`] = {
           source_name: selectedCompany.source,
           display_name: displayName,
           updated_at: now
         };
-
-        updates[`${INDEX_ROOT}/meta/months/${item.monthKey}`] = {
-          updated_at: now
-        };
+        updates[`${INDEX_ROOT}/meta/months/${item.monthKey}`] = { updated_at: now };
       });
 
-      Object.entries(monthStats).forEach(([monthKey, rowCount]) => {
+      Object.entries(monthStats).forEach(([monthKey, stats]) => {
         updates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${monthKey}`] = {
           source_name: selectedCompany.source,
           display_name: displayName,
           month_key: monthKey,
-          row_count: rowCount,
+          row_count: stats.combined_final,
+          static_before: stats.static_before,
+          firebase_before: stats.firebase_before,
+          new_rows_last_import: stats.new_rows,
+          duplicate_rows_last_import: stats.duplicate_rows,
+          mirrored_rows_last_import: stats.mirrored_rows,
           updated_at: now
         };
-
         updates[`${INDEX_ROOT}/meta/months/${monthKey}/companies/${selectedCompany.key}`] = {
           source_name: selectedCompany.source,
           display_name: displayName,
           month_key: monthKey,
-          row_count: rowCount,
+          row_count: stats.combined_final,
+          static_before: stats.static_before,
+          firebase_before: stats.firebase_before,
+          new_rows_last_import: stats.new_rows,
+          duplicate_rows_last_import: stats.duplicate_rows,
+          mirrored_rows_last_import: stats.mirrored_rows,
           updated_at: now
         };
       });
@@ -352,17 +457,21 @@
         display_name: displayName,
         file_count: files.length,
         row_count: rows.length,
-        months: [...monthsTouched],
+        parsed_row_count: parsedRows.length,
+        new_row_count: newRows,
+        duplicate_row_count: duplicateRows,
+        mirrored_row_count: mirroredIntoFirebase,
+        months: monthsTouched,
         updated_at: now
       };
 
       const uploadId = `${selectedCompany.key}_${now}`;
-
       updates[`${INDEX_ROOT}/uploads/${uploadId}`] = {
         ...pulse,
+        duplicated_inside_batch: duplicatedInsideBatch,
+        month_stats: monthStats,
         created_at: now
       };
-
       updates[`${INDEX_ROOT}/meta/last_upload`] = pulse;
       updates[`${INDEX_ROOT}/meta/refresh`] = pulse;
 
@@ -373,10 +482,18 @@
         sessionStorage.setItem('jb_faturamento_upload_pulse', JSON.stringify(pulse));
       } catch (e) {}
 
-      appendLog(
-        `Upload concluído: ${rows.length} linhas normalizadas em ${monthsTouched.size} mês(es). ` +
-        `Dashboard sinalizado para atualização automática.`
-      );
+      appendLog(`Importação concluída para ${displayName}.`);
+      appendLog(`Arquivos: ${files.length} • Linhas lidas: ${parsedRows.length} • Linhas únicas do lote: ${rows.length}.`);
+      if(duplicatedInsideBatch > 0) appendLog(`Duplicadas dentro do lote: ${duplicatedInsideBatch}.`);
+      appendLog(`Novas linhas reais na base consolidada: ${newRows}.`);
+      appendLog(`Linhas já existentes na base consolidada: ${duplicateRows}.`);
+      appendLog(`Linhas gravadas/espelhadas no Firebase nesta importação: ${mirroredIntoFirebase}.`);
+      Object.entries(monthStats).sort((a,b) => a[0].localeCompare(b[0])).forEach(([monthKey, stats]) => {
+        appendLog(`Mês ${monthKey}: estática ${stats.static_before} • Firebase ${stats.firebase_before} • total antes ${stats.combined_before} • novas ${stats.new_rows} • repetidas ${stats.duplicate_rows} • total final ${stats.combined_final}.`);
+      });
+      if(newRows === 0){
+        appendLog('Nenhuma linha nova entrou porque este arquivo já existe na base consolidada (estática + Firebase).');
+      }
 
       await buscarEmpresaMes();
     }

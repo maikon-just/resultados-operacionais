@@ -2693,9 +2693,11 @@ window.__jbAutoInitDisabled = true;
     const months = [...new Set([...(monthsBetween(range.from, range.to)), ...(monthsBetween(compare.from, compare.to))])];
     let all=[];
     for(const mk of months){
-      let part = await loadMonthFromFirebase(mk, storeName);
-      if(!part.length) part = await loadMonthFromStatic(mk, storeName);
-      all.push(...part);
+      const [firebasePart, staticPart] = await Promise.all([
+        loadMonthFromFirebase(mk, storeName),
+        loadMonthFromStatic(mk, storeName)
+      ]);
+      all.push(...staticPart, ...firebasePart);
     }
     return dedupeRows(all);
   }
