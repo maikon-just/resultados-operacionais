@@ -111,8 +111,18 @@
     .loading-spinner{width:44px;height:44px;border:4px solid #dbe5f1;border-top-color:#5b8def;border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
     .loading-text{font-size:13px;font-weight:800;color:#4b5d79}
-    @media(max-width:1320px){.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2,.grid-3{grid-template-columns:1fr}.toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:760px){.hero h1{font-size:24px}.wrap{padding:14px 12px 26px}.toolbar{grid-template-columns:1fr}.kpi-row{grid-template-columns:1fr}.chart,.chart.sm,.chart.tall{height:250px}.tabs{overflow:visible;flex-wrap:wrap;padding-bottom:0}.tab{flex:1 1 calc(50% - 8px);text-align:center}.preset-group,.action-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}.preset-btn,.btn{width:100%;padding:0 8px}}
+    /* KPI compacto para linha de 6 */
+    .kpi-row{grid-template-columns:repeat(6,minmax(0,1fr))}
+    .kpi .value{font-size:22px}
+    .kpi .label{font-size:10px}
+    /* turno btns */
+    .turno-group{display:flex;gap:8px;flex-wrap:wrap}
+    .turno-btn{height:42px;padding:0 14px;border-radius:12px;border:2px solid #d6e2f1;background:#fff;color:#33507c;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;transition:.15s ease;flex:1 1 auto}
+    .turno-btn:hover{transform:translateY(-1px)}
+    .turno-btn.active-dia{background:#f97316;border-color:#f97316;color:#fff}
+    .turno-btn.active-noite{background:#7c3aed;border-color:#7c3aed;color:#fff}
+    @media(max-width:1320px){.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}}{.kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2,.grid-3{grid-template-columns:1fr}.toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:760px){.hero h1{font-size:24px}.wrap{padding:14px 12px 26px}.toolbar{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))}.chart,.chart.sm,.chart.tall{height:250px}.tabs{overflow:visible;flex-wrap:wrap;padding-bottom:0}.tab{flex:1 1 calc(50% - 8px);text-align:center}.preset-group,.action-group,.turno-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}.preset-btn,.btn,.turno-btn{width:100%;padding:0 8px}}
   </style>
 </head>
 <body>
@@ -128,13 +138,21 @@
       </div>
     </div>
 
-    <div class="panel toolbar">
+    <div class="panel toolbar" style="grid-template-columns:repeat(4,minmax(0,1fr))">
       <div class="field">
         <label>Períodos rápidos</label>
         <div class="preset-group">
           <button class="preset-btn active" data-preset="mes_atual">Mês atual</button>
           <button class="preset-btn" data-preset="mes_anterior">Mês anterior</button>
           <button class="preset-btn" data-preset="ontem">Ontem</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Turno</label>
+        <div class="turno-group">
+          <button class="turno-btn" id="btnTodos" data-turno="todos">Todos</button>
+          <button class="turno-btn" id="btnDia" data-turno="dia">☀️ Dia</button>
+          <button class="turno-btn" id="btnNoite" data-turno="noite">🌙 Noite</button>
         </div>
       </div>
       <div class="field">
@@ -328,11 +346,17 @@
   /* ── Constantes ─────────────────────────────────────────── */
   const STATIC_ROOT   = 'data/vendas-index';
   const FB_ROOT       = 'vendas_indexadas';
+  // Lojas ativas (Just Chicken e Batataria McCain removidas — fechadas)
   const STORE_ORDER   = ['Burger Matriz','Burger ABC','Burger GRU','Gourmet','Aham Forneria','Aham Sushi'];
   const STORE_COLORS  = {
     'Burger Matriz':'#7c3aed','Burger ABC':'#f97316','Burger GRU':'#eab308',
     'Gourmet':'#0ea5e9','Aham Forneria':'#16a34a','Aham Sushi':'#e11d48'
   };
+  // Turnos: Dia = 06h–17h59  |  Noite = 18h–05h59
+  const TURNO_DIA   = ['Manhã','Tarde','Café da Tarde','Almoço','dia','tarde','cafe','manha','Manha'];
+  const HORA_DIA_INI = 6;   // 06:00
+  const HORA_DIA_FIM = 18;  // até 17:59
+  let activeTurno = null; // null = todos, 'dia', 'noite'
   const fmtMoney = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
   const fmtInt   = new Intl.NumberFormat('pt-BR');
 
@@ -494,6 +518,10 @@
     return dedupeRows(all);
   }
 
+  /* ── Lojas fechadas (não exibir) ────────────────────────── */
+  const LOJAS_FECHADAS = ['Just Chicken','Batataria McCain','Batataria','Just Chiken'];
+  function lojaAtiva(name){ return !LOJAS_FECHADAS.some(f=>String(name||'').toLowerCase().includes(f.toLowerCase())); }
+
   /* ── Catálogo de lojas ──────────────────────────────────── */
   async function loadStoreCatalog(){
     const staticMeta = await fetchJson(`${STATIC_ROOT}/meta.json`);
@@ -503,19 +531,30 @@
       ? Object.values(fbCompanies).map(c=>c?.display_name||c?.source_name).filter(Boolean) : [];
     [...staticNames,...fbNames].forEach(name=>{
       const n=String(name).trim();
-      if(n && !storesList.includes(n)) storesList.push(n);
+      if(n && !storesList.includes(n) && lojaAtiva(n)) storesList.push(n);
     });
+  }
+
+  /* ── Filtro de turno ────────────────────────────────────── */
+  function isDia(row){
+    const h = row.data instanceof Date ? row.data.getHours() : -1;
+    return h >= HORA_DIA_INI && h < HORA_DIA_FIM;
+  }
+  function applyTurno(rows){
+    if(!activeTurno || activeTurno==='todos') return rows;
+    return rows.filter(r => activeTurno==='dia' ? isDia(r) : !isDia(r));
   }
 
   /* ── Filtro e sumarização ───────────────────────────────── */
   function filterRows(rows, range, storeName=null){
-    return (rows||[]).filter(r=>{
+    const base = (rows||[]).filter(r=>{
       if(r.cancelado) return false;
       if(range?.from && r.data < range.from) return false;
       if(range?.to   && r.data > range.to)   return false;
       if(storeName && r.loja !== storeName)   return false;
       return true;
     });
+    return applyTurno(base);
   }
   function summarize(rows){
     const map=new Map();
@@ -569,12 +608,14 @@
     const proj = projectionCard(range, cur.faturamento, prev.faturamento);
     const storeLbl = activeStore || 'Todas as lojas';
 
+    const turnoLabel = activeTurno==='dia' ? ' ☀️ Dia' : activeTurno==='noite' ? ' 🌙 Noite' : '';
     document.getElementById('kpisGeral').innerHTML = `
-      <div class="kpi green"><div class="label">Faturamento total</div><div class="value">${fmtMoney.format(cur.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${badge(cur.faturamento,prev.faturamento)}</span></div></div>
-      <div class="kpi blue"><div class="label">Total de pedidos</div><div class="value">${fmtInt.format(cur.pedidos)}</div><div class="sub"><span>${storeLbl}</span><span>${badge(cur.pedidos,prev.pedidos)}</span></div></div>
+      <div class="kpi green"><div class="label">Faturamento total${turnoLabel}</div><div class="value">${fmtMoney.format(cur.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${badge(cur.faturamento,prev.faturamento)}</span></div></div>
+      <div class="kpi blue"><div class="label">Pedidos${turnoLabel}</div><div class="value">${fmtInt.format(cur.pedidos)}</div><div class="sub"><span>${storeLbl}</span><span>${badge(cur.pedidos,prev.pedidos)}</span></div></div>
       <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(cur.ticket)}</div><div class="sub"><span>Por pedido</span><span>${badge(cur.ticket,prev.ticket)}</span></div></div>
-      <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(cur.desconto)}</div><div class="sub"><span>${cur.faturamento ? ((cur.desconto/cur.faturamento)*100).toFixed(1)+'%' : '0,0%'}</span><span>${badge(cur.desconto,prev.desconto)}</span></div></div>
-      <div class="kpi purple"><div class="label">${proj.label}</div><div class="value">${proj.value}</div><div class="sub"><span>${proj.sub}</span><span>${proj.compare}</span></div></div>`;
+      <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(cur.desconto)}</div><div class="sub"><span>${cur.faturamento ? ((cur.desconto/cur.faturamento)*100).toFixed(1)+'%' : '0%'}</span><span>${badge(cur.desconto,prev.desconto)}</span></div></div>
+      <div class="kpi" style="border-color:#d9e5f4;background:linear-gradient(180deg,#fff 0%,#fbfdff 100%)"><div class="label" style="color:#0891b2">Taxa de entrega</div><div class="value" style="color:#0891b2;font-size:20px">${fmtMoney.format(cur.entrega)}</div><div class="sub"><span>${cur.faturamento ? ((cur.entrega/cur.faturamento)*100).toFixed(1)+'%' : '0%'}</span><span>${badge(cur.entrega,prev.entrega)}</span></div></div>
+      <div class="kpi purple"><div class="label">Projeção mensal</div><div class="value" style="font-size:18px">${proj.value}</div><div class="sub"><span>${proj.sub}</span><span>${proj.compare}</span></div></div>`;
 
     const visStores = cur.stores.filter(s=>s.pedidos>0||prev.stores?.find(ps=>ps.loja===s.loja&&ps.pedidos>0));
     const lbls = visStores.map(s=>s.loja), colors=visStores.map(s=>colorOf(s.loja));
@@ -828,6 +869,31 @@
       if(!r) return;
       setDateRange(r.from,r.to,btn.dataset.preset);
       renderAll(r);
+    }));
+
+    // Botões de turno (Dia / Noite / Todos)
+    function paintTurnoBtns(){
+      document.getElementById('btnTodos')?.classList.toggle('preset-btn', activeTurno==='todos'||!activeTurno);
+      ['btnTodos','btnDia','btnNoite'].forEach(id=>{
+        const el=document.getElementById(id); if(!el) return;
+        el.classList.remove('active-dia','active-noite','preset-btn');
+        const t=el.dataset.turno;
+        if(activeTurno===t || (!activeTurno&&t==='todos')){
+          if(t==='dia')   el.classList.add('active-dia');
+          else if(t==='noite') el.classList.add('active-noite');
+          else el.classList.add('preset-btn');
+          el.classList.add('active');
+        }
+      });
+    }
+    paintTurnoBtns();
+    document.querySelectorAll('.turno-btn').forEach(btn=>btn.addEventListener('click',()=>{
+      const t=btn.dataset.turno;
+      activeTurno = (activeTurno===t||t==='todos') && t!=='todos' ? null : t==='todos' ? null : t;
+      // se clicou em "todos" sempre zera
+      if(t==='todos') activeTurno=null;
+      paintTurnoBtns();
+      renderAll(selectedRange());
     }));
 
     // Botões de ação

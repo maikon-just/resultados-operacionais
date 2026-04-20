@@ -363,19 +363,39 @@
           }
         });
 
-        // metadados (pequenos, uma única chave por mês/empresa)
+        // metadados — paths planos, sem pai/filho no mesmo update (evita erro Firebase)
+        // Dados da empresa (campos diretos, sem subpath conflitante)
+        metaUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/source_name`]=selectedCompany.source;
+        metaUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/display_name`]=displayName;
+        metaUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/updated_at`]=now;
+        // Meta resumo da empresa (separado, sem conflito com companies/key acima pois vai em meta/)
+        metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/source_name`]=selectedCompany.source;
+        metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/display_name`]=displayName;
+        metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/updated_at`]=now;
         monthsTouched.forEach(mk=>{
-          metaUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/source_name`]=selectedCompany.source;
-          metaUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/display_name`]=displayName;
-          metaUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/updated_at`]=now;
-          metaUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${mk}/updated_at`]=now;
-          metaUpdates[`${INDEX_ROOT}/months/${mk}/updated_at`]=now;
-          metaUpdates[`${INDEX_ROOT}/months/${mk}/companies/${selectedCompany.key}`]={source_name:selectedCompany.source,display_name:displayName,updated_at:now};
-          metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}`]={source_name:selectedCompany.source,display_name:displayName,updated_at:now};
-          metaUpdates[`${INDEX_ROOT}/meta/months/${mk}`]={updated_at:now};
           const stats=monthStats[mk];
-          metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${mk}`]={source_name:selectedCompany.source,display_name:displayName,month_key:mk,row_count:stats.combined_final,static_before:stats.static_before,firebase_before:stats.firebase_before,new_rows_last_import:stats.new_rows,duplicate_rows_last_import:stats.duplicate_rows,mirrored_rows_last_import:stats.mirrored_rows,updated_at:now};
-          metaUpdates[`${INDEX_ROOT}/meta/months/${mk}/companies/${selectedCompany.key}`]={source_name:selectedCompany.source,display_name:displayName,month_key:mk,row_count:stats.combined_final,static_before:stats.static_before,firebase_before:stats.firebase_before,new_rows_last_import:stats.new_rows,duplicate_rows_last_import:stats.duplicate_rows,mirrored_rows_last_import:stats.mirrored_rows,updated_at:now};
+          // Empresa/mês
+          metaUpdates[`${INDEX_ROOT}/companies/${selectedCompany.key}/months/${mk}/updated_at`]=now;
+          // Mês global
+          metaUpdates[`${INDEX_ROOT}/months/${mk}/updated_at`]=now;
+          metaUpdates[`${INDEX_ROOT}/months/${mk}/companies/${selectedCompany.key}/source_name`]=selectedCompany.source;
+          metaUpdates[`${INDEX_ROOT}/months/${mk}/companies/${selectedCompany.key}/display_name`]=displayName;
+          metaUpdates[`${INDEX_ROOT}/months/${mk}/companies/${selectedCompany.key}/updated_at`]=now;
+          // Meta mês
+          metaUpdates[`${INDEX_ROOT}/meta/months/${mk}/updated_at`]=now;
+          // Meta empresa/mês (campos planos, sem objeto aninhado)
+          metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${mk}/month_key`]=mk;
+          metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${mk}/row_count`]=stats.combined_final;
+          metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${mk}/static_before`]=stats.static_before;
+          metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${mk}/firebase_before`]=stats.firebase_before;
+          metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${mk}/new_rows_last_import`]=stats.new_rows;
+          metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${mk}/duplicate_rows_last_import`]=stats.duplicate_rows;
+          metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${mk}/mirrored_rows_last_import`]=stats.mirrored_rows;
+          metaUpdates[`${INDEX_ROOT}/meta/companies/${selectedCompany.key}/months/${mk}/updated_at`]=now;
+          // Meta mês/empresa (campos planos)
+          metaUpdates[`${INDEX_ROOT}/meta/months/${mk}/companies/${selectedCompany.key}/month_key`]=mk;
+          metaUpdates[`${INDEX_ROOT}/meta/months/${mk}/companies/${selectedCompany.key}/row_count`]=stats.combined_final;
+          metaUpdates[`${INDEX_ROOT}/meta/months/${mk}/companies/${selectedCompany.key}/updated_at`]=now;
         });
 
         const pulse={scope:'faturamento',company_key:selectedCompany.key,source_name:selectedCompany.source,display_name:displayName,file_count:files.length,row_count:rows.length,parsed_row_count:parsedRows.length,new_row_count:newRows,duplicate_row_count:duplicateRows,mirrored_row_count:mirroredIntoFirebase,months:monthsTouched,updated_at:now};
