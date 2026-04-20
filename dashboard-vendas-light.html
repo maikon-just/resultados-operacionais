@@ -233,129 +233,125 @@
 
     <div id="storeButtonsArea" class="store-grid"></div>
 
-    <section id="sec-geral" style="display:block">
-      <div class="kpi-row" id="kpisGeral"></div>
-      <div class="grid-2">
-        <div class="panel card">
-          <h3>Faturamento por loja</h3>
-          <div class="chart"><canvas id="chartFatLoja"></canvas></div>
-        </div>
-        <div class="panel card">
-          <h3>Pedidos por loja</h3>
-          <div class="chart"><canvas id="chartPedLoja"></canvas></div>
-        </div>
-      </div>
-      <div class="grid-2">
-        <div class="panel card">
-          <h3>Descontos por loja</h3>
-          <div class="chart sm"><canvas id="chartDescLoja"></canvas></div>
-        </div>
-        <div class="panel card">
-          <h3>Taxa de entrega por loja</h3>
-          <div class="chart sm"><canvas id="chartEntregaLoja"></canvas></div>
-        </div>
-      </div>
-      <div class="panel card finance-ranking-card">
-        <h3>Ranking Financeiro por Loja</h3>
-        <div class="table-wrap finance-ranking-wrap">
-          <table class="finance-ranking-table">
-            <thead>
-              <tr>
-                <th>Loja</th>
-                <th>Pedidos</th>
-                <th>Faturamento</th>
-                <th>Ticket Médio</th>
-                <th>Desconto</th>
-                <th>% Desconto</th>
-                <th>Taxa Entrega</th>
-                <th>% vs período anterior</th>
-              </tr>
-            </thead>
-            <tbody id="tbodyResumo"></tbody>
-          </table>
-        </div>
-        <div class="footer-note" id="footResumo"></div>
-      </div>
-    </section>
+    <!-- ── Visão geral: KPIs + gráficos ── -->
+    <div id="kpisGeral" class="kpi-row"></div>
 
-    <section id="sec-projecao" style="display:block">
-      <div class="kpi-row" id="kpisProj"></div>
-      <div class="grid-2">
-        <div class="panel card">
-          <h3>Comparativo do mês atual x mesmo período do mês anterior</h3>
-          <div class="chart tall"><canvas id="chartProjComp"></canvas></div>
-        </div>
-        <div class="panel card">
-          <h3>Projeção de fechamento do mês por loja</h3>
-          <div class="chart tall"><canvas id="chartProjLoja"></canvas></div>
-        </div>
+    <div class="grid-2">
+      <div class="panel card">
+        <h3>Faturamento por loja</h3>
+        <div class="chart"><canvas id="chartFatLoja"></canvas></div>
       </div>
       <div class="panel card">
-        <h3>Detalhamento da projeção</h3>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Loja</th>
-                <th>Pedidos MTD</th>
-                <th>Fat. MTD</th>
-                <th>Mesmo período mês anterior</th>
-                <th>Variação</th>
-                <th>Projeção fechamento</th>
-                <th>Dias corridos</th>
-                <th>Dias no mês</th>
-              </tr>
-            </thead>
-            <tbody id="tbodyProj"></tbody>
-          </table>
-        </div>
-        <div class="footer-note" id="footProj"></div>
+        <h3>Pedidos por loja</h3>
+        <div class="chart"><canvas id="chartPedLoja"></canvas></div>
       </div>
-    </section>
-
-    <section id="sec-lojas" style="display:block">
-      <div class="store-pills" id="storePills"></div>
-      <div class="kpi-row" id="kpisLoja"></div>
-      <div class="grid-2">
-        <div class="panel card">
-          <h3>Faturamento diário da loja</h3>
-          <div class="chart"><canvas id="chartLojaFat"></canvas></div>
-        </div>
-        <div class="panel card">
-          <h3>Pedidos diários da loja</h3>
-          <div class="chart"><canvas id="chartLojaPed"></canvas></div>
-        </div>
+    </div>
+    <div class="grid-2">
+      <div class="panel card">
+        <h3>Descontos por loja</h3>
+        <div class="chart sm"><canvas id="chartDescLoja"></canvas></div>
       </div>
       <div class="panel card">
-        <h3>Tabela diária da loja</h3>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Pedidos</th>
-                <th>Faturamento</th>
-                <th>Ticket</th>
-                <th>Desconto</th>
-                <th>Entrega</th>
-              </tr>
-            </thead>
-            <tbody id="tbodyLojaDia"></tbody>
-          </table>
-        </div>
+        <h3>Taxa de entrega por loja</h3>
+        <div class="chart sm"><canvas id="chartEntregaLoja"></canvas></div>
       </div>
-    </section>
+    </div>
+    <div class="panel card finance-ranking-card">
+      <h3>Ranking Financeiro por Loja</h3>
+      <div class="table-wrap finance-ranking-wrap">
+        <table class="finance-ranking-table">
+          <thead>
+            <tr>
+              <th>Loja</th>
+              <th>Pedidos</th>
+              <th>Faturamento</th>
+              <th>Ticket Médio</th>
+              <th>Desconto</th>
+              <th>% Desconto</th>
+              <th>Taxa Entrega</th>
+              <th>% vs período anterior</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyResumo"></tbody>
+        </table>
+      </div>
+      <div class="footer-note" id="footResumo"></div>
+    </div>
 
-    <section id="sec-diario" style="display:block">
-      <div class="panel card" style="margin-bottom:18px">
-        <h3>Faturamento diário consolidado</h3>
-        <div class="chart tall"><canvas id="chartDiarioFat"></canvas></div>
+    <!-- ── Projeção ── -->
+    <div class="grid-2">
+      <div class="panel card">
+        <h3>Comparativo do mês atual x mesmo período do mês anterior</h3>
+        <div class="chart tall"><canvas id="chartProjComp"></canvas></div>
       </div>
       <div class="panel card">
-        <h3>Pedidos diários consolidados</h3>
-        <div class="chart tall"><canvas id="chartDiarioPed"></canvas></div>
+        <h3>Projeção de fechamento do mês por loja</h3>
+        <div class="chart tall"><canvas id="chartProjLoja"></canvas></div>
       </div>
-    </section>
+    </div>
+    <div class="panel card">
+      <h3>Detalhamento da projeção</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Loja</th>
+              <th>Pedidos MTD</th>
+              <th>Fat. MTD</th>
+              <th>Mesmo período mês anterior</th>
+              <th>Variação</th>
+              <th>Projeção fechamento</th>
+              <th>Dias corridos</th>
+              <th>Dias no mês</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyProj"></tbody>
+        </table>
+      </div>
+      <div class="footer-note" id="footProj"></div>
+    </div>
+
+    <!-- ── Por loja ── -->
+    <div class="store-pills" id="storePills"></div>
+    <div class="grid-2">
+      <div class="panel card">
+        <h3>Faturamento diário da loja</h3>
+        <div class="chart"><canvas id="chartLojaFat"></canvas></div>
+      </div>
+      <div class="panel card">
+        <h3>Pedidos diários da loja</h3>
+        <div class="chart"><canvas id="chartLojaPed"></canvas></div>
+      </div>
+    </div>
+    <div class="panel card">
+      <h3>Tabela diária da loja</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Pedidos</th>
+              <th>Faturamento</th>
+              <th>Ticket</th>
+              <th>Desconto</th>
+              <th>Entrega</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyLojaDia"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Evolução diária ── -->
+    <div class="panel card" style="margin-bottom:18px">
+      <h3>Faturamento diário consolidado</h3>
+      <div class="chart tall"><canvas id="chartDiarioFat"></canvas></div>
+    </div>
+    <div class="panel card">
+      <h3>Pedidos diários consolidados</h3>
+      <div class="chart tall"><canvas id="chartDiarioPed"></canvas></div>
+    </div>
+
   </div>
 
 <script>
@@ -386,7 +382,6 @@
   /* ── Estado ─────────────────────────────────────────────── */
   let activeStore   = null;   // null = todas as lojas
   let activePreset  = 'mes_atual';
-  let activeTab     = 'geral';
   let charts        = {};
   let storesList    = STORE_ORDER.slice();
   let refreshTimer  = 0;
@@ -711,7 +706,7 @@
     const daysInMonth = range?.from ? new Date(range.from.getFullYear(),range.from.getMonth()+1,0).getDate() : 30;
     const elapsed = range?.from&&range?.to ? Math.max(1,Math.round((new Date(range.to.getFullYear(),range.to.getMonth(),range.to.getDate())-new Date(range.from.getFullYear(),range.from.getMonth(),range.from.getDate()))/86400000)+1) : 1;
 
-    document.getElementById('kpisProj').innerHTML = `
+    const kpisProjEl = document.getElementById('kpisProj'); if(kpisProjEl) kpisProjEl.innerHTML = `
       <div class="kpi green"><div class="label">Faturamento MTD</div><div class="value">${fmtMoney.format(cur.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${badge(cur.faturamento,prev.faturamento)}</span></div></div>
       <div class="kpi purple"><div class="label">Projeção mensal</div><div class="value">${proj.value}</div><div class="sub"><span>${proj.sub}</span><span>${proj.compare}</span></div><div style="margin-top:8px;font-size:18px;font-weight:800;color:${prevMonthTotal>0&&(proj.projectedValue||0)>prevMonthTotal?'#2563eb':prevMonthTotal>0?'#ef4444':'#94a3b8'}">${prevMonthTotal>0?fmtMoney.format(prevMonthTotal):'—'}</div></div>
       <div class="kpi blue"><div class="label">Pedidos MTD</div><div class="value">${fmtInt.format(cur.pedidos)}</div><div class="sub"><span>Dias: ${elapsed}/${daysInMonth}</span><span>${badge(cur.pedidos,prev.pedidos)}</span></div></div>
@@ -785,7 +780,7 @@
     const storeSumPrev=prev.stores.find(s=>s.loja===store)||{pedidos:0,faturamento:0,desconto:0,entrega:0};
     const ticket=storeSumCur.pedidos?storeSumCur.faturamento/storeSumCur.pedidos:0;
 
-    document.getElementById('kpisLoja').innerHTML=`
+    const kpisLojaEl = document.getElementById('kpisLoja'); if(kpisLojaEl) kpisLojaEl.innerHTML=`
       <div class="kpi green"><div class="label">Faturamento</div><div class="value">${fmtMoney.format(storeSumCur.faturamento)}</div><div class="sub"><span>${store}</span><span>${badge(storeSumCur.faturamento,storeSumPrev.faturamento)}</span></div></div>
       <div class="kpi blue"><div class="label">Pedidos</div><div class="value">${fmtInt.format(storeSumCur.pedidos)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${badge(storeSumCur.pedidos,storeSumPrev.pedidos)}</span></div></div>
       <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(ticket)}</div><div class="sub"><span>Por pedido</span><span>${badge(ticket,storeSumPrev.pedidos?storeSumPrev.faturamento/storeSumPrev.pedidos:0)}</span></div></div>
@@ -827,12 +822,8 @@
     const allRows = await loadRowsForRange(range, activeStore);
     if(token!==renderToken) return; // outra renderização foi disparada
 
+    // Renderiza todas as seções em scroll único (sem abas)
     renderGeral(allRows, range);
-    if(activeTab==='projecao') renderProjecao(allRows, range);
-    if(activeTab==='lojas')    renderLojas(allRows, range);
-    if(activeTab==='diario')   renderDiario(allRows, range);
-
-    // Renderiza todas as seções (sem abas)
     renderProjecao(allRows, range);
     renderLojas(allRows, range);
     renderDiario(allRows, range);
