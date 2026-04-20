@@ -111,7 +111,7 @@
       </div>
       <div class="field toolbar-range">
         <label>Período selecionado</label>
-        <button type="button" class="range-display" id="periodRangeDisplay">Escolha data</button>
+        <button type="button" class="range-display" id="periodRangeDisplay">Selecionar período</button>
         <div id="rangeHiddenInputs" aria-hidden="true">
           <input type="date" id="dataInicio">
           <input type="date" id="dataFim">
@@ -1812,8 +1812,6 @@ window.__jbAutoInitDisabled = true;
 </script>
 
 <style id="jb-ultimate-fix-style">
-  [hidden]{display:none !important}
-  body.range-modal-open{overflow:hidden !important}
   #storeButtonsTopFix{margin:10px 0 12px}
   #storeButtonsTopFix .store-grid{display:flex;flex-wrap:wrap;gap:8px}
   #storeButtonsTopFix .store-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:16px;border:2px solid #d6e2f1;background:#fff;font:800 12px Montserrat,system-ui,sans-serif;cursor:pointer;white-space:nowrap;transition:.15s ease}
@@ -1821,63 +1819,47 @@ window.__jbAutoInitDisabled = true;
   #storeButtonsTopFix .store-btn:hover{transform:translateY(-1px)}
   #kpisLoja,#sec-lojas,#resultLineLightPatch{display:none !important}
   #rangeHiddenInputs{display:none !important}
-
-  .toolbar,
-  .toolbar *{box-sizing:border-box}
   .toolbar{align-items:stretch !important}
-  .toolbar .field,
-  .toolbar-presets,
-  .toolbar-range,
-  .toolbar-actions{justify-content:flex-start;width:auto !important;min-width:0 !important;flex:unset !important}
-  .toolbar .field:nth-child(1),
-  .toolbar .field:nth-child(2),
-  .toolbar .field:nth-child(3),
-  .toolbar .field:nth-child(4),
-  .toolbar-presets,
-  .toolbar-range,
-  .toolbar-actions{grid-column:auto !important;width:auto !important}
+  .toolbar .field{justify-content:flex-start}
   .toolbar .field label{margin-bottom:8px}
-  .toolbar-range > label{display:none !important}
-  .toolbar .preset-group,.toolbar .action-group{width:100% !important;margin:0 !important}
+  .toolbar .preset-group,.toolbar .action-group{width:100%}
+  .toolbar-presets,.toolbar-actions{display:flex;flex-direction:column;justify-content:flex-start}
+  .toolbar-range{display:flex;flex-direction:column;justify-content:flex-start}
   .toolbar .preset-group,
-  .toolbar .action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:10px !important;align-items:stretch !important;justify-items:stretch !important}
+  .toolbar .action-group{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:10px !important;align-items:stretch !important}
   .toolbar .preset-group > *,
-  .toolbar .action-group > *{width:100% !important;max-width:none !important;justify-self:stretch !important;margin:0 !important}
+  .toolbar .action-group > *{width:100% !important;max-width:none !important;justify-self:stretch !important}
   .toolbar .preset-btn,
-  .toolbar .btn{display:flex !important;align-items:center !important;justify-content:center !important;text-align:center !important;white-space:normal !important;word-break:keep-all !important;overflow-wrap:anywhere !important;line-height:1.08 !important;min-height:48px !important;height:48px !important;padding:8px 6px !important;border-radius:14px !important;font-size:10.5px !important;letter-spacing:-.15px !important}
-  .range-display{height:48px !important;width:100% !important;display:flex !important;align-items:center !important;justify-content:center !important;padding:0 14px !important;border-radius:16px !important;border:1px solid #d6e2f1 !important;background:#fbfdff !important;color:#0f172a !important;font:800 13px Montserrat,system-ui,sans-serif !important;cursor:pointer !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.7) !important}
+  .toolbar .btn{display:flex !important;align-items:center !important;justify-content:center !important;text-align:center !important;white-space:normal !important;line-height:1.15 !important;min-height:52px !important;padding:10px 8px !important;border-radius:14px !important}
+  .toolbar .preset-btn{font-size:12px !important}
+  .toolbar .btn{font-size:12px !important}
+  .range-display{height:56px;width:100%;display:flex;align-items:center;justify-content:center;padding:0 16px;border-radius:18px;border:1px solid #d6e2f1;background:#fbfdff;color:#0f172a;font:800 14px Montserrat,system-ui,sans-serif;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
   .range-display:hover{filter:brightness(1.01)}
-  .range-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.34);backdrop-filter:blur(2px);z-index:9998}
-  .range-popover{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;z-index:9999}
+  .range-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.28);backdrop-filter:blur(2px);z-index:50}
+  .range-popover{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;z-index:51}
   .range-popover-card{width:min(520px,100%);background:#fff;border:1px solid #dbe5f1;border-radius:24px;box-shadow:0 25px 60px rgba(15,23,42,.18);padding:18px}
   .range-popover-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
   .range-popover-head strong{display:block;font-size:18px;color:#16325c}
-  .range-popover-head span{display:block;margin-top:4px;font-size:12px;font-weight:700;color:#64748b;line-height:1.3}
+  .range-popover-head span{display:block;margin-top:4px;font-size:12px;font-weight:700;color:#64748b}
   .range-close{width:36px;height:36px;border:none;border-radius:999px;background:#eef4ff;color:#33507c;font-size:22px;line-height:1;cursor:pointer}
   .range-steps{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .range-step{display:flex;flex-direction:column;gap:8px}
   .range-step label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#4b5d79}
   .range-step input{height:48px;border:1px solid #d6e2f1;border-radius:14px;padding:0 12px;background:#fbfdff;color:#0f172a;font:700 13px Montserrat,system-ui,sans-serif;outline:none}
   .range-step input:disabled{background:#f3f6fb;color:#94a3b8;cursor:not-allowed}
-  .range-preview{margin-top:14px;padding:12px 14px;border-radius:16px;background:#f8fbff;border:1px solid #dbe5f1;font-size:12px;font-weight:700;color:#334155;line-height:1.3}
+  .range-preview{margin-top:14px;padding:12px 14px;border-radius:16px;background:#f8fbff;border:1px solid #dbe5f1;font-size:12px;font-weight:700;color:#334155}
   .range-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-
   @media (min-width:761px){
-    .toolbar{display:grid !important;grid-template-columns:minmax(280px,1fr) minmax(220px,.8fr) minmax(320px,1fr) !important;gap:12px !important;overflow:visible !important}
+    .toolbar{display:grid !important;grid-template-columns:minmax(300px,1.15fr) minmax(280px,.95fr) minmax(360px,1.2fr) !important;gap:12px !important;overflow:visible !important}
+    .toolbar-presets,.toolbar-range,.toolbar-actions{min-width:0 !important}
   }
-
   @media (max-width:760px){
     .toolbar{display:grid !important;grid-template-columns:1fr !important;gap:10px !important;overflow:visible !important;padding:12px !important}
-    .toolbar-presets,.toolbar-range,.toolbar-actions,
-    .toolbar .field:nth-child(1),.toolbar .field:nth-child(2),.toolbar .field:nth-child(3),.toolbar .field:nth-child(4){grid-column:1 / -1 !important;width:auto !important}
-    .toolbar .field{width:100% !important;align-items:stretch !important}
+    .toolbar .field{width:100% !important;min-width:0 !important;align-items:stretch !important}
     .toolbar .field label{font-size:11px !important;line-height:1.05 !important;margin:0 0 6px !important;padding:0 2px !important;text-align:left !important}
     .toolbar .preset-group,.toolbar .action-group{gap:8px !important}
-    .toolbar .preset-btn,.toolbar .btn{min-height:46px !important;height:46px !important;padding:7px 4px !important;font-size:9.8px !important;letter-spacing:-.2px !important;line-height:1.02 !important}
-    .range-display{height:46px !important;font-size:13px !important;padding:0 12px !important;text-align:center !important}
-    .range-popover{align-items:flex-start !important;padding:78px 10px 14px !important}
-    .range-popover-card{max-width:100% !important;padding:16px !important;border-radius:22px !important}
-    .range-popover-head strong{font-size:17px !important}
+    .toolbar .preset-btn,.toolbar .btn{min-height:54px !important;padding:10px 6px !important;font-size:11px !important;letter-spacing:-.1px !important}
+    .range-display{height:58px !important;font-size:13px !important;padding:0 12px !important;text-align:center !important}
     .range-steps{grid-template-columns:1fr !important}
     .range-actions{grid-template-columns:1fr !important}
     #storeButtonsTopFix .store-grid{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:10px !important}
@@ -2531,8 +2513,7 @@ window.__jbAutoInitDisabled = true;
     const display = document.getElementById('periodRangeDisplay');
     if(!display) return;
     const range = selectedRange();
-    display.textContent = 'Escolha data';
-    display.title = range.from && range.to ? getRangeDisplayText(range.from, range.to) : 'Escolha data';
+    display.textContent = getRangeDisplayText(range.from, range.to);
   }
   function setDateRange(from, to, preset=null){
     const fromEl=document.getElementById('dataInicio'); const toEl=document.getElementById('dataFim');
@@ -2771,18 +2752,10 @@ window.__jbAutoInitDisabled = true;
     updateRangePreview();
     backdrop.hidden = false;
     popover.hidden = false;
-    document.body.classList.add('range-modal-open');
-    setTimeout(() => {
-      try{ if(start && !start.value){ start.showPicker?.(); } }catch(e){}
-      try{ start?.focus(); }catch(e){}
-    }, 30);
   }
   function closeRangePopover(){
-    const backdrop = document.getElementById('rangeBackdrop');
-    const popover = document.getElementById('rangePopover');
-    if(backdrop) backdrop.hidden = true;
-    if(popover) popover.hidden = true;
-    document.body.classList.remove('range-modal-open');
+    document.getElementById('rangeBackdrop').hidden = true;
+    document.getElementById('rangePopover').hidden = true;
   }
   function updateRangePreview(){
     const start = document.getElementById('rangeStartPicker');
@@ -2831,10 +2804,7 @@ window.__jbAutoInitDisabled = true;
       document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
       window.activePreset='custom';
       updateRangePreview();
-      if(startPicker.value && endPicker && !endPicker.disabled){
-        try{ endPicker.focus(); }catch(e){}
-        setTimeout(() => { try{ endPicker.showPicker?.(); }catch(e){} }, 30);
-      }
+      if(startPicker.value && endPicker && !endPicker.disabled) endPicker.focus();
     });
     endPicker?.addEventListener('change', () => {
       document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
@@ -2862,11 +2832,9 @@ window.__jbAutoInitDisabled = true;
   }
 
   showGeneralOnly();
-  closeRangePopover();
   await loadStoreCatalog();
   ensureStoreButtons();
   bindControls();
-  closeRangePopover();
   const start = currentMonthRange();
   setDateRange(start.from, start.to, 'mes_atual');
   await loadAndRender(false);
