@@ -130,7 +130,12 @@
       .grid-2,.grid-3{grid-template-columns:1fr}
       .toolbar{grid-template-columns:repeat(2,minmax(0,1fr))!important}
     }
+    /* desktop-only: só aparece em telas > 760px */
+    .desktop-only{display:flex}
     @media(max-width:760px){
+      .desktop-only{display:none!important}
+      /* esconde pills de loja redundantes entre gráficos */
+      .store-pills{display:none!important}
       .hero h1{font-size:22px}
       .wrap{padding:12px 14px 24px}
       /* tabelas: scroll interno, sem empurrar página */
@@ -240,8 +245,8 @@
     <!-- ── KPIs ── -->
     <div id="kpisGeral" class="kpi-row"></div>
 
-    <!-- ── Tabelas agrupadas: Ranking + Projeção (lado a lado) ── -->
-    <div class="tables-group">
+    <!-- ── Tabelas (apenas desktop) ── -->
+    <div class="tables-group desktop-only">
       <div class="panel card finance-ranking-card">
         <h3>Ranking Financeiro por Loja</h3>
         <div class="table-wrap finance-ranking-wrap">
@@ -283,6 +288,27 @@
           </table>
         </div>
         <div class="footer-note" id="footProj"></div>
+      </div>
+      <div class="panel card">
+        <h3>Tabela diária da loja</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Pedidos</th>
+                <th>Faturamento</th>
+                <th>Ticket</th>
+                <th>Desconto</th>
+                <th>Entrega</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyLojaDia"></tbody>
+          </table>
+        </div>
+        <div id="expandLojaDia" style="display:none;text-align:center;margin-top:12px">
+          <button class="btn secondary" id="btnExpandLojaDia" style="font-size:12px;height:36px;padding:0 20px">Ver todos os dias ▾</button>
+        </div>
       </div>
     </div>
 
@@ -329,27 +355,6 @@
       <div class="panel card">
         <h3>Pedidos diários da loja</h3>
         <div class="chart"><canvas id="chartLojaPed"></canvas></div>
-      </div>
-    </div>
-    <div class="panel card">
-      <h3>Tabela diária da loja</h3>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Pedidos</th>
-              <th>Faturamento</th>
-              <th>Ticket</th>
-              <th>Desconto</th>
-              <th>Entrega</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyLojaDia"></tbody>
-        </table>
-      </div>
-      <div id="expandLojaDia" style="display:none;text-align:center;margin-top:12px">
-        <button class="btn secondary" id="btnExpandLojaDia" style="font-size:12px;height:36px;padding:0 20px">Ver todos os dias ▾</button>
       </div>
     </div>
 
