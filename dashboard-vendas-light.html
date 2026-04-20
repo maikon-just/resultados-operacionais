@@ -387,10 +387,9 @@
     'Burger Matriz':'#7c3aed','Burger ABC':'#f97316','Burger GRU':'#eab308',
     'Gourmet':'#0ea5e9','Aham Forneria':'#16a34a','Aham Sushi':'#e11d48'
   };
-  // Turnos: Dia = 06h–17h59  |  Noite = 18h–05h59
-  const TURNO_DIA   = ['Manhã','Tarde','Café da Tarde','Almoço','dia','tarde','cafe','manha','Manha'];
+  // Turnos: Dia = 06h–17h59  |  Noite + Madrugada = 18h–05h59
   const HORA_DIA_INI = 6;   // 06:00
-  const HORA_DIA_FIM = 18;  // até 17:59
+  const HORA_DIA_FIM = 18;  // até 17:59  (Noite e Madrugada = fora deste intervalo)
   let activeTurno = null; // null = todos, 'dia', 'noite'
   const fmtMoney = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
   const fmtInt   = new Intl.NumberFormat('pt-BR');
@@ -438,9 +437,11 @@
     pf.setHours(0,0,0,0);
     return {from:pf, to:pt};
   }
+  // Mês atual: do dia 1 até ONTEM (não inclui hoje, igual à projeção)
   function currentMonthRange(){
-    const now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-    return {from:new Date(today.getFullYear(),today.getMonth(),1), to:today};
+    const now=new Date();
+    const yesterday=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
+    return {from:new Date(yesterday.getFullYear(),yesterday.getMonth(),1), to:new Date(yesterday.getFullYear(),yesterday.getMonth(),yesterday.getDate(),23,59,59,999)};
   }
   function previousMonthRange(){
     const now=new Date();
@@ -570,13 +571,21 @@
   }
 
   /* ── Filtro de turno ────────────────────────────────────── */
+  // isDia: pedidos entre 06:00 e 17:59 (Manhã, Almoço, Café da Tarde, Tarde)
   function isDia(row){
     const h = row.data instanceof Date ? row.data.getHours() : -1;
     return h >= HORA_DIA_INI && h < HORA_DIA_FIM;
   }
+  // isNoite: pedidos a partir de 18:00 ou antes de 06:00 (Noite + Madrugada)
+  function isNoite(row){
+    const h = row.data instanceof Date ? row.data.getHours() : -1;
+    return h >= HORA_DIA_FIM || h < HORA_DIA_INI;
+  }
   function applyTurno(rows){
     if(!activeTurno || activeTurno==='todos') return rows;
-    return rows.filter(r => activeTurno==='dia' ? isDia(r) : !isDia(r));
+    if(activeTurno==='dia')   return rows.filter(r => isDia(r));
+    if(activeTurno==='noite') return rows.filter(r => isNoite(r));
+    return rows;
   }
 
   /* ── Filtro e sumarização ───────────────────────────────── */
@@ -623,7 +632,7 @@
        Fórmula: prev_total_mes × (1 + (cur_mtd - prev_mtd) / prev_mtd)
      ─────────────────────────────────────────────────────────── */
   function projectionCard(range, curMtdRev, prevMtdRev, prevMonthTotalRev){
-    if(!range?.from||!range?.to) return {label:'Projeção mensal',value:'—',sub:'sem período',compare:badge(0,0)};
+    if(!range?.from||!range?.to) return {label:'Projeção mensal',value:'—',sub:'sem período',compare:badge(0,0),elapsed:1};
     const daysInMonth = new Date(range.from.getFullYear(),range.from.getMonth()+1,0).getDate();
     const elapsed = Math.max(1, Math.round((new Date(range.to.getFullYear(),range.to.getMonth(),range.to.getDate()) - new Date(range.from.getFullYear(),range.from.getMonth(),range.from.getDate()))/86400000)+1);
 
@@ -631,11 +640,10 @@
     let subLabel = `${elapsed} de ${daysInMonth} dias`;
 
     if(prevMtdRev > 0 && prevMonthTotalRev > 0){
-      // variação% do MTD atual vs mesmo período mês anterior
+      // variação% do MTD atual vs mesmo período mês anterior (dias 1→N)
       const variation = (curMtdRev - prevMtdRev) / prevMtdRev;
-      // aplica sobre o total fechado do mês anterior
+      // aplica sobre o total FECHADO do mês anterior
       projected = prevMonthTotalRev * (1 + variation);
-      const variationPct = (variation*100).toFixed(1);
       subLabel = `${elapsed} de ${daysInMonth} dias`;
     } else if(curMtdRev > 0){
       // fallback: extrapolação linear se não há mês anterior
@@ -647,6 +655,7 @@
       label:'Projeção mensal',
       value: projected>0 ? fmtMoney.format(projected) : '—',
       projectedValue: projected,
+      elapsed: elapsed,
       sub: subLabel,
       compare: badge(curMtdRev, prevMtdRev)
     };
@@ -676,12 +685,24 @@
     const prevMonthTotal = summarize(prevMonthRows).faturamento;
 
     const proj = projectionCard(range, cur.faturamento, prev.faturamento, prevMonthTotal);
+    // Projeção de pedidos: mesma lógica — variação% aplicada ao total de pedidos do mês anterior
+    const prevMonthPedidos = summarize(prevMonthRows).pedidos;
+    const prevMtdPedidos   = prev.pedidos;
+    let projPedidos = 0;
+    if(prevMtdPedidos > 0 && prevMonthPedidos > 0){
+      const varPed = (cur.pedidos - prevMtdPedidos) / prevMtdPedidos;
+      projPedidos  = prevMonthPedidos * (1 + varPed);
+    } else if(cur.pedidos > 0 && proj.elapsed > 0){
+      const daysInMonth2 = range?.from ? new Date(range.from.getFullYear(),range.from.getMonth()+1,0).getDate() : 30;
+      projPedidos = (cur.pedidos / proj.elapsed) * daysInMonth2;
+    }
+    const projPedColor = prevMonthPedidos > 0 ? (projPedidos >= prevMonthPedidos ? '#2563eb' : '#ef4444') : '#94a3b8';
     const storeLbl = activeStore || 'Todas as lojas';
 
     const turnoLabel = activeTurno==='dia' ? ' ☀️ Dia' : activeTurno==='noite' ? ' 🌙 Noite' : '';
     document.getElementById('kpisGeral').innerHTML = `
       <div class="kpi green"><div class="label">Faturamento total${turnoLabel}</div><div class="value">${fmtMoney.format(cur.faturamento)}</div><div class="sub"><span>${periodLabel(range)}</span><span>${badge(cur.faturamento,prev.faturamento)}</span></div></div>
-      <div class="kpi blue"><div class="label">Pedidos${turnoLabel}</div><div class="value">${fmtInt.format(cur.pedidos)}</div><div class="sub"><span>${storeLbl}</span><span>${badge(cur.pedidos,prev.pedidos)}</span></div></div>
+      <div class="kpi blue"><div class="label">Pedidos${turnoLabel}</div><div class="value">${fmtInt.format(cur.pedidos)}</div><div class="sub"><span>${storeLbl}</span><span>${badge(cur.pedidos,prev.pedidos)}</span></div><div style="margin-top:8px;font-size:13px;font-weight:800;color:${projPedColor}">Proj: ${projPedidos>0?fmtInt.format(Math.round(projPedidos)):'—'}</div></div>
       <div class="kpi yellow"><div class="label">Ticket médio</div><div class="value">${fmtMoney.format(cur.ticket)}</div><div class="sub"><span>Por pedido</span><span>${badge(cur.ticket,prev.ticket)}</span></div></div>
       <div class="kpi red"><div class="label">Descontos</div><div class="value">${fmtMoney.format(cur.desconto)}</div><div class="sub"><span>${cur.faturamento ? ((cur.desconto/cur.faturamento)*100).toFixed(1)+'%' : '0%'}</span><span>${badge(cur.desconto,prev.desconto)}</span></div></div>
       <div class="kpi" style="border-color:#d9e5f4;background:linear-gradient(180deg,#fff 0%,#fbfdff 100%)"><div class="label" style="color:#0891b2">Taxa de entrega</div><div class="value" style="color:#0891b2;font-size:20px">${fmtMoney.format(cur.entrega)}</div><div class="sub"><span>${cur.faturamento ? ((cur.entrega/cur.faturamento)*100).toFixed(1)+'%' : '0%'}</span><span>${badge(cur.entrega,prev.entrega)}</span></div></div>
@@ -695,10 +716,12 @@
     mkChart('chartEntregaLoja','bar',{labels:lbls,datasets:[{label:'Entrega',data:visStores.map(s=>s.entrega),backgroundColor:colors,borderRadius:8}]},{plugins:{legend:{display:false}}});
 
     const body = document.getElementById('tbodyResumo');
+    // prevMap usa o MTD comparável (mesmo intervalo de dias do mês anterior)
     const prevMap = new Map(prev.stores.map(s=>[s.loja,s]));
     body.innerHTML = cur.stores.filter(s=>s.pedidos>0).map((s,i)=>{
       const p=prevMap.get(s.loja)||{faturamento:0};
       const tk = s.pedidos ? s.faturamento/s.pedidos : 0;
+      // badge compara faturamento atual vs mesmo período mês anterior (correto)
       return `<tr><td><span class="rank-badge">${i+1}</span> <span class="store-name-strong">${s.loja}</span></td><td>${fmtInt.format(s.pedidos)}</td><td class="money-green">${fmtMoney.format(s.faturamento)}</td><td class="money-blue">${fmtMoney.format(tk)}</td><td class="money-red">${fmtMoney.format(s.desconto)}</td><td>${s.faturamento ? ((s.desconto/s.faturamento)*100).toFixed(1)+'%' : '—'}</td><td class="money-dark">${fmtMoney.format(s.entrega)}</td><td>${badge(s.faturamento,p.faturamento)}</td></tr>`;
     }).join('') || '<tr><td colspan="8" class="empty">Sem dados para o período</td></tr>';
     document.getElementById('footResumo').textContent = `${cur.pedidos} pedidos · ${fmtMoney.format(cur.faturamento)} · período: ${periodLabel(range)}`;
@@ -900,13 +923,23 @@
   function openRangePopover(){
     document.getElementById('rangeBackdrop').hidden=false;
     document.getElementById('rangePopover').hidden=false;
-    const r=selectedRange();
+    // Sempre abre com datas do mês atual para facilitar seleção
+    const now = new Date();
+    const monthFirstYmd = `${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;
+    const todayYmd = ymd(now);
     const sp=document.getElementById('rangeStartPicker'), ep=document.getElementById('rangeEndPicker');
-    if(sp) sp.value=r.from?ymd(r.from):'';
-    if(ep){ ep.value=r.to?ymd(r.to):''; ep.disabled=!sp.value; }
-    document.getElementById('rangePreviewText').textContent='Selecione a primeira data para começar.';
+    if(sp){
+      sp.value = monthFirstYmd; // padrão: início do mês atual
+      sp.min   = monthFirstYmd; // não permite antes do início do mês
+    }
+    if(ep){
+      ep.value = todayYmd;      // padrão: hoje
+      ep.disabled = false;
+      ep.min = sp ? sp.value : monthFirstYmd;
+    }
+    document.getElementById('rangePreviewText').textContent=`${longDate(parseDate(monthFirstYmd))} → ${longDate(parseDate(todayYmd,true))}`;
     const confirm=document.getElementById('btnRangeConfirm');
-    if(confirm) confirm.disabled=!(sp.value&&ep.value);
+    if(confirm) confirm.disabled=!(sp?.value&&ep?.value);
   }
   function closeRangePopover(){
     document.getElementById('rangeBackdrop').hidden=true;
