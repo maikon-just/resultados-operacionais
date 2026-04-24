@@ -147,7 +147,7 @@
       <div class="history-head">
         <div>
           <h2 style="margin-bottom:6px">Gerenciar arquivos importados</h2>
-          <div class="muted">Exclua um arquivo enviado por engano para poder reenviar a versão correta sem duplicação.</div>
+          <div class="muted">Histórico automático dos últimos 15 dias. Arquivos novos podem ser excluídos; envios antigos aparecem para conferência.</div>
         </div>
         <button class="btn ghost" id="btnAtualizarHistorico">Atualizar lista</button>
       </div>
@@ -330,25 +330,46 @@
 
     async function carregarHistoricoArquivos(){
       const monthFilter=qs('searchMonth').value||'';
-      const snap=await fbDB_v2.ref(`${INDEX_ROOT}/meta/upload_files_by_company/${selectedCompany.key}`).once('value');
-      const obj=snap.val()||{};
-      let rows=Object.entries(obj).map(([id,value])=>({id,...(value||{})}));
+      const since=Date.now()-(15*24*60*60*1000);
+      let rows=[];
+
+      const scopedSnap=await fbDB_v2.ref(`${INDEX_ROOT}/meta/upload_files_by_company/${selectedCompany.key}`).once('value');
+      const scopedObj=scopedSnap.val()||{};
+      rows=Object.entries(scopedObj).map(([id,value])=>({id,...(value||{}),history_source:'file_meta'}));
+
+      if(!rows.length){
+        const legacySnap=await fbDB_v2.ref(`${INDEX_ROOT}/uploads`).once('value');
+        const legacyObj=legacySnap.val()||{};
+        rows=Object.entries(legacyObj)
+          .map(([id,value])=>({
+            id,
+            ...(value||{}),
+            history_source:'legacy_upload',
+            file_name:(value&&value.file_name) || ((Number(value&&value.file_count||0)===1)?`Importação ${id}`:`${Number(value&&value.file_count||0)} arquivo(s) • ${id}`),
+            can_delete:false
+          }))
+          .filter(item=>item.company_key===selectedCompany.key);
+      }
+
+      rows=rows.filter(item=>Number(item.created_at||item.updated_at||0) >= since);
       if(monthFilter) rows=rows.filter(item=>(item.months||[]).includes(monthFilter));
-      return rows.sort((a,b)=>(Number(b.created_at||0)-Number(a.created_at||0))).slice(0,25);
+      return rows.sort((a,b)=>(Number(b.created_at||b.updated_at||0)-Number(a.created_at||a.updated_at||0))).slice(0,50);
     }
 
     function renderHistoricoArquivos(items){
       const wrap=qs('historyList');
       if(!items.length){
-        wrap.innerHTML='<div class="muted">Nenhum arquivo encontrado para a empresa/mês selecionados.</div>';
+        wrap.innerHTML='<div class="muted">Nenhum envio encontrado nos últimos 15 dias para a empresa/mês selecionados.</div>';
         return;
       }
       wrap.innerHTML=items.map(item=>{
         const status=item.status==='deleted' ? 'Removido' : 'Ativo';
+        const legacy=item.history_source==='legacy_upload';
         const tags=[
           `<span class="mini-tag ${item.status==='deleted'?'danger':'ok'}">${status}</span>`,
           `<span class="mini-tag">${Number(item.mirrored_row_count||0)} linha(s) gravadas</span>`,
-          `<span class="mini-tag">${Number(item.duplicate_row_count||0)} repetidas</span>`
+          `<span class="mini-tag">${Number(item.duplicate_row_count||0)} repetidas</span>`,
+          `<span class="mini-tag ${legacy?'warn':''}">${legacy?'Histórico antigo':'Arquivo rastreável'}</span>`
         ];
         if(item.duplicated_inside_batch) tags.push(`<span class="mini-tag warn">${Number(item.duplicated_inside_batch)} duplicadas no lote</span>`);
         const canDelete=item.status!=='deleted' && !!item.can_delete;
@@ -361,12 +382,13 @@
             <div class="history-sub muted">
               <span>Empresa: ${escapeHtml(item.display_name||selectedCompany.source)}</span>
               <span>Meses: ${escapeHtml((item.months||[]).join(', ')||'—')}</span>
-              <span>Enviado em: ${escapeHtml(formatDateTime(item.created_at))}</span>
+              <span>Enviado em: ${escapeHtml(formatDateTime(item.created_at||item.updated_at))}</span>
               ${item.deleted_at ? `<span>Removido em: ${escapeHtml(formatDateTime(item.deleted_at))}</span>` : ''}
+              ${legacy ? '<span>Exclusão retroativa indisponível</span>' : ''}
             </div>
           </div>
           <div class="history-actions">
-            <button class="btn ${canDelete?'danger':'ghost'}" data-delete-upload-file="${escapeHtml(item.id)}" ${canDelete?'':'disabled'}>${item.status==='deleted'?'Removido':'Excluir arquivo'}</button>
+            <button class="btn ${canDelete?'danger':'ghost'}" data-delete-upload-file="${escapeHtml(item.id)}" ${canDelete?'':'disabled'}>${item.status==='deleted'?'Removido':(legacy?'Sem exclusão retroativa':'Excluir arquivo')}</button>
           </div>
         </div>`;
       }).join('');
